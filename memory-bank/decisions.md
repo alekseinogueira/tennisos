@@ -68,4 +68,14 @@
 - **Why:** Calling supabase inside the onAuthStateChange callback can deadlock the auth lock (supabase-js v2); also satisfies the `react-hooks/set-state-in-effect` rule.
 - **Alternatives:** Awaiting getProfile inside the callback (deadlock risk), a separate id-keyed effect (tripped the lint rule).
 
+## 2026-06-13 — No credit field on the student create/edit form
+- **Decision:** The admin student form sets profile fields only (full_name, email, phone, status). Credits are never set here; they're added later only via a real transaction (manual adjustment or package purchase).
+- **Why:** A freshly-created roster student is unclaimed (`user_id` NULL), but `lesson_credits.user_id` is NOT NULL → a credit row can't reference a non-existent auth user. Keeps the ledger honest (every delta tied to a transaction) and avoids a schema change.
+- **Alternatives:** Make `lesson_credits.user_id` nullable + backfill it at claim time (rejected — schema/RLS churn for no real benefit); enable the credit field only when editing a claimed student (rejected — credits belong in a dedicated transactional flow, not the profile form).
+
+## 2026-06-13 — Admin reuses RoleRoute; invite generator emits a claim URL (not an email)
+- **Decision:** `/admin/*` is gated by the existing `RoleRoute allow={['coach','admin']}` (no new admin-only gate). The invite generator (`InvitePanel`) produces a copyable `/claim?email=…` URL client-side; the real emailed magic link stays with the deferred service-role invite Edge Function.
+- **Why:** `admin` is already a coach superset, so no extra primitive is needed. Sending real invite emails requires the service-role key (server-side only) — out of scope this session and an outbound action best left to the planned Edge Function.
+- **Alternatives:** A separate admin-only RoleRoute (unnecessary); client-side `signInWithOtp` to email a magic link now (rejected — diverges from the documented `inviteUserByEmail` plan and sends real email outside the intended seam).
+
 <!-- New decisions go above this line, newest first. -->

@@ -28,3 +28,22 @@ Single-coach tool first; build only what solves a real, recurring problem for me
 ## Memory
 At the start of every task, read `memory-bank/activeContext.md` and `memory-bank/progress.md`.
 Read other memory-bank files only when the task needs them.
+
+## 55TC Design Spec (fonte de verdade: 55tenniscrew.com)
+
+CORES: forest #1C3526 · sand #F5EDE0 · ink #0D0D0D
+- Texto sand SEMPRE sobre forest. Texto ink SEMPRE sobre sand. Nunca inverter.
+- Motif de quadra SVG (linhas em sand 6% opacity) em TODA tela com bg forest.
+
+TIPOGRAFIA:
+- Bebas Neue: headlines MAIUSCULAS, letter-spacing min 0.1em, line-height 0.9-1.
+- DM Sans: body normal. Labels MAIUSCULAS + letter-spacing 0.2em (inputs, badges, eyebrows).
+- Padrao eyebrow: DM Sans uppercase tracking largo acima de titulo Bebas Neue.
+
+BOTOES primarios: bg forest, texto sand, UPPERCASE, letter-spacing 0.1em, border-radius max 4px.
+
+TAGLINE: Less Theory. More Game. - usar em boas-vindas do aluno, empty states, footer.
+
+VOZ: direta, sem jargao. Empty states humanizados. Erros diretos e humanos.
+
+LAYOUT: max-w-5xl centrado, padding vertical generoso, flat sem sombras dramaticas.

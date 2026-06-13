@@ -13,6 +13,9 @@ import ForgotPassword from './screens/ForgotPassword'
 import ResetPassword from './screens/ResetPassword'
 import ClaimInvite from './screens/ClaimInvite'
 import ComingSoon from './screens/ComingSoon'
+import AdminHome from './screens/admin/AdminHome'
+import Students from './screens/admin/Students'
+import StudentForm from './screens/admin/StudentForm'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -31,6 +34,11 @@ createRoot(document.getElementById('root')).render(
               <Route path="/" element={<ComingSoon title="Student Home" />} />
               <Route element={<RoleRoute allow={['coach', 'admin']} />}>
                 <Route path="/coach" element={<ComingSoon title="Coach Home" />} />
+                {/* Admin panel — coach/admin only; students are bounced to / by RoleRoute */}
+                <Route path="/admin" element={<AdminHome />} />
+                <Route path="/admin/students" element={<Students />} />
+                <Route path="/admin/students/new" element={<StudentForm />} />
+                <Route path="/admin/students/:id/edit" element={<StudentForm />} />
               </Route>
             </Route>
           </Route>

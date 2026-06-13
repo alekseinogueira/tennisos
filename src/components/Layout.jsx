@@ -12,8 +12,12 @@ export default function Layout() {
   // Role-aware nav. Only the home destination exists today — feature sections
   // (roster, feedback, videos, packages…) get added here as their screens land.
   const navItems = coach
-    ? [{ to: '/coach', label: 'Home' }]
-    : [{ to: '/', label: 'Home' }]
+    ? [
+        { to: '/coach', label: 'Home', end: true },
+        // No `end` so Admin stays highlighted across /admin sub-routes.
+        { to: '/admin', label: 'Admin', end: false },
+      ]
+    : [{ to: '/', label: 'Home', end: true }]
 
   return (
     <div className="flex min-h-screen flex-col bg-sand">
@@ -26,7 +30,7 @@ export default function Layout() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end
+                end={item.end}
                 className={({ isActive }) =>
                   `rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                     isActive ? 'bg-sand/15 text-sand' : 'text-sand/70 hover:text-sand'

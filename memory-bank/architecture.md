@@ -34,18 +34,22 @@ tennisos/
 │   │   ├── ProtectedRoute.jsx# requires a session, else redirect /login
 │   │   └── RoleRoute.jsx     # requires role (coach/admin), else redirect/403
 │   ├── components/
-│   │   └── Layout.jsx        # branded shell + role-aware nav
+│   │   ├── Layout.jsx        # branded shell + role-aware nav
+│   │   └── InvitePanel.jsx   # copyable /claim?email=… link, shown after creating a student
 │   └── screens/
 │       ├── Login.jsx
 │       ├── ForgotPassword.jsx
 │       ├── ResetPassword.jsx     # handles recovery session -> updateUser({password})
 │       ├── ClaimInvite.jsx       # student sets password on invite -> row auto-links
-│       ├── student/
+│       ├── admin/                # BUILT — coach/admin panel (realizes the coach Roster intent)
+│       │   ├── AdminHome.jsx     # /admin landing (Control Room)
+│       │   ├── Students.jsx      # /admin/students roster table (name/email/status/balance)
+│       │   └── StudentForm.jsx   # create/edit student (profile fields only — NO credit field)
+│       ├── student/              # planned
 │       │   ├── Dashboard.jsx     # credit balance + recent feedback/videos
 │       │   ├── Feedbacks.jsx
 │       │   └── Videos.jsx
-│       └── coach/
-│           ├── Roster.jsx        # list/create students, send invites
+│       └── coach/                # planned (StudentDetail, Packages, FeedbackComposer)
 │           ├── StudentDetail.jsx # credits, feedback, videos for one student
 │           ├── Packages.jsx      # manage offerings, grant credits
 │           └── FeedbackComposer.jsx  # write feedback, attach videos
@@ -72,8 +76,14 @@ Screens never call `supabase.auth` directly except the auth screens.
   `ResetPassword` consumes the recovery session → `updateUser({ password })`.
 - **Coach account:** seeded once manually — create the auth user, then set
   `profiles.role = 'coach'` in the Supabase dashboard. (Documented bootstrap step.)
+- **Credits are transaction-only:** the admin student form never sets credits. Because an
+  unclaimed student has `user_id` NULL and `lesson_credits.user_id` is NOT NULL, credits can
+  only be written once there's an auth user — and always as a real `lesson_credits` delta
+  (manual adjustment or package purchase), recorded in a dedicated credit-management flow.
 - **Student provisioning (coach-invite + claim):**
-  1. Coach creates a `students` row (`user_id` NULL, `status` 'invited', `email`).
+  1. Coach creates a `students` row (`user_id` NULL, `status` 'invited', `email`) via the admin
+     form; `InvitePanel` then surfaces a copyable `/claim?email=…` URL. (Emailed magic link
+     comes later via the service-role invite Edge Function — see below.)
   2. Coach triggers invite → Edge Function calls `auth.admin.inviteUserByEmail(email)`
      (service-role). Supabase emails an invite/set-password link.
   3. Student sets password (`ClaimInvite`) → auth user created.

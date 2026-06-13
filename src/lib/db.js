@@ -109,6 +109,21 @@ export async function getCreditBalance(studentId) {
   return rows.reduce((sum, r) => sum + r.delta, 0)
 }
 
+/**
+ * Balances for the whole roster in ONE query, as a { [student_id]: balance }
+ * map — avoids N+1 when rendering the student list. RLS still applies (coach
+ * sees all; a student would see only their own rows).
+ */
+export async function getCreditBalances() {
+  const rows = unwrap(
+    await supabase.from('lesson_credits').select('student_id, delta'),
+  )
+  return rows.reduce((acc, r) => {
+    acc[r.student_id] = (acc[r.student_id] ?? 0) + r.delta
+    return acc
+  }, {})
+}
+
 /** Coach/system-only (RLS): record a credit grant or use. */
 export async function addCredit(fields) {
   return unwrap(
