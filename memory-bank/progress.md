@@ -32,6 +32,14 @@
   - **Student:** `Feedbacks` (`/feedback`) — own feedback newest-first with inline-playing
     YouTube embeds + "Watch ↗" links for other sources. Feedback nav item.
   - Lint + build clean.
+- **Lesson credits UI — Phase 7 COMPLETE (code-level):**
+  - **Admin:** `StudentDetail` (`/admin/students/:id`) — per-student credit hub: live balance,
+    per-transaction adjustment form (signed `delta`, `reason`, optional `note` → `addCredit`),
+    and credit history (newest first). Blocks unclaimed students. Roster name links here.
+  - **Schema:** `lesson_credits` gained a nullable `note` column (migration `002`, edited in place).
+  - **Student:** dashboard balance confirmed live (`getCreditBalance` over the real ledger) — the
+    loop closes once an entry is recorded. No dashboard change needed.
+  - Lint + build clean.
 
 ## In Progress
 - Nothing actively mid-build. Admin roster + student portal + Phase 6 all complete at the
@@ -41,8 +49,8 @@
 - Applying the Supabase migrations to a real project + seeding the coach account.
 - `.env` wiring + live smoke test of login/claim/reset + admin roster + the Phase 6 loop.
 - Coach invite Edge Function (`functions/invite`) + `lib/api.js` caller → real emailed invite.
-- Credit management UI (manual adjustments / package purchases that write `lesson_credits`).
-- Coach screens still unbuilt: Packages, StudentDetail.
+- Coach screens still unbuilt: Packages (deferred to Stripe — no V1 UI).
+- Package-purchase credit grants (writes `lesson_credits` with a `package_id`) — deferred to Stripe.
 - Real gallery **upload**: `gallery` Storage bucket + storage RLS + upload UI (replaces the
   manual external_url paste). n8n/Stripe seams.
 

@@ -147,4 +147,34 @@
   (rejected — task #3 needs to attach gallery clips now); build full Storage upload now (out of
   scope this session).
 
+## 2026-06-13 — Credit adjustment lives on a new `/admin/students/:id` StudentDetail hub
+- **Decision:** Built a dedicated StudentDetail screen (`/admin/students/:id`) as the home for
+  the credit ledger: a live balance, a per-transaction adjustment form (signed `delta`, `reason`,
+  optional `note`), and the credit history list (newest first). Roster student name now links here.
+  Credits are always one-off entries — **no package picker** (packages table is reserved for Stripe later).
+- **Why:** Credits are their own transactional concern, not part of the student profile form
+  (see the 2026-06-13 "no credit field" decision). A detail hub gives them a natural home and a
+  place future per-student panels (feedback list, gallery) can grow into.
+- **Alternatives:** Bolt the credit panel onto the edit form (rejected — conflates profile edits
+  with a financial ledger); a standalone `/admin/credits` screen (rejected — credits are always
+  viewed in the context of one student).
+
+## 2026-06-13 — Added `note` column to `lesson_credits` (edited migration 002 in place)
+- **Decision:** Added `note text` (nullable) to `lesson_credits` directly in `002_mvp_schema.sql`
+  so the adjustment form can attach an optional memo (e.g. "Private x10 pack, paid cash").
+- **Why:** The task explicitly asked for an optional note; the table had no field for it. Migrations
+  are still **unapplied**, so editing 002 in place (same precedent as the Phase 6 video remodel) keeps
+  the schema readable rather than create-then-alter.
+- **Alternatives:** A separate `004` migration (just noise while nothing is applied); dropping the
+  note (rejected — it's an explicit requirement); overloading an existing column (none fits).
+
+## 2026-06-13 — Credit panel blocks unclaimed students (same guard as feedback)
+- **Decision:** The adjustment form only renders for a claimed student (`user_id` not NULL); an
+  unclaimed roster row gets a "Hasn't joined yet → Send the invite" panel instead.
+- **Why:** `lesson_credits.user_id` (the RLS subject) is NOT NULL — there's no auth id to stamp on an
+  unclaimed row, and the student couldn't see the balance until they claim. Mirrors the feedback
+  composer guard and the credits-are-transaction-only constraint family.
+- **Alternatives:** Let the insert fail with a raw DB error (poor UX); make `user_id` nullable
+  (rejected before — schema/RLS churn).
+
 <!-- New decisions go above this line, newest first. -->

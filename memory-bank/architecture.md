@@ -48,14 +48,13 @@ tennisos/
 │       ├── Feedbacks.jsx           # BUILT — /feedback (student): own feedback + inline videos (gallery + library)
 │       ├── admin/                  # BUILT — coach/admin panel
 │       │   ├── AdminHome.jsx       # /admin landing (Control Room)
-│       │   ├── Students.jsx        # /admin/students roster table (name/email/status/balance + Feedback/Edit actions)
+│       │   ├── Students.jsx        # /admin/students roster table (name links to detail; status/balance + Feedback/Edit actions)
+│       │   ├── StudentDetail.jsx   # BUILT — /admin/students/:id — credit hub: balance + adjust form (delta/reason/note) + history (blocks unclaimed)
 │       │   ├── StudentForm.jsx     # create/edit student (profile fields only — NO credit field)
 │       │   ├── FeedbackComposer.jsx# /admin/students/:id/feedback/new — write feedback (blocks unclaimed)
 │       │   ├── FeedbackDetail.jsx  # /admin/students/:id/feedback/:fid — attach library items + gallery clips
 │       │   └── Videos.jsx          # /admin/videos — curated_library CRUD (create/list/delete)
-│       └── coach/                # planned (StudentDetail, Packages)
-│           ├── StudentDetail.jsx # credits, feedback, videos for one student
-│           └── Packages.jsx      # manage offerings, grant credits
+│       └── (planned)              # Packages.jsx — manage offerings, grant credits (deferred to Stripe)
 ├── supabase/
 │   ├── config.toml
 │   ├── migrations/

@@ -4,18 +4,35 @@
 > Read this first at the start of every task.
 
 ## Current Focus
-**Phase 6 (feedback + video library) is COMPLETE (code-level).** Shipped the full
-feedback loop + a two-system video model. **Key remodel this session:** the single
-per-student `videos` table was split into **two** tables — `student_gallery` (per-student
-PRIVATE lesson footage) and `curated_library` (GLOBAL coach-owned technical references any
-student can browse) — each with its own join table (`feedback_gallery_links`,
-`feedback_library_links`). Migrations `002`/`003` were **edited in place** (they were
-unapplied, so no `004` churn). Still **not yet applied** → all Phase 6 screens are
-lint/build-verified only, not smoke-tested against live rows.
+**Phase 7 (lesson credits UI) is COMPLETE (code-level).** Built the coach-facing credit
+ledger on a new **StudentDetail hub** (`/admin/students/:id`): live balance + a per-transaction
+adjustment form (signed `delta`, `reason`, optional `note`) + credit history (newest first).
+No package picker — credits are always one-off (packages stay reserved for Stripe). Confirmed
+the student dashboard already reads the live balance (`getCreditBalance`), so the loop closes:
+coach records credits → `lesson_credits` → dashboard reflects it. Added a `note` column to
+`lesson_credits` (migration `002`, edited in place — still unapplied). Lint/build-verified only.
 
-**Phase 7 (next) is NOT decided yet.** Likely candidates from the backlog: apply migrations
-+ seed coach; credit-management UI (gives the dashboard a non-zero balance); the invite
-Edge Function. See Next Steps.
+**Phase 8 (next) is NOT decided yet.** Top backlog candidates: **apply migrations + seed coach**
+(unblocks every screen for live smoke-testing), then the invite Edge Function. See Next Steps.
+
+## Recent Changes (2026-06-13 — Phase 7: lesson credits UI)
+- **`screens/admin/StudentDetail.jsx`** (NEW, `/admin/students/:id`): per-student credit hub.
+  Loads `getStudent` + `getCreditBalance` + `listCreditsForStudent` in parallel. Sections:
+  live **balance** card, **Adjust Credits** form (signed `delta` with `+ grant · − use` helper,
+  `reason` select [purchase/lesson/adjustment/refund], optional `note` → `addCredit`), and a
+  **History** list (reason eyebrow + note + date + signed delta, forest for grants / muted for uses).
+  New entries prepend live and bump the balance optimistically. **Blocks unclaimed students**
+  (`students.user_id` NULL → `lesson_credits.user_id` NOT NULL) with a "Hasn't joined yet" panel,
+  same guard as the feedback composer. Header has Edit / New feedback / Back-to-roster links.
+- **`lesson_credits` schema:** added `note text` (nullable) in `002_mvp_schema.sql` (edited in
+  place — unapplied) + `database-blueprint.md`. `addCredit`/`listCreditsForStudent` already existed
+  in `db.js` (no change; `addCredit` passes `fields` through, so `note` flows automatically).
+- **`main.jsx`:** wired `/admin/students/:id` (before `:id/edit`). **`Students.jsx`:** roster name
+  is now a link to the detail hub.
+- **Student dashboard confirmed live:** `StudentDashboard.jsx` already sums the real ledger via
+  `getCreditBalance(student.id)`; the only literal `0`s are fallbacks (no roster row / `?? 0`).
+  No change needed — Phase 7 task #3 satisfied by confirmation.
+- `npm run lint` + `npm run build` clean.
 
 ## Recent Changes (2026-06-13 — Phase 6: feedback + video library)
 - **Schema remodel (`002`/`003` edited in place, `db.js`, `database-blueprint.md`):**
@@ -73,16 +90,15 @@ Edge Function. See Next Steps.
 1. **Apply migrations** to a Supabase project (dashboard SQL editor OR `supabase db push`),
    then seed the coach account and set `profiles.role='coach'`.
 2. Set `.env` locally (VITE_SUPABASE_*) and smoke-test login/claim/reset + the admin roster
-   (create student → invite link → edit) + the **student portal** (dashboard balance +
-   profile) + the **Phase 6 loop**: coach writes feedback → attaches a library item + a
-   gallery clip → student sees the note with inline-playing videos; confirm RLS (a student
-   can browse `curated_library` but only sees their own `student_gallery`/feedback).
+   (create student → invite link → edit) + the **credit loop** (StudentDetail: record a +/−
+   entry → balance + history update → student dashboard shows the live balance) + the
+   **student portal** (dashboard balance + profile) + the **Phase 6 loop**: coach writes
+   feedback → attaches a library item + a gallery clip → student sees the note with
+   inline-playing videos; confirm RLS (a student can browse `curated_library` but only sees
+   their own `student_gallery`/feedback/credits).
 3. Build the coach **invite Edge Function** (`functions/invite`, service-role) + `lib/api.js`
    caller, then upgrade `InvitePanel` from a manual claim URL to a real emailed magic link.
-4. **Credit management UI** (separate from the student form): manual adjustments + (later)
-   package purchases that write `lesson_credits` rows — likely a StudentDetail screen. This
-   is what gives the student dashboard a non-zero balance to display.
-5. (Later) Real **gallery upload**: a `gallery` Storage bucket + upload UI to replace the
+4. (Later) Real **gallery upload**: a `gallery` Storage bucket + upload UI to replace the
    manual external_url paste in `FeedbackDetail`.
 
 ## Open Questions / Blockers

@@ -115,7 +115,12 @@ export default function Students() {
                   className="border-b border-forest/8 last:border-0 transition hover:bg-white"
                 >
                   <td className="px-5 py-4 font-medium text-ink">
-                    {s.full_name}
+                    <Link
+                      to={`/admin/students/${s.id}`}
+                      className="underline-offset-4 transition hover:text-forest hover:underline"
+                    >
+                      {s.full_name}
+                    </Link>
                   </td>
                   <td className="px-5 py-4 text-sm text-ink/65">{s.email}</td>
                   <td className="px-5 py-4">

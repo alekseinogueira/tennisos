@@ -64,6 +64,7 @@
 | package_id  | uuid → packages(id)        | nullable (manual adjustments) |
 | delta       | int NOT NULL               | +granted / −used |
 | reason      | credit_reason              | enum: purchase, lesson, adjustment, refund |
+| note        | text                       | optional coach memo on the entry |
 | created_by  | uuid → auth.users(id)      | who recorded it |
 | created_at  | timestamptz                | |
 

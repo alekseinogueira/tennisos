@@ -57,6 +57,7 @@ create table lesson_credits (
   package_id uuid references packages(id),                             -- NULL = manual adj.
   delta      int not null,                                             -- +granted / -used
   reason     credit_reason,
+  note       text,                                                     -- optional coach memo
   created_by uuid references auth.users(id),
   created_at timestamptz not null default now()
 );
