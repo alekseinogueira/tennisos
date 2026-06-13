@@ -3,6 +3,14 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-13 — Ship via Vercel deploy hook + manual deploy (not git push-to-deploy)
+- **Decision:** Deploy production through a Vercel **deploy hook + manual trigger**, not raw
+  GitHub push-to-deploy.
+- **Why:** The git-integration builds (and CLI deploys) stalled — every build after the first sat
+  in `UNKNOWN` and never built (0ms, no logs); status page was green, so it was account/project
+  specific. The deploy hook + manual deploy builds and ships reliably.
+- **Alternatives:** Keep debugging the git auto-build integration (deferred); switch hosts (no).
+
 ## 2026-06-11 — Email+password auth (not magic-link)
 - **Decision:** Use Supabase email+password with a forgot/reset-password flow.
 - **Why:** Coach prefers familiar credentials; reset flow accepted as the cost.

@@ -4,18 +4,26 @@
 > Read this first at the start of every task.
 
 ## Current Focus
-**Mobile nav overflow bug FIXED (2026-06-13).** On mobile the header nav could be swiped
-sideways and dragged the whole page with it (blank white gutter on the right). Fix in
-`src/components/Layout.jsx`, Tailwind-only: the `<nav>` now scrolls independently
-(`min-w-0 touch-pan-x overflow-x-auto` — `min-w-0` lets the flex child shrink so the row no
-longer overflows the viewport) and the page root got `overflow-x-hidden` so the body can
-never scroll horizontally. No other component/logic touched; lint clean.
+**Mobile nav overflow bug FIXED and LIVE (2026-06-13).** Two-pass fix, both shipped:
+- v1 (`6e49a4e`): `<nav>` → `min-w-0 touch-pan-x overflow-x-auto`; page root → `overflow-x-hidden`.
+- v2 robust (`53208a8`, current): nav stays the constrained scroll viewport, items moved into an
+  inner `<ul className="flex w-max">` track with `shrink-0 <li>` items (never wrap, reliably
+  overflow), a `.nav-scroll` class in `index.css` (hide scrollbar + `-webkit-overflow-scrolling:
+  touch`), `w-full max-w-full` on the root wrapper, and `body { overflow-x: hidden }` global guard.
+  Tailwind + one `index.css` utility; no other files. Lint clean. **Coach confirmed it's working
+  on the deployed site** after a manual production deploy.
 
 **Deployment is LIVE (2026-06-13).** TennisOS is on Vercel + GitHub:
 - **GitHub:** `github.com/alekseinogueira/tennisos` (PRIVATE, default branch `master`).
-  Pushed via `gh` (user `alekseinogueira`); repo auto-connected to Vercel for push-to-deploy.
+  Pushed via `gh` (user `alekseinogueira`).
 - **Vercel project:** `aleksei-s-projects2/tennisos` (CLI user `alekseinogueira-4203`), Vite
-  auto-detected. Production: `https://tennisos.vercel.app` (READY). `vercel.json` SPA rewrite.
+  auto-detected. Production: `https://tennisos.vercel.app`. `vercel.json` SPA rewrite.
+- **Deploy mechanism:** git push-to-deploy was **unreliable** — for ~1h every git- and
+  CLI-triggered build sat in `UNKNOWN` / never-built (0ms, no logs) while only the very first
+  deploy ever built. Removing the stuck deploys + re-triggering via CLI did NOT help. **Coach
+  resolved it by creating a Vercel deploy hook and deploying manually** — that path builds and
+  ships fine. So the working deploy path today is the **deploy hook + manual deploy**, not raw
+  push-to-deploy. Revisit/repair the git auto-build integration later if push-to-deploy is wanted.
 - **Env vars** set in Vercel for **Production + Development**: `VITE_SUPABASE_URL`,
   `VITE_SUPABASE_ANON_KEY` (read from local `.env`). **Preview NOT set** — CLI 54.7.1 bug
   returns `git_branch_required` even with `--value ... --yes`; backfill later (preview deploys

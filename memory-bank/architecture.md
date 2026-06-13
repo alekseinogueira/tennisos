@@ -135,8 +135,10 @@ yet — gallery clips are added as external_url (Drive/YouTube) paste until uplo
 `curated_library` is link-only (external_url), no Storage.
 
 ## Deploy + DNS (portal.55tenniscrew.com)
-- Vercel project linked to this repo. Build `vite build` → `dist`. `vercel.json` SPA rewrite
-  so client routes resolve.
+- Vercel project `aleksei-s-projects2/tennisos`, linked to this repo. Build `vite build` →
+  `dist`. `vercel.json` SPA rewrite so client routes resolve.
+- **Deploy trigger:** a **Vercel deploy hook + manual deploy** is the working path — git
+  push-to-deploy stalled (builds stuck `UNKNOWN`/never built). Repair git auto-build later.
 - Vercel env (Production + Preview): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` only.
   The Supabase **service-role key never goes to Vercel** — it lives only as an Edge Function secret.
 - DNS: add `portal.55tenniscrew.com` as a domain on the Vercel project; create a **CNAME

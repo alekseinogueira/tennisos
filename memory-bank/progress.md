@@ -54,9 +54,14 @@
   code level; all await **applied migrations + live data** to smoke-test.
 
 ## Recently Fixed
-- **Mobile nav horizontal-scroll bug (2026-06-13):** header nav no longer scrolls the whole
-  page sideways. `Layout.jsx` — `<nav>` is `min-w-0 touch-pan-x overflow-x-auto` (scrolls on
-  its own), page root is `overflow-x-hidden`. Tailwind-only, lint clean.
+- **Mobile nav horizontal-scroll bug — LIVE & confirmed (2026-06-13):** header nav no longer
+  scrolls the whole page sideways. Final form (`53208a8`): `<nav>` is the scroll viewport
+  (`min-w-0 touch-pan-x overflow-x-auto` + `.nav-scroll` hides bar / iOS momentum), inner
+  `<ul class="flex w-max">` track with `shrink-0 <li>` items, root `w-full max-w-full
+  overflow-x-hidden`, and `body { overflow-x: hidden }`. Coach verified on the deployed site.
+- **Vercel deploy unblocked (2026-06-13):** git push-to-deploy stalled (builds stuck `UNKNOWN`,
+  never built). Coach created a **Vercel deploy hook + manual deploy** — production now ships
+  reliably via that path.
 
 ## Not Started
 - Applying the Supabase migrations to a real project + seeding the coach account.
@@ -68,6 +73,11 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Vercel git push-to-deploy is unreliable** — git-triggered (and CLI) builds sat in `UNKNOWN`
+  / never built for this project. Working path is the **deploy hook + manual deploy**. Repair the
+  git auto-build integration before relying on push-to-deploy.
+- **Vercel Preview env vars not set** (`VITE_SUPABASE_URL`/`ANON_KEY`) — CLI 54.7.1 bug; Preview
+  deploys lack Supabase config until backfilled (upgrade CLI, then `vercel env add … preview`).
 - Migrations written (`supabase/migrations/001..003`) but **not applied** — auth + admin +
   Phase 6 data are non-functional until a Supabase project exists and `.env` is set.
 - `InvitePanel` generates a claim URL only; no session-bearing magic-link email yet (needs the
