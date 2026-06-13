@@ -53,6 +53,11 @@
 - Nothing actively mid-build. Admin roster + student portal + Phase 6 all complete at the
   code level; all await **applied migrations + live data** to smoke-test.
 
+## Recently Fixed
+- **Mobile nav horizontal-scroll bug (2026-06-13):** header nav no longer scrolls the whole
+  page sideways. `Layout.jsx` — `<nav>` is `min-w-0 touch-pan-x overflow-x-auto` (scrolls on
+  its own), page root is `overflow-x-hidden`. Tailwind-only, lint clean.
+
 ## Not Started
 - Applying the Supabase migrations to a real project + seeding the coach account.
 - `.env` wiring + live smoke test of login/claim/reset + admin roster + the Phase 6 loop.

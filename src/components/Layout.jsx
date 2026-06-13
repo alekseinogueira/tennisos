@@ -28,12 +28,12 @@ export default function Layout() {
       ]
 
   return (
-    <div className="flex min-h-screen flex-col bg-sand">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-sand">
       <header className="bg-forest text-sand">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
           <span className="font-display text-2xl tracking-wide">TennisOS</span>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex min-w-0 touch-pan-x items-center gap-1 overflow-x-auto">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}

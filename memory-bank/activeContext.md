@@ -4,6 +4,13 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Mobile nav overflow bug FIXED (2026-06-13).** On mobile the header nav could be swiped
+sideways and dragged the whole page with it (blank white gutter on the right). Fix in
+`src/components/Layout.jsx`, Tailwind-only: the `<nav>` now scrolls independently
+(`min-w-0 touch-pan-x overflow-x-auto` — `min-w-0` lets the flex child shrink so the row no
+longer overflows the viewport) and the page root got `overflow-x-hidden` so the body can
+never scroll horizontally. No other component/logic touched; lint clean.
+
 **Deployment is LIVE (2026-06-13).** TennisOS is on Vercel + GitHub:
 - **GitHub:** `github.com/alekseinogueira/tennisos` (PRIVATE, default branch `master`).
   Pushed via `gh` (user `alekseinogueira`); repo auto-connected to Vercel for push-to-deploy.
