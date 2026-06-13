@@ -48,4 +48,24 @@
 - **Why:** Fast, disk-efficient, strict by default.
 - **Alternatives:** npm, yarn.
 
+## 2026-06-13 — npm (this build) instead of pnpm
+- **Decision:** Used npm to install deps and run scripts this session; committed `package-lock.json`.
+- **Why:** Session was driven with npm commands; Vercel builds fine on npm. Avoided mixing two lockfiles.
+- **Alternatives:** pnpm (original CLAUDE.md choice — now inconsistent; flagged to reconcile CLAUDE.md).
+
+## 2026-06-13 — Guard triggers for column-immutability (RLS can't do per-column)
+- **Decision:** `guard_profile_role()` + `guard_student_update()` BEFORE-UPDATE triggers enforce "student can't change role/status/user_id/email"; RLS handles row-level visibility only.
+- **Why:** RLS policies gate whole rows, not individual columns; the blueprint requires students edit only name/phone.
+- **Alternatives:** Column-level GRANTs (clumsier with PostgREST), trusting the client (unsafe).
+
+## 2026-06-13 — Guards gate on `current_user = 'authenticated'`
+- **Decision:** The guard triggers only restrict real end-user sessions; the SECURITY DEFINER `handle_new_user` auto-link and `service_role` calls bypass them.
+- **Why:** The invite-claim auto-link flips `user_id`/`status` and must not be blocked; coach tooling via service-role is trusted.
+- **Alternatives:** Special-casing the NULL→uid transition in the guard (more fragile; auth.uid() is null during signup).
+
+## 2026-06-13 — Profile fetch deferred out of onAuthStateChange
+- **Decision:** `AuthProvider` resolves the profile via `setTimeout(0)` from the auth callback, with a ref guarding refetches on token refresh.
+- **Why:** Calling supabase inside the onAuthStateChange callback can deadlock the auth lock (supabase-js v2); also satisfies the `react-hooks/set-state-in-effect` rule.
+- **Alternatives:** Awaiting getProfile inside the callback (deadlock risk), a separate id-keyed effect (tripped the lint rule).
+
 <!-- New decisions go above this line, newest first. -->

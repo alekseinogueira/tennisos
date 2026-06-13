@@ -1,24 +1,43 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 
-// Placeholder until the auth layer + screens land (next steps).
-function Placeholder() {
-  return (
-    <div style={{ fontFamily: 'system-ui', padding: '2rem' }}>
-      <h1>TennisOS</h1>
-      <p>Scaffold is up. Auth, screens, and theming come next.</p>
-    </div>
-  )
-}
+import { AuthProvider } from './auth/AuthProvider'
+import ProtectedRoute from './auth/ProtectedRoute'
+import RoleRoute from './auth/RoleRoute'
+import Layout from './components/Layout'
+
+import Login from './screens/Login'
+import ForgotPassword from './screens/ForgotPassword'
+import ResetPassword from './screens/ResetPassword'
+import ClaimInvite from './screens/ClaimInvite'
+import ComingSoon from './screens/ComingSoon'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Placeholder />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          {/* Public auth routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot" element={<ForgotPassword />} />
+          <Route path="/reset" element={<ResetPassword />} />
+          <Route path="/claim" element={<ClaimInvite />} />
+
+          {/* Authenticated routes — gated, then wrapped in the branded shell */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/" element={<ComingSoon title="Student Home" />} />
+              <Route element={<RoleRoute allow={['coach', 'admin']} />}>
+                <Route path="/coach" element={<ComingSoon title="Coach Home" />} />
+              </Route>
+            </Route>
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 )

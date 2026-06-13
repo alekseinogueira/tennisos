@@ -1,1 +1,27 @@
 @import 'tailwindcss';
+
+/* ── 55TC brand tokens (drive Tailwind utilities: bg-forest, text-ink, font-display…) ── */
+@theme {
+  --color-forest: #1c3526; /* primary  */
+  --color-sand: #f5ede0; /* background */
+  --color-ink: #0d0d0d; /* text */
+
+  --font-display: 'Bebas Neue', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── base ── */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-sand);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
