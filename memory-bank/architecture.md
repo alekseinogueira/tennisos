@@ -104,6 +104,11 @@ Write rules: students are read-only on credits/feedback/videos (coach/system gra
 students may update only their own `students` profile fields (not role/status). All inserts of
 student data are coach-only except the claim-time auto-link (handled by trigger).
 
+Column-immutability that RLS can't express is enforced by BEFORE-UPDATE **guard triggers**
+(`guard_profile_role`, `guard_student_update` in migration 003): a student can't change their
+own `role`/`status`/`user_id`/`email`. Guards gate on `current_user = 'authenticated'`, so the
+SECURITY DEFINER `handle_new_user` auto-link and `service_role` tooling bypass them.
+
 Storage: a `videos` Supabase Storage bucket with object paths prefixed by `student_id`;
 storage RLS mirrors the table (student reads own prefix, coach all).
 
