@@ -4,12 +4,13 @@ Student portal + internal OS for **55 Tennis Crew (55TC)** — my tennis coachin
 Single-coach tool first; build only what solves a real, recurring problem for me.
 
 ## Stack & Commands
-- Stack: TBD (likely Next.js App Router + TypeScript on Vercel)
-- Package manager: pnpm
-- Dev:   `pnpm dev`     <!-- placeholder until decided -->
-- Build: `pnpm build`   <!-- placeholder -->
-- Lint:  `pnpm lint`    <!-- placeholder -->
-- Test:  `pnpm test`    <!-- placeholder -->
+- Stack: React 19 + Vite + react-router-dom v7 + Tailwind v4 + supabase-js v2, on Vercel
+- Package manager: npm
+- Dev:   `npm run dev`       <!-- vite -->
+- Build: `npm run build`     <!-- vite build -->
+- Lint:  `npm run lint`      <!-- eslint . -->
+- Test:  none yet            <!-- no test runner configured -->
+- Install: `npm install` (copy `.env.example` → `.env` and set VITE_SUPABASE_* first)
 
 ## Hard Rules
 - Never expose, print, or hardcode secrets. Use env vars; never commit `.env`.

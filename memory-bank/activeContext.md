@@ -32,8 +32,5 @@ authenticates, gates by role, and renders a branded shell — but has **no featu
 4. Start feature screens (coach Roster first), adding role-aware nav items in `Layout`.
 
 ## Open Questions / Blockers
-- **Package manager mismatch:** built with npm (committed `package-lock.json`), but CLAUDE.md +
-  earlier decision say pnpm. Reconcile CLAUDE.md (and its dev/build/lint/test placeholders) — needs
-  a call from the coach. Scripts are: dev=`vite`, build=`vite build`, lint=`eslint .`, preview=`vite preview`.
 - Migrations are written but **unapplied** — auth won't work until a Supabase project exists + `.env` set.
 - Storage bucket `videos` + storage RLS not yet created (deferred to when uploads are built).

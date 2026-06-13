@@ -26,5 +26,3 @@
 ## Known Issues
 - Migrations written (`supabase/migrations/001..003`) but **not applied** — auth is non-functional
   until a Supabase project exists and `.env` is set.
-- Package-manager mismatch: built with npm (`package-lock.json` committed) vs pnpm in CLAUDE.md —
-  needs reconciliation (see activeContext Open Questions).
