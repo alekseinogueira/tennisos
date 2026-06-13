@@ -4,6 +4,23 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Deployment is LIVE (2026-06-13).** TennisOS is on Vercel + GitHub:
+- **GitHub:** `github.com/alekseinogueira/tennisos` (PRIVATE, default branch `master`).
+  Pushed via `gh` (user `alekseinogueira`); repo auto-connected to Vercel for push-to-deploy.
+- **Vercel project:** `aleksei-s-projects2/tennisos` (CLI user `alekseinogueira-4203`), Vite
+  auto-detected. Production: `https://tennisos.vercel.app` (READY). `vercel.json` SPA rewrite.
+- **Env vars** set in Vercel for **Production + Development**: `VITE_SUPABASE_URL`,
+  `VITE_SUPABASE_ANON_KEY` (read from local `.env`). **Preview NOT set** — CLI 54.7.1 bug
+  returns `git_branch_required` even with `--value ... --yes`; backfill later (preview deploys
+  lack Supabase config until then). Upgrade CLI (`npm i -g vercel@latest`) likely fixes it.
+- **Custom domain** `portal.55tenniscrew.com` added to the project; auto-assigned to production.
+  Awaiting DNS. Vercel verifies via either `A portal 76.76.21.21` (its stated default) or
+  `CNAME portal cname.vercel-dns.com` — add ONE at GoDaddy. **Do NOT change nameservers**
+  (would move the whole zone off GoDaddy and break the public apex/www site) and do NOT touch
+  apex/www. Cert auto-issues once the record resolves.
+- Caveat: app still reads Supabase balance/data as empty until **migrations are applied + coach
+  seeded** (see Next Steps) — deploy is live but the backend project work is unchanged.
+
 **Phase 8 (student-facing video screens) is COMPLETE (code-level).** Built the two student
 browse views that consume the Phase 6 two-system video model:
 - **`/library`** (`Library.jsx`): the GLOBAL `curated_library` shelf, open to any signed-in
