@@ -2,12 +2,27 @@
 // user + sign-out, and a sand content area that renders the active page.
 // Sits inside <ProtectedRoute>, so a session is guaranteed here; signing out
 // clears it and ProtectedRoute bounces back to /login.
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth, isCoachRole } from '../auth/useAuth'
 
 export default function Layout() {
   const { user, role, signOut } = useAuth()
   const coach = isCoachRole(role)
+
+  // Header account menu (☰): holds the email, role badge, and sign-out.
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  // Close the dropdown when clicking anywhere outside it.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onPointerDown = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
+  }, [menuOpen])
 
   // Role-aware nav. Only the home destination exists today — feature sections
   // (roster, feedback, videos, packages…) get added here as their screens land.
@@ -33,7 +48,7 @@ export default function Layout() {
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
           <span className="font-display text-2xl tracking-wide">TennisOS</span>
 
-          <nav className="nav-scroll min-w-0 touch-pan-x overflow-x-auto">
+          <nav className="nav-scroll min-w-0 touch-pan-x overflow-x-auto [-webkit-mask-image:linear-gradient(to_right,#000_82%,transparent)] [mask-image:linear-gradient(to_right,#000_82%,transparent)]">
             <ul className="flex w-max items-center gap-1">
               {navItems.map((item) => (
                 <li key={item.to} className="shrink-0">
@@ -53,19 +68,32 @@ export default function Layout() {
             </ul>
           </nav>
 
-          <div className="ml-auto flex items-center gap-4">
-            <div className="hidden text-right sm:block">
-              <p className="text-sm leading-tight">{user?.email}</p>
-              <p className="text-xs uppercase tracking-[0.15em] text-sand/60">
-                {coach ? 'Coach' : 'Student'}
-              </p>
-            </div>
+          <div ref={menuRef} className="relative ml-auto">
             <button
-              onClick={signOut}
-              className="rounded-lg border border-sand/25 px-3 py-1.5 text-sm font-medium text-sand transition hover:bg-sand/10"
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-label="Account menu"
+              aria-haspopup="true"
+              aria-expanded={menuOpen}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-sand/25 text-xl leading-none text-sand transition hover:bg-sand/10"
             >
-              Sign out
+              ☰
             </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-12 z-20 w-56 rounded-lg border border-sand/15 bg-forest p-4 shadow-lg">
+                <p className="truncate text-sm leading-tight text-sand">{user?.email}</p>
+                <span className="mt-2 inline-block rounded border border-sand/25 px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-sand/70">
+                  {coach ? 'Coach' : 'Student'}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="mt-4 w-full rounded-lg border border-sand/25 px-3 py-1.5 text-sm font-medium uppercase tracking-[0.1em] text-sand transition hover:bg-sand/10"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
