@@ -16,14 +16,16 @@
   (name · email · status badge · credit balance), create/edit student form, and the
   `InvitePanel` claim-link generator. `getCreditBalances()` (one-query roster balances).
   Lint + build clean.
-- **Student portal (student):** dashboard `/` (forest welcome hero + court motif +
-  lesson-credit balance + "Next Session" coming-soon placeholder) and read-only `/profile`
-  (full_name · email · phone · status, own-row via RLS). Shared `CourtMotif` component;
-  Profile nav item in the student nav. Lint + build clean.
+- **Student portal — Phase 5 COMPLETE (student):** dashboard `/` (forest welcome hero +
+  court motif + lesson-credit balance + "Next Session" coming-soon placeholder) and
+  read-only `/profile` (full_name · email · phone · status, own-row via RLS). Shared
+  `CourtMotif` component; Profile nav item in the student nav. Lint + build clean.
 
 ## In Progress
-- Nothing active. Admin roster + student portal complete (code-level); both await live data
-  to smoke-test.
+- **Phase 6 (feedback + video library) — next up, not started.** Tables (`feedbacks`,
+  `videos`, `feedback_video_links`) + `db.js` helpers already exist; needs the screens
+  (coach feedback composer + attach videos; student feedback/video library).
+- Admin roster + student portal complete (code-level); both await live data to smoke-test.
 
 ## Not Started
 - Applying the Supabase migrations to a real project + seeding the coach account.

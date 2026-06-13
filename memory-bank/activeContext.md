@@ -4,11 +4,16 @@
 > Read this first at the start of every task.
 
 ## Current Focus
-Shipped the **Student portal** — the two screens a player sees: the dashboard (`/`)
-and a read-only profile (`/profile`). Built on the existing auth layer + shell + `db.js`;
-no new data-layer or RLS work. Supabase migrations are still written but **not yet applied**,
-so these screens are lint/build-verified only — not smoke-tested against live credits/rows.
-Feedback + video features are explicitly **Phase 6** (not touched).
+**Phase 5 (Student portal) is COMPLETE.** Shipped the two screens a player sees: the
+dashboard (`/`) and a read-only profile (`/profile`). Built on the existing auth layer +
+shell + `db.js`; no new data-layer or RLS work. Supabase migrations are still written but
+**not yet applied**, so these screens are lint/build-verified only — not smoke-tested
+against live credits/rows.
+
+**Phase 6 (feedback + video library) is NEXT.** Both the `feedbacks` and `videos` tables
+(+ the `feedback_video_links` join) already exist in the blueprint and `db.js` already has
+the CRUD/list helpers — Phase 6 is the screens: coach feedback composer (write + attach
+videos) and the student-facing feedback/video library.
 
 ## Recent Changes (2026-06-13 — Student portal)
 - **`screens/StudentDashboard.jsx`** (route `/`, replaces the old `ComingSoon` placeholder):

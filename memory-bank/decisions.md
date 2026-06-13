@@ -88,4 +88,9 @@
 - **Why:** The spec wants the motif on every forest screen; a shared component avoids re-typing the SVG. Rewriting Login to import it would be restructuring a working file for no functional gain (hard rule: ask before restructuring).
 - **Alternatives:** Inline-duplicate the SVG in the dashboard (rejected — drift risk); refactor Login to use the shared component too (deferred — touches a working screen unnecessarily).
 
+## 2026-06-13 — CourtMotif extracted as shared component
+- **Decision:** CourtMotif extracted as shared component for reuse across all forest-bg screens.
+- **Why:** The 55TC spec puts the court-line motif on every forest-background surface; a single shared component keeps it consistent and avoids re-typing the SVG per screen.
+- **Alternatives:** Inline-duplicating the SVG per screen (drift risk).
+
 <!-- New decisions go above this line, newest first. -->
