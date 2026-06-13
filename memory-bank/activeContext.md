@@ -4,25 +4,36 @@
 > Read this first at the start of every task.
 
 ## Current Focus
-First feature shipped: the **Admin panel** (coach/admin only) for managing the student
-roster. Auth layer + shell were already done; this session built the admin route group,
-the student list, the create/edit form, and the invite-link generator. Supabase migrations
-are still written but **not yet applied** — so the admin screens are lint/build-verified only,
-not smoke-tested against live data.
+Shipped the **Student portal** — the two screens a player sees: the dashboard (`/`)
+and a read-only profile (`/profile`). Built on the existing auth layer + shell + `db.js`;
+no new data-layer or RLS work. Supabase migrations are still written but **not yet applied**,
+so these screens are lint/build-verified only — not smoke-tested against live credits/rows.
+Feedback + video features are explicitly **Phase 6** (not touched).
 
-## Recent Changes (2026-06-13 — Admin panel)
-- **Routes:** `/admin`, `/admin/students`, `/admin/students/new`, `/admin/students/:id/edit`,
-  all nested inside the existing `RoleRoute allow={['coach','admin']}` (reused, no new gate).
-  Students hitting any `/admin/*` route are bounced to `/`.
-- **Screens (`src/screens/admin/`):** `AdminHome` (Control Room landing), `Students`
-  (roster table: name · email · status badge · credit balance + New/Edit links),
-  `StudentForm` (create/edit: full_name, email, phone, status — **no credit field**).
-- **`components/InvitePanel.jsx`:** copyable claim URL (`/claim?email=…`) shown after create.
-- **`lib/db.js`:** added `getCreditBalances()` — sums the whole ledger into a
-  `{ student_id: balance }` map in one query (avoids N+1 in the roster table).
-- **`Layout.jsx`:** added an **Admin** nav item (coach-only); made `end` per-nav-item so
-  Admin stays highlighted across `/admin/*` sub-routes.
+## Recent Changes (2026-06-13 — Student portal)
+- **`screens/StudentDashboard.jsx`** (route `/`, replaces the old `ComingSoon` placeholder):
+  forest welcome hero with court motif + eyebrow + Bebas `Welcome, {firstName}` + tagline
+  "Less Theory. More Game."; a **lesson-credit balance** card; a dashed "Next Session —
+  coming soon" placeholder. Resolves the student's own roster row via `getStudentByUserId`,
+  then sums the ledger via `getCreditBalance(student.id)`. Name falls back
+  profile.full_name → "Player"; balance falls back to 0 when no roster row.
+- **`screens/Profile.jsx`** (route `/profile`): read-only definition list — full_name,
+  email, phone, status badge. Reads only the student's own row via `getStudentByUserId`
+  (**RLS** enforces own-row isolation); no edit. Humanized empty/error states.
+- **`components/CourtMotif.jsx`:** net-new shared SVG (Login keeps its own local copy —
+  I did not restructure Login).
+- **`Layout.jsx`:** added a **Profile** nav item to the student nav (coach nav unchanged —
+  coaches have no roster row).
+- **`main.jsx`:** wired `/` → `StudentDashboard`, added `/profile` → `Profile` (both inside
+  `Layout`, outside the coach `RoleRoute`; RLS governs the data). `ComingSoon` still serves
+  `/coach`.
 - `npm run lint` + `npm run build` clean.
+
+## Earlier this session-stream (Admin panel — prior session)
+- `/admin/*` route group behind the reused coach/admin `RoleRoute`: `AdminHome` (Control
+  Room), `Students` roster table, `StudentForm` (create/edit, **no credit field**),
+  `InvitePanel` claim-URL generator. `lib/db.js` gained `getCreditBalances()` (one-query
+  roster balances). `Layout` gained the coach-only Admin nav item.
 
 ## Earlier this session-stream (auth layer + shell — prior session)
 - EPC plumbing (`lib/supabase.js`, `lib/db.js`), migrations `001..003`, the auth layer
@@ -39,15 +50,18 @@ not smoke-tested against live data.
 1. **Apply migrations** to a Supabase project (dashboard SQL editor OR `supabase db push`),
    then seed the coach account and set `profiles.role='coach'`.
 2. Set `.env` locally (VITE_SUPABASE_*) and smoke-test login/claim/reset + the admin roster
-   (create student → invite link → edit) against the real project.
+   (create student → invite link → edit) + the **student portal** (dashboard balance +
+   profile own-row isolation) against the real project.
 3. Build the coach **invite Edge Function** (`functions/invite`, service-role) + `lib/api.js`
    caller, then upgrade `InvitePanel` from a manual claim URL to a real emailed magic link.
 4. **Credit management UI** (separate from the student form): manual adjustments + (later)
-   package purchases that write `lesson_credits` rows — likely a StudentDetail screen.
+   package purchases that write `lesson_credits` rows — likely a StudentDetail screen. This
+   is what gives the student dashboard a non-zero balance to display.
 
 ## Open Questions / Blockers
-- Migrations are written but **unapplied** — auth + admin data are non-functional until a
-  Supabase project exists + `.env` set. Admin screens verified by lint/build only.
+- Migrations are written but **unapplied** — auth + admin + student-portal data are
+  non-functional until a Supabase project exists + `.env` set. Screens verified by lint/build
+  only; the dashboard always reads balance 0 until credit rows exist.
 - `InvitePanel` only produces a claim URL; it does **not** email a session-bearing magic link
   yet (that needs the service-role invite Edge Function). A bare `/claim?email=` link won't
   establish a session on its own until then.

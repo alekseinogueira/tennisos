@@ -16,9 +16,14 @@
   (name · email · status badge · credit balance), create/edit student form, and the
   `InvitePanel` claim-link generator. `getCreditBalances()` (one-query roster balances).
   Lint + build clean.
+- **Student portal (student):** dashboard `/` (forest welcome hero + court motif +
+  lesson-credit balance + "Next Session" coming-soon placeholder) and read-only `/profile`
+  (full_name · email · phone · status, own-row via RLS). Shared `CourtMotif` component;
+  Profile nav item in the student nav. Lint + build clean.
 
 ## In Progress
-- Nothing active. Admin roster feature complete (code-level); awaits live data to smoke-test.
+- Nothing active. Admin roster + student portal complete (code-level); both await live data
+  to smoke-test.
 
 ## Not Started
 - Applying the Supabase migrations to a real project + seeding the coach account.
@@ -26,7 +31,7 @@
 - Coach invite Edge Function (`functions/invite`) + `lib/api.js` caller → real emailed invite.
 - Credit management UI (manual adjustments / package purchases that write `lesson_credits`).
 - Remaining feature screens (coach Packages/StudentDetail/FeedbackComposer;
-  student Dashboard/Feedbacks/Videos).
+  student Feedbacks/Videos — Phase 6).
 - Storage `videos` bucket + storage RLS; n8n/Stripe seams.
 
 ## Known Issues

@@ -17,7 +17,10 @@ export default function Layout() {
         // No `end` so Admin stays highlighted across /admin sub-routes.
         { to: '/admin', label: 'Admin', end: false },
       ]
-    : [{ to: '/', label: 'Home', end: true }]
+    : [
+        { to: '/', label: 'Home', end: true },
+        { to: '/profile', label: 'Profile', end: true },
+      ]
 
   return (
     <div className="flex min-h-screen flex-col bg-sand">

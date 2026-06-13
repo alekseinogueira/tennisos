@@ -78,4 +78,14 @@
 - **Why:** `admin` is already a coach superset, so no extra primitive is needed. Sending real invite emails requires the service-role key (server-side only) — out of scope this session and an outbound action best left to the planned Edge Function.
 - **Alternatives:** A separate admin-only RoleRoute (unnecessary); client-side `signInWithOtp` to email a magic link now (rejected — diverges from the documented `inviteUserByEmail` plan and sends real email outside the intended seam).
 
+## 2026-06-13 — Student portal reads the roster row (not the profile) and `/profile` is read-only via RLS
+- **Decision:** The dashboard and profile resolve the player's data through `getStudentByUserId(user.id)` (the `students` roster row), not the `profiles` row. `/profile` is render-only — it shows full_name/email/phone/status and relies on RLS for own-row isolation, with no edit affordance. Both routes sit inside `Layout` but **outside** the coach `RoleRoute` (any authenticated user reaches them; RLS governs what they see).
+- **Why:** `students` is the business subject (credits/feedback/videos hang off it); `profiles` is just the identity/role backbone. Read-only keeps the student-edit guard-trigger surface untested-but-unexercised this session and matches the brief ("edit not needed yet"). RLS already guarantees a student sees only their own row, so no app-layer ownership check is needed.
+- **Alternatives:** Reading name from `profiles` (rejected — splits the student's data across two sources); gating `/profile` behind a student-only RoleRoute (unnecessary — RLS + the empty-state cover a coach with no roster row); building edit now (out of scope).
+
+## 2026-06-13 — Shared `CourtMotif` component, Login's copy left in place
+- **Decision:** Extracted the court-line SVG into `components/CourtMotif.jsx` for the new forest surfaces (student dashboard hero), but did **not** touch Login's existing inline copy.
+- **Why:** The spec wants the motif on every forest screen; a shared component avoids re-typing the SVG. Rewriting Login to import it would be restructuring a working file for no functional gain (hard rule: ask before restructuring).
+- **Alternatives:** Inline-duplicate the SVG in the dashboard (rejected — drift risk); refactor Login to use the shared component too (deferred — touches a working screen unnecessarily).
+
 <!-- New decisions go above this line, newest first. -->

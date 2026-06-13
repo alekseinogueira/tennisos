@@ -34,19 +34,22 @@ tennisos/
 │   │   ├── ProtectedRoute.jsx# requires a session, else redirect /login
 │   │   └── RoleRoute.jsx     # requires role (coach/admin), else redirect/403
 │   ├── components/
-│   │   ├── Layout.jsx        # branded shell + role-aware nav
+│   │   ├── Layout.jsx        # branded shell + role-aware nav (Home/Profile · coach: Home/Admin)
+│   │   ├── CourtMotif.jsx    # BUILT — shared court-line SVG for forest surfaces
 │   │   └── InvitePanel.jsx   # copyable /claim?email=… link, shown after creating a student
 │   └── screens/
 │       ├── Login.jsx
 │       ├── ForgotPassword.jsx
-│       ├── ResetPassword.jsx     # handles recovery session -> updateUser({password})
-│       ├── ClaimInvite.jsx       # student sets password on invite -> row auto-links
-│       ├── admin/                # BUILT — coach/admin panel (realizes the coach Roster intent)
-│       │   ├── AdminHome.jsx     # /admin landing (Control Room)
-│       │   ├── Students.jsx      # /admin/students roster table (name/email/status/balance)
-│       │   └── StudentForm.jsx   # create/edit student (profile fields only — NO credit field)
-│       ├── student/              # planned
-│       │   ├── Dashboard.jsx     # credit balance + recent feedback/videos
+│       ├── ResetPassword.jsx       # handles recovery session -> updateUser({password})
+│       ├── ClaimInvite.jsx         # student sets password on invite -> row auto-links
+│       ├── ComingSoon.jsx          # placeholder, still serves /coach
+│       ├── StudentDashboard.jsx    # BUILT — / welcome hero + lesson-credit balance + next-session placeholder
+│       ├── Profile.jsx             # BUILT — /profile read-only own row (RLS), no edit
+│       ├── admin/                  # BUILT — coach/admin panel (realizes the coach Roster intent)
+│       │   ├── AdminHome.jsx       # /admin landing (Control Room)
+│       │   ├── Students.jsx        # /admin/students roster table (name/email/status/balance)
+│       │   └── StudentForm.jsx     # create/edit student (profile fields only — NO credit field)
+│       ├── student/              # planned — Phase 6
 │       │   ├── Feedbacks.jsx
 │       │   └── Videos.jsx
 │       └── coach/                # planned (StudentDetail, Packages, FeedbackComposer)

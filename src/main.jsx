@@ -13,6 +13,8 @@ import ForgotPassword from './screens/ForgotPassword'
 import ResetPassword from './screens/ResetPassword'
 import ClaimInvite from './screens/ClaimInvite'
 import ComingSoon from './screens/ComingSoon'
+import StudentDashboard from './screens/StudentDashboard'
+import Profile from './screens/Profile'
 import AdminHome from './screens/admin/AdminHome'
 import Students from './screens/admin/Students'
 import StudentForm from './screens/admin/StudentForm'
@@ -31,7 +33,8 @@ createRoot(document.getElementById('root')).render(
           {/* Authenticated routes — gated, then wrapped in the branded shell */}
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
-              <Route path="/" element={<ComingSoon title="Student Home" />} />
+              <Route path="/" element={<StudentDashboard />} />
+              <Route path="/profile" element={<Profile />} />
               <Route element={<RoleRoute allow={['coach', 'admin']} />}>
                 <Route path="/coach" element={<ComingSoon title="Coach Home" />} />
                 {/* Admin panel — coach/admin only; students are bounced to / by RoleRoute */}
