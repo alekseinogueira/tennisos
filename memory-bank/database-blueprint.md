@@ -86,45 +86,74 @@
 - Rel: *→1 students; *↔* videos via feedback_video_links.
 - **RLS:** student SELECT own; coach full CRUD. Students read-only.
 
-### videos  (subject = student)
+### student_gallery  (per-student PRIVATE lesson footage; subject = student)
 | column           | type                    | notes |
 |------------------|-------------------------|-------|
 | id               | uuid PK                 | |
 | user_id          | uuid NOT NULL → auth.users(id) | the student's auth id (subject) |
 | student_id       | uuid NOT NULL → students(id)   | |
-| coach_id         | uuid → auth.users(id)   | |
+| coach_id         | uuid → auth.users(id)   | who added the clip |
 | title            | text                    | |
-| storage_path     | text                    | Supabase Storage object path (uploads) |
-| external_url     | text                    | for youtube/link sources |
+| storage_path     | text                    | Supabase Storage object path (future upload) |
+| external_url     | text                    | Drive/YouTube link (manual paste until upload lands) |
 | source           | video_source default 'link' | enum: upload, youtube, link (future: n8n/agente_cortes) |
 | external_ref     | text                    | id from an external producer (n8n) — future-friendly, nullable |
 | duration_seconds | int                     | |
 | created_at       | timestamptz             | |
 
-- Rel: *→1 students; *↔* feedbacks via feedback_video_links.
-- **RLS:** student SELECT own; coach full CRUD. Storage bucket `videos`, object paths prefixed
-  by `student_id`; storage RLS mirrors this table.
+- The student's own clips, added by the coach; visible only to that student.
+- Rel: *→1 students; *↔* feedbacks via feedback_gallery_links.
+- **RLS:** student SELECT own (`user_id = auth.uid()`); coach full CRUD. Future storage bucket
+  `gallery`, object paths prefixed by `student_id`; storage RLS mirrors this table.
 
-### feedback_video_links  (join feedbacks ↔ videos; denormalized user_id)
+### curated_library  (GLOBAL coach-owned technical references; no subject)
+| column       | type                    | notes |
+|--------------|-------------------------|-------|
+| id           | uuid PK                 | |
+| coach_id     | uuid → auth.users(id)   | who curated it |
+| title        | text NOT NULL           | |
+| category     | text                    | free text — forehand, backhand, footwork, serve, … |
+| external_url | text NOT NULL           | YouTube / external link |
+| source       | video_source default 'link' | enum: youtube, link |
+| created_at   | timestamptz             | |
+
+- Reusable reference videos, not tied to any student. Organized by free-text `category`.
+- Rel: *↔* feedbacks via feedback_library_links.
+- **RLS:** ANY authenticated user may SELECT (browse); coach full CRUD.
+
+### feedback_gallery_links  (join feedbacks ↔ student_gallery; denormalized user_id)
 | column      | type                       | notes |
 |-------------|----------------------------|-------|
-| id          | uuid PK                    | (or composite PK feedback_id+video_id) |
+| id          | uuid PK                    | |
 | feedback_id | uuid NOT NULL → feedbacks(id) ON DELETE CASCADE | |
-| video_id    | uuid NOT NULL → videos(id) ON DELETE CASCADE    | |
+| gallery_id  | uuid NOT NULL → student_gallery(id) ON DELETE CASCADE | |
 | user_id     | uuid NOT NULL              | **denormalized** = student subject (copied from feedback) |
 | created_at  | timestamptz                | |
-| UNIQUE(feedback_id, video_id) | | prevent dup links |
+| UNIQUE(feedback_id, gallery_id) | | prevent dup links |
 
-- **RLS:** student SELECT own (`user_id = auth.uid()`); coach full CRUD. `user_id` denormalized
-  so the policy is a single predicate (no EXISTS-join), set by the writing code/coach UI.
+- **RLS:** student SELECT own (`user_id = auth.uid()`); coach full CRUD. Single-predicate policy.
+
+### feedback_library_links  (join feedbacks ↔ curated_library; denormalized user_id)
+| column      | type                       | notes |
+|-------------|----------------------------|-------|
+| id          | uuid PK                    | |
+| feedback_id | uuid NOT NULL → feedbacks(id) ON DELETE CASCADE | |
+| library_id  | uuid NOT NULL → curated_library(id) ON DELETE CASCADE | |
+| user_id     | uuid NOT NULL              | **denormalized** = student subject the feedback is for |
+| created_at  | timestamptz                | |
+| UNIQUE(feedback_id, library_id) | | prevent dup links |
+
+- **RLS:** student SELECT own (`user_id = auth.uid()`); coach full CRUD. Single-predicate policy.
 
 ## Relationship map
 ```
 auth.users ─1:1─ profiles
 auth.users ─1:0..1─ students (students.user_id)
-students ─1:*─ lesson_credits, feedbacks, videos
+students ─1:*─ lesson_credits, feedbacks, student_gallery
 packages ─1:*─ lesson_credits (package_id)
-feedbacks ─*:*─ videos  (via feedback_video_links)
+feedbacks ─*:*─ student_gallery   (via feedback_gallery_links)
+feedbacks ─*:*─ curated_library   (via feedback_library_links)
+curated_library  (global; no student link)
 ```
 
 ## Enums
@@ -135,4 +164,5 @@ feedbacks ─*:*─ videos  (via feedback_video_links)
 
 ## Built later (not MVP)
 Stripe (`stripe_price_id`, checkout fn, credit-grant webhook), `student_notes` (coach-private),
-n8n event webhooks, scheduling.
+`gallery` storage bucket + real upload (replaces manual external_url paste), n8n event webhooks,
+scheduling.

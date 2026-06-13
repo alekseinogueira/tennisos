@@ -161,61 +161,121 @@ export async function updateFeedback(id, patch) {
   )
 }
 
-// ─── videos ──────────────────────────────────────────────────────────────────
+// ─── student_gallery (per-student PRIVATE lesson footage) ────────────────────
 
-export async function listVideosForStudent(studentId) {
+/** A student's own clips, newest first. RLS: student sees own; coach sees all. */
+export async function listGalleryForStudent(studentId) {
   return unwrap(
     await supabase
-      .from('videos')
+      .from('student_gallery')
       .select('*')
       .eq('student_id', studentId)
       .order('created_at', { ascending: false }),
   )
 }
 
-export async function createVideo(fields) {
+/** Coach-only (RLS): add a clip to a student's gallery (external_url for now). */
+export async function createGalleryClip(fields) {
   return unwrap(
-    await supabase.from('videos').insert(fields).select().single(),
+    await supabase.from('student_gallery').insert(fields).select().single(),
   )
 }
 
-export async function updateVideo(id, patch) {
+export async function deleteGalleryClip(id) {
   return unwrap(
-    await supabase.from('videos').update(patch).eq('id', id).select().single(),
+    await supabase.from('student_gallery').delete().eq('id', id).select(),
   )
 }
 
-// ─── feedback_video_links (join) ─────────────────────────────────────────────
+// ─── curated_library (GLOBAL coach-owned technical references) ───────────────
 
-/** Videos attached to one feedback (joined through the link table). */
-export async function listVideosForFeedback(feedbackId) {
+/** Every reference video. RLS: any authenticated user may browse; coach CRUD. */
+export async function listLibrary() {
+  return unwrap(
+    await supabase
+      .from('curated_library')
+      .select('*')
+      .order('category', { nullsFirst: false })
+      .order('title'),
+  )
+}
+
+export async function createLibraryItem(fields) {
+  return unwrap(
+    await supabase.from('curated_library').insert(fields).select().single(),
+  )
+}
+
+export async function deleteLibraryItem(id) {
+  return unwrap(
+    await supabase.from('curated_library').delete().eq('id', id).select(),
+  )
+}
+
+// ─── feedback links (gallery + curated library) ──────────────────────────────
+
+/** Gallery clips attached to one feedback (joined through the link table). */
+export async function listGalleryForFeedback(feedbackId) {
   const rows = unwrap(
     await supabase
-      .from('feedback_video_links')
-      .select('video:videos(*)')
+      .from('feedback_gallery_links')
+      .select('clip:student_gallery(*)')
       .eq('feedback_id', feedbackId),
   )
-  return rows.map((r) => r.video)
+  return rows.map((r) => r.clip)
 }
 
-/** Link a video to a feedback. user_id is the denormalized student subject. */
-export async function linkVideoToFeedback({ feedbackId, videoId, userId }) {
+/** Curated-library items attached to one feedback (joined through the link table). */
+export async function listLibraryForFeedback(feedbackId) {
+  const rows = unwrap(
+    await supabase
+      .from('feedback_library_links')
+      .select('item:curated_library(*)')
+      .eq('feedback_id', feedbackId),
+  )
+  return rows.map((r) => r.item)
+}
+
+/** Link a gallery clip to a feedback. user_id is the denormalized student subject. */
+export async function linkGalleryToFeedback({ feedbackId, galleryId, userId }) {
   return unwrap(
     await supabase
-      .from('feedback_video_links')
-      .insert({ feedback_id: feedbackId, video_id: videoId, user_id: userId })
+      .from('feedback_gallery_links')
+      .insert({ feedback_id: feedbackId, gallery_id: galleryId, user_id: userId })
       .select()
       .single(),
   )
 }
 
-export async function unlinkVideoFromFeedback(feedbackId, videoId) {
+/** Link a curated-library item to a feedback. user_id is the denormalized subject. */
+export async function linkLibraryToFeedback({ feedbackId, libraryId, userId }) {
   return unwrap(
     await supabase
-      .from('feedback_video_links')
+      .from('feedback_library_links')
+      .insert({ feedback_id: feedbackId, library_id: libraryId, user_id: userId })
+      .select()
+      .single(),
+  )
+}
+
+export async function unlinkGalleryFromFeedback(feedbackId, galleryId) {
+  return unwrap(
+    await supabase
+      .from('feedback_gallery_links')
       .delete()
       .eq('feedback_id', feedbackId)
-      .eq('video_id', videoId)
+      .eq('gallery_id', galleryId)
+      .select(),
+  )
+}
+
+export async function unlinkLibraryFromFeedback(feedbackId, libraryId) {
+  return unwrap(
+    await supabase
+      .from('feedback_library_links')
+      .delete()
+      .eq('feedback_id', feedbackId)
+      .eq('library_id', libraryId)
       .select(),
   )
 }

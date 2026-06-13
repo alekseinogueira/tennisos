@@ -12,6 +12,12 @@ const sections = [
     title: 'Students',
     body: 'Manage your roster, set lesson credits, and send invite links.',
   },
+  {
+    to: '/admin/videos',
+    eyebrow: 'Library',
+    title: 'Videos',
+    body: 'Curate technical reference clips to attach to player feedback.',
+  },
 ]
 
 export default function AdminHome() {

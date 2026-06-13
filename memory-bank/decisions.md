@@ -93,4 +93,58 @@
 - **Why:** The 55TC spec puts the court-line motif on every forest-background surface; a single shared component keeps it consistent and avoids re-typing the SVG per screen.
 - **Alternatives:** Inline-duplicating the SVG per screen (drift risk).
 
+## 2026-06-13 — Split `videos` into `student_gallery` + `curated_library` (two systems)
+- **Decision:** Replace the single per-student `videos` table with two: `student_gallery`
+  (per-student PRIVATE lesson footage; subject = student) and `curated_library` (GLOBAL,
+  coach-owned technical references with no student subject). Each gets its own join table
+  (`feedback_gallery_links`, `feedback_library_links`); a feedback can attach from both.
+- **Why:** They have opposite visibility and lifecycle. Gallery clips are one student's own
+  footage (private, RLS `user_id = auth.uid()`); library clips are reusable references every
+  student should be able to browse. Forcing both into one table can't express "global +
+  reusable" and "per-person + private" with a single RLS predicate.
+- **Alternatives:** One `videos` table with a nullable `student_id` + an EXISTS-join RLS for
+  students reading linked library items (rejected — multi-join policy, conflates two concepts);
+  one polymorphic join table with a type discriminator + nullable FKs (rejected — messy FKs,
+  no clean per-source RLS).
+
+## 2026-06-13 — `curated_library` is browse-by-any-authenticated; `category` is free text
+- **Decision:** `curated_library` SELECT policy = `auth.uid() is not null` (any signed-in user
+  may browse the whole shelf); coach has full CRUD. `category` is a free-text column, not an enum.
+- **Why:** The library is a shared coaching resource — students should discover references, not
+  just ones already attached to them. Free-text category keeps it flexible ("etc." in the brief);
+  can standardize to an enum later if categories settle.
+- **Alternatives:** Restrict student reads to library items linked to their feedback (rejected —
+  defeats "browse the library"); a `video_category` enum now (rejected — premature rigidity).
+
+## 2026-06-13 — Edited migrations 002/003 in place (no new 004) for the video remodel
+- **Decision:** Rewrote the `videos`/`feedback_video_links` blocks directly in `002_mvp_schema.sql`
+  and `003_rls_policies.sql` rather than adding a `004_*` that creates-then-alters.
+- **Why:** The migrations are **unapplied** — no deployed history to preserve — so editing in
+  place keeps the schema readable instead of a create-then-immediately-rework trail.
+- **Alternatives:** A separate `004` migration (honest evolution if anything were applied, but
+  here just noise). Revisit this rule the moment migrations are first applied — after that,
+  always add new migrations.
+
+## 2026-06-13 — Feedback composer blocks unclaimed students
+- **Decision:** `FeedbackComposer` refuses to create feedback for a student whose `user_id` is
+  NULL (invite not yet claimed), showing a "Hasn't joined yet → Send the invite" panel.
+- **Why:** `feedbacks.user_id` (the RLS subject) is NOT NULL; an unclaimed roster row has no
+  auth id to stamp, and the student couldn't see the feedback anyway until they claim. Same
+  constraint family as the credits-are-transaction-only decision.
+- **Alternatives:** Make `feedbacks.user_id` nullable + backfill at claim time (rejected —
+  schema/RLS churn, mirrors the rejected `lesson_credits` approach); let the insert fail with a
+  raw DB error (rejected — poor UX).
+
+## 2026-06-13 — Gallery clips added by URL paste (no upload yet), auto-attached on add
+- **Decision:** Until real file upload exists, a coach populates `student_gallery` by pasting a
+  Drive/YouTube URL on the feedback attach screen (`FeedbackDetail`); a newly-added clip is
+  auto-linked to the feedback being edited. `student_gallery.storage_path` + a future `gallery`
+  Storage bucket are shaped for real upload later.
+- **Why:** Makes the gallery usable from day one without building Storage upload + RLS this
+  session; the coach is adding the clip precisely to reference it in this feedback, so auto-attach
+  matches intent.
+- **Alternatives:** Ship the gallery schema-only (empty, un-attachable) until upload lands
+  (rejected — task #3 needs to attach gallery clips now); build full Storage upload now (out of
+  scope this session).
+
 <!-- New decisions go above this line, newest first. -->

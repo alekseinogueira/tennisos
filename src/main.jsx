@@ -15,9 +15,13 @@ import ClaimInvite from './screens/ClaimInvite'
 import ComingSoon from './screens/ComingSoon'
 import StudentDashboard from './screens/StudentDashboard'
 import Profile from './screens/Profile'
+import Feedbacks from './screens/Feedbacks'
 import AdminHome from './screens/admin/AdminHome'
 import Students from './screens/admin/Students'
 import StudentForm from './screens/admin/StudentForm'
+import FeedbackComposer from './screens/admin/FeedbackComposer'
+import Videos from './screens/admin/Videos'
+import FeedbackDetail from './screens/admin/FeedbackDetail'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -34,6 +38,7 @@ createRoot(document.getElementById('root')).render(
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/" element={<StudentDashboard />} />
+              <Route path="/feedback" element={<Feedbacks />} />
               <Route path="/profile" element={<Profile />} />
               <Route element={<RoleRoute allow={['coach', 'admin']} />}>
                 <Route path="/coach" element={<ComingSoon title="Coach Home" />} />
@@ -42,6 +47,15 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/admin/students" element={<Students />} />
                 <Route path="/admin/students/new" element={<StudentForm />} />
                 <Route path="/admin/students/:id/edit" element={<StudentForm />} />
+                <Route
+                  path="/admin/students/:id/feedback/new"
+                  element={<FeedbackComposer />}
+                />
+                <Route
+                  path="/admin/students/:id/feedback/:fid"
+                  element={<FeedbackDetail />}
+                />
+                <Route path="/admin/videos" element={<Videos />} />
               </Route>
             </Route>
           </Route>

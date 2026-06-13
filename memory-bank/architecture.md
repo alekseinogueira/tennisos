@@ -34,7 +34,7 @@ tennisos/
 │   │   ├── ProtectedRoute.jsx# requires a session, else redirect /login
 │   │   └── RoleRoute.jsx     # requires role (coach/admin), else redirect/403
 │   ├── components/
-│   │   ├── Layout.jsx        # branded shell + role-aware nav (Home/Profile · coach: Home/Admin)
+│   │   ├── Layout.jsx        # branded shell + role-aware nav (student: Home/Feedback/Profile · coach: Home/Admin/Videos)
 │   │   ├── CourtMotif.jsx    # BUILT — shared court-line SVG for forest surfaces
 │   │   └── InvitePanel.jsx   # copyable /claim?email=… link, shown after creating a student
 │   └── screens/
@@ -45,22 +45,22 @@ tennisos/
 │       ├── ComingSoon.jsx          # placeholder, still serves /coach
 │       ├── StudentDashboard.jsx    # BUILT — / welcome hero + lesson-credit balance + next-session placeholder
 │       ├── Profile.jsx             # BUILT — /profile read-only own row (RLS), no edit
-│       ├── admin/                  # BUILT — coach/admin panel (realizes the coach Roster intent)
+│       ├── Feedbacks.jsx           # BUILT — /feedback (student): own feedback + inline videos (gallery + library)
+│       ├── admin/                  # BUILT — coach/admin panel
 │       │   ├── AdminHome.jsx       # /admin landing (Control Room)
-│       │   ├── Students.jsx        # /admin/students roster table (name/email/status/balance)
-│       │   └── StudentForm.jsx     # create/edit student (profile fields only — NO credit field)
-│       ├── student/              # planned — Phase 6
-│       │   ├── Feedbacks.jsx
-│       │   └── Videos.jsx
-│       └── coach/                # planned (StudentDetail, Packages, FeedbackComposer)
+│       │   ├── Students.jsx        # /admin/students roster table (name/email/status/balance + Feedback/Edit actions)
+│       │   ├── StudentForm.jsx     # create/edit student (profile fields only — NO credit field)
+│       │   ├── FeedbackComposer.jsx# /admin/students/:id/feedback/new — write feedback (blocks unclaimed)
+│       │   ├── FeedbackDetail.jsx  # /admin/students/:id/feedback/:fid — attach library items + gallery clips
+│       │   └── Videos.jsx          # /admin/videos — curated_library CRUD (create/list/delete)
+│       └── coach/                # planned (StudentDetail, Packages)
 │           ├── StudentDetail.jsx # credits, feedback, videos for one student
-│           ├── Packages.jsx      # manage offerings, grant credits
-│           └── FeedbackComposer.jsx  # write feedback, attach videos
+│           └── Packages.jsx      # manage offerings, grant credits
 ├── supabase/
 │   ├── config.toml
 │   ├── migrations/
 │   │   ├── 001_profiles_auth.sql   # role enum, profiles, is_coach(), handle_new_user trigger
-│   │   ├── 002_mvp_schema.sql      # 6 business tables
+│   │   ├── 002_mvp_schema.sql      # business tables (students, packages, lesson_credits, feedbacks, student_gallery, curated_library + 2 feedback-link joins)
 │   │   └── 003_rls_policies.sql    # enable RLS + policies on every table
 │   └── functions/
 │       └── invite/index.ts         # (later) coach invite email; uses service-role key
@@ -105,13 +105,21 @@ Enable RLS on **every** table. Two security-definer helpers:
 - `auth.uid()` used directly for student-owned rows.
 
 `user_id` semantics per table (per the "every table carries user_id" rule):
-- **Subject tables** (students, lesson_credits, feedbacks, videos, feedback_video_links):
-  `user_id` = the **student's** auth id. Policy: student sees/edits rows where
-  `user_id = auth.uid()`; coach sees/edits all via `is_coach()`.
-- **Owner/reference table** (packages): `user_id` = the **coach owner's** auth id. Coach full
-  CRUD; students read-only where `active = true`.
-- **Join table** (feedback_video_links): `user_id` is **denormalized** (copied from the parent
-  feedback's student) so policies stay single-predicate instead of multi-join EXISTS.
+- **Subject tables** (students, lesson_credits, feedbacks, student_gallery): `user_id` = the
+  **student's** auth id. Policy: student sees/edits rows where `user_id = auth.uid()`; coach
+  sees/edits all via `is_coach()`.
+- **Owner/reference tables:** `packages` (`user_id` = coach owner; students read where
+  `active = true`) and **`curated_library`** — a GLOBAL coach-owned shelf with **no** student
+  subject: coach full CRUD, and **any authenticated user may SELECT** (`auth.uid() is not null`)
+  so students can browse all references, not just attached ones.
+- **Join tables** (feedback_gallery_links, feedback_library_links): `user_id` is
+  **denormalized** (copied from the parent feedback's student) so each policy stays a single
+  predicate (`user_id = auth.uid()`) instead of a multi-join EXISTS.
+
+**Two video systems (Phase 6):** `student_gallery` = per-student PRIVATE lesson footage
+(subject table, above); `curated_library` = global reference shelf (reference table, above).
+A feedback links to either via its dedicated join table. This replaced the original single
+`videos` table + `feedback_video_links` join.
 
 Write rules: students are read-only on credits/feedback/videos (coach/system grant those);
 students may update only their own `students` profile fields (not role/status). All inserts of
@@ -122,8 +130,10 @@ Column-immutability that RLS can't express is enforced by BEFORE-UPDATE **guard 
 own `role`/`status`/`user_id`/`email`. Guards gate on `current_user = 'authenticated'`, so the
 SECURITY DEFINER `handle_new_user` auto-link and `service_role` tooling bypass them.
 
-Storage: a `videos` Supabase Storage bucket with object paths prefixed by `student_id`;
-storage RLS mirrors the table (student reads own prefix, coach all).
+Storage (later): a `gallery` Supabase Storage bucket with object paths prefixed by
+`student_id`, mirroring `student_gallery` RLS (student reads own prefix, coach all). Not built
+yet — gallery clips are added as external_url (Drive/YouTube) paste until upload lands.
+`curated_library` is link-only (external_url), no Storage.
 
 ## Deploy + DNS (portal.55tenniscrew.com)
 - Vercel project linked to this repo. Build `vite build` → `dist`. `vercel.json` SPA rewrite
@@ -143,8 +153,8 @@ n8n already runs at n8n.55tenniscrew.com. Integration seams to leave open:
   (feedback created, credits low) → POST to an n8n webhook (secret in Edge Function env) →
   n8n sends email/WhatsApp.
 - **Inbound (n8n → TennisOS):** n8n writes back via service-role (e.g., agente_cortes-produced
-  clip → insert `videos` row + `feedback_video_links`). `videos.source` + external-id columns
-  exist so external content slots in cleanly.
+  clip → insert `student_gallery` row + `feedback_gallery_links`). `student_gallery.source` +
+  `external_ref` columns exist so external content slots in cleanly.
 - Keep every secret-bearing call behind the Edge Function pattern (`lib/api.js` → `functions/*`).
 - **Stripe (later):** `packages.stripe_price_id`, a checkout Edge Function, credits granted on
   webhook. Schema is shaped for it; not implemented in MVP.

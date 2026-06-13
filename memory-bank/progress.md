@@ -20,24 +20,38 @@
   court motif + lesson-credit balance + "Next Session" coming-soon placeholder) and
   read-only `/profile` (full_name · email · phone · status, own-row via RLS). Shared
   `CourtMotif` component; Profile nav item in the student nav. Lint + build clean.
+- **Feedback + video library — Phase 6 COMPLETE (code-level):**
+  - **Two-system video model.** `videos`/`feedback_video_links` replaced by
+    `student_gallery` (per-student PRIVATE) + `curated_library` (GLOBAL, browse-by-any-
+    authenticated) + `feedback_gallery_links` + `feedback_library_links`. RLS + `db.js`
+    helpers + blueprint updated; `002`/`003` edited in place (unapplied).
+  - **Admin:** `FeedbackComposer` (`/admin/students/:id/feedback/new`, blocks unclaimed
+    students), `FeedbackDetail` (`/admin/students/:id/feedback/:fid`, attach library items +
+    gallery clips; URL-paste add-clip form auto-attaches), `Videos` (`/admin/videos`,
+    curated-library CRUD). Roster gained a Feedback action; AdminHome gained a Library card.
+  - **Student:** `Feedbacks` (`/feedback`) — own feedback newest-first with inline-playing
+    YouTube embeds + "Watch ↗" links for other sources. Feedback nav item.
+  - Lint + build clean.
 
 ## In Progress
-- **Phase 6 (feedback + video library) — next up, not started.** Tables (`feedbacks`,
-  `videos`, `feedback_video_links`) + `db.js` helpers already exist; needs the screens
-  (coach feedback composer + attach videos; student feedback/video library).
-- Admin roster + student portal complete (code-level); both await live data to smoke-test.
+- Nothing actively mid-build. Admin roster + student portal + Phase 6 all complete at the
+  code level; all await **applied migrations + live data** to smoke-test.
 
 ## Not Started
 - Applying the Supabase migrations to a real project + seeding the coach account.
-- `.env` wiring + live smoke test of login/claim/reset + admin roster.
+- `.env` wiring + live smoke test of login/claim/reset + admin roster + the Phase 6 loop.
 - Coach invite Edge Function (`functions/invite`) + `lib/api.js` caller → real emailed invite.
 - Credit management UI (manual adjustments / package purchases that write `lesson_credits`).
-- Remaining feature screens (coach Packages/StudentDetail/FeedbackComposer;
-  student Feedbacks/Videos — Phase 6).
-- Storage `videos` bucket + storage RLS; n8n/Stripe seams.
+- Coach screens still unbuilt: Packages, StudentDetail.
+- Real gallery **upload**: `gallery` Storage bucket + storage RLS + upload UI (replaces the
+  manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
-- Migrations written (`supabase/migrations/001..003`) but **not applied** — auth + admin data
-  are non-functional until a Supabase project exists and `.env` is set.
+- Migrations written (`supabase/migrations/001..003`) but **not applied** — auth + admin +
+  Phase 6 data are non-functional until a Supabase project exists and `.env` is set.
 - `InvitePanel` generates a claim URL only; no session-bearing magic-link email yet (needs the
   service-role invite Edge Function). A raw `/claim?email=` link won't create a session alone.
+- Feedback can't be written for an **unclaimed** student (`feedbacks.user_id` NOT NULL); the
+  composer blocks it and prompts to send the invite first.
+- Gallery clips are **URL paste only** (no upload yet); non-YouTube links (e.g. Drive) can't
+  embed inline and render as a "Watch ↗" link in the student view.

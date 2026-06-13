@@ -82,32 +82,60 @@ create trigger feedbacks_set_updated_at
   before update on feedbacks
   for each row execute function set_updated_at();
 
--- ─── videos (subject = student) ──────────────────────────────────────────────
-create table videos (
+-- ─── student_gallery (per-student PRIVATE lesson footage; subject = student) ──
+-- The student's own clips, added by the coach. Visible only to that student.
+-- Uploads land later; for now external_url holds a Drive/YouTube link.
+create table student_gallery (
   id               uuid primary key default gen_random_uuid(),
-  user_id          uuid not null references auth.users(id),               -- student subject
+  user_id          uuid not null references auth.users(id),               -- student subject (RLS)
   student_id       uuid not null references students(id) on delete cascade,
-  coach_id         uuid references auth.users(id),
+  coach_id         uuid references auth.users(id),                        -- who added it
   title            text,
-  storage_path     text,                                                  -- Supabase Storage object
-  external_url     text,                                                  -- youtube/link sources
+  storage_path     text,                                                  -- Supabase Storage object (future upload)
+  external_url     text,                                                  -- Drive/YouTube link for now
   source           video_source not null default 'link',
   external_ref     text,                                                  -- external producer id (n8n) — future
   duration_seconds int,
   created_at       timestamptz not null default now()
 );
-create index videos_student_idx on videos (student_id);
-create index videos_user_idx    on videos (user_id);
+create index student_gallery_student_idx on student_gallery (student_id);
+create index student_gallery_user_idx    on student_gallery (user_id);
 
--- ─── feedback_video_links (join feedbacks <-> videos; denormalized user_id) ──
+-- ─── curated_library (GLOBAL coach-owned technical references) ───────────────
+-- Reusable reference videos (YouTube / external links) any student can browse.
+-- No student_id — these are not tied to a person; organized by free-text category.
+create table curated_library (
+  id           uuid primary key default gen_random_uuid(),
+  coach_id     uuid references auth.users(id),
+  title        text not null,
+  category     text,                                                      -- forehand, backhand, serve, … (free text)
+  external_url text not null,
+  source       video_source not null default 'link',                     -- youtube | link
+  created_at   timestamptz not null default now()
+);
+create index curated_library_category_idx on curated_library (category);
+
+-- ─── feedback_gallery_links (join feedbacks <-> student_gallery) ─────────────
 -- user_id is the student subject, COPIED from the parent feedback so RLS stays
--- a single predicate (no EXISTS-join). Set by the writing code/coach UI.
-create table feedback_video_links (
+-- a single predicate (no EXISTS-join). Set by the writing coach UI.
+create table feedback_gallery_links (
   id          uuid primary key default gen_random_uuid(),
-  feedback_id uuid not null references feedbacks(id) on delete cascade,
-  video_id    uuid not null references videos(id)    on delete cascade,
+  feedback_id uuid not null references feedbacks(id)        on delete cascade,
+  gallery_id  uuid not null references student_gallery(id)  on delete cascade,
   user_id     uuid not null,
   created_at  timestamptz not null default now(),
-  unique (feedback_id, video_id)
+  unique (feedback_id, gallery_id)
 );
-create index fvl_user_idx on feedback_video_links (user_id);
+create index fgl_user_idx on feedback_gallery_links (user_id);
+
+-- ─── feedback_library_links (join feedbacks <-> curated_library) ────────────
+-- user_id is the student subject the feedback is for (denormalized from feedback).
+create table feedback_library_links (
+  id          uuid primary key default gen_random_uuid(),
+  feedback_id uuid not null references feedbacks(id)       on delete cascade,
+  library_id  uuid not null references curated_library(id) on delete cascade,
+  user_id     uuid not null,
+  created_at  timestamptz not null default now(),
+  unique (feedback_id, library_id)
+);
+create index fll_user_idx on feedback_library_links (user_id);

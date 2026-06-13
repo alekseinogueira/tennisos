@@ -110,21 +110,41 @@ create policy feedbacks_select on feedbacks
 create policy feedbacks_coach_all on feedbacks
   for all using (is_coach()) with check (is_coach());
 
--- ─── videos ───────────────────────────────────────────────────────────────────
-alter table videos enable row level security;
+-- ─── student_gallery ──────────────────────────────────────────────────────────
+-- Private: a student sees only their own clips; coach sees all.
+alter table student_gallery enable row level security;
 
-create policy videos_select on videos
+create policy student_gallery_select on student_gallery
   for select using (user_id = auth.uid() or is_coach());
 
-create policy videos_coach_all on videos
+create policy student_gallery_coach_all on student_gallery
   for all using (is_coach()) with check (is_coach());
 
--- ─── feedback_video_links ─────────────────────────────────────────────────────
-alter table feedback_video_links enable row level security;
+-- ─── curated_library ──────────────────────────────────────────────────────────
+-- Global references: ANY authenticated user may browse; coach has full CRUD.
+alter table curated_library enable row level security;
 
+create policy curated_library_select on curated_library
+  for select using (auth.uid() is not null);
+
+create policy curated_library_coach_all on curated_library
+  for all using (is_coach()) with check (is_coach());
+
+-- ─── feedback_gallery_links ───────────────────────────────────────────────────
 -- Single-predicate policy thanks to the denormalized user_id.
-create policy fvl_select on feedback_video_links
+alter table feedback_gallery_links enable row level security;
+
+create policy fgl_select on feedback_gallery_links
   for select using (user_id = auth.uid() or is_coach());
 
-create policy fvl_coach_all on feedback_video_links
+create policy fgl_coach_all on feedback_gallery_links
+  for all using (is_coach()) with check (is_coach());
+
+-- ─── feedback_library_links ───────────────────────────────────────────────────
+alter table feedback_library_links enable row level security;
+
+create policy fll_select on feedback_library_links
+  for select using (user_id = auth.uid() or is_coach());
+
+create policy fll_coach_all on feedback_library_links
   for all using (is_coach()) with check (is_coach());

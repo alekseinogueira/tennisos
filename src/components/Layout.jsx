@@ -16,9 +16,11 @@ export default function Layout() {
         { to: '/coach', label: 'Home', end: true },
         // No `end` so Admin stays highlighted across /admin sub-routes.
         { to: '/admin', label: 'Admin', end: false },
+        { to: '/admin/videos', label: 'Videos', end: true },
       ]
     : [
         { to: '/', label: 'Home', end: true },
+        { to: '/feedback', label: 'Feedback', end: true },
         { to: '/profile', label: 'Profile', end: true },
       ]
 

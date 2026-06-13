@@ -105,7 +105,7 @@ export default function Students() {
                 <Th>Email</Th>
                 <Th>Status</Th>
                 <Th className="text-right">Credits</Th>
-                <Th className="text-right">Edit</Th>
+                <Th className="text-right">Actions</Th>
               </tr>
             </thead>
             <tbody>
@@ -125,12 +125,20 @@ export default function Students() {
                     {balances[s.id] ?? 0}
                   </td>
                   <td className="px-5 py-4 text-right">
-                    <Link
-                      to={`/admin/students/${s.id}/edit`}
-                      className="text-xs font-semibold uppercase tracking-[0.15em] text-forest underline-offset-4 transition hover:underline"
-                    >
-                      Edit
-                    </Link>
+                    <div className="flex items-center justify-end gap-4">
+                      <Link
+                        to={`/admin/students/${s.id}/feedback/new`}
+                        className="text-xs font-semibold uppercase tracking-[0.15em] text-forest underline-offset-4 transition hover:underline"
+                      >
+                        Feedback
+                      </Link>
+                      <Link
+                        to={`/admin/students/${s.id}/edit`}
+                        className="text-xs font-semibold uppercase tracking-[0.15em] text-forest underline-offset-4 transition hover:underline"
+                      >
+                        Edit
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
