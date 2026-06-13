@@ -4,16 +4,40 @@
 > Read this first at the start of every task.
 
 ## Current Focus
-**Phase 7 (lesson credits UI) is COMPLETE (code-level).** Built the coach-facing credit
-ledger on a new **StudentDetail hub** (`/admin/students/:id`): live balance + a per-transaction
-adjustment form (signed `delta`, `reason`, optional `note`) + credit history (newest first).
-No package picker — credits are always one-off (packages stay reserved for Stripe). Confirmed
-the student dashboard already reads the live balance (`getCreditBalance`), so the loop closes:
-coach records credits → `lesson_credits` → dashboard reflects it. Added a `note` column to
-`lesson_credits` (migration `002`, edited in place — still unapplied). Lint/build-verified only.
+**Phase 8 (student-facing video screens) is COMPLETE (code-level).** Built the two student
+browse views that consume the Phase 6 two-system video model:
+- **`/library`** (`Library.jsx`): the GLOBAL `curated_library` shelf, open to any signed-in
+  user (RLS lets every authenticated user SELECT). Free-text-category filter chips (All + each
+  category) + a card grid; YouTube embeds inline, other links get a "Watch ↗" tile. Coach gets
+  it in the nav too (browse the same shelf they manage at `/admin/videos`).
+- **`/gallery`** (`Gallery.jsx`): the student's OWN `student_gallery` clips, newest first,
+  RLS-private (`user_id = auth.uid()`). Resolves the roster row via `getStudentByUserId`, shows
+  title + date + playable clip (same embed/link pattern). Student nav only.
+Extracted the `youtubeId` URL parser into **`lib/youtube.js`** and used it in both new screens
+(Feedbacks.jsx keeps its own inline copy — not refactored). Lint/build-verified only.
 
-**Phase 8 (next) is NOT decided yet.** Top backlog candidates: **apply migrations + seed coach**
+**Phase 9 (next) is NOT decided yet.** Top backlog candidates: **apply migrations + seed coach**
 (unblocks every screen for live smoke-testing), then the invite Edge Function. See Next Steps.
+
+## Recent Changes (2026-06-13 — Phase 8: student video screens)
+- **`lib/youtube.js`** (NEW): extracted the `youtubeId(url)` parser (watch / youtu.be /
+  embed / shorts) so both new screens share one implementation. `Feedbacks.jsx` still has its
+  own inline copy (working file, left untouched).
+- **`screens/Library.jsx`** (NEW, `/library`): browses `listLibrary()`. Derives unique
+  categories (free text; null → "More"), renders FilterChip row (All + each category) when
+  there's more than one, and a `sm:grid-cols-2` card grid. Each card: category eyebrow + Bebas
+  title + inline YouTube iframe (via `youtubeId`) or a "Watch ↗" external tile. Humanized empty
+  state ("The shelf is empty"). Open to any authenticated user (no roster row needed).
+- **`screens/Gallery.jsx`** (NEW, `/gallery`): `getStudentByUserId(user.id)` → if no roster row,
+  empty list; else `listGalleryForStudent(student.id)`. Card grid with date eyebrow
+  (`created_at.slice(0,10)`) + title + same embed/link tile. Humanized empty state ("No clips
+  yet"). RLS keeps it the student's own clips only.
+- **`main.jsx`:** wired `/library` + `/gallery` alongside `/feedback` + `/profile` (inside
+  `Layout`, **outside** the coach `RoleRoute` — any authenticated user reaches them, RLS governs
+  what they see).
+- **`Layout.jsx`:** student nav gained **Library** + **Gallery**; coach nav gained **Library**
+  (browse the shelf they curate at `/admin/videos`). Gallery is student-only.
+- `npm run lint` + `npm run build` clean.
 
 ## Recent Changes (2026-06-13 — Phase 7: lesson credits UI)
 - **`screens/admin/StudentDetail.jsx`** (NEW, `/admin/students/:id`): per-student credit hub.

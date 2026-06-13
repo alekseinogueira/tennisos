@@ -40,6 +40,14 @@
   - **Student:** dashboard balance confirmed live (`getCreditBalance` over the real ledger) — the
     loop closes once an entry is recorded. No dashboard change needed.
   - Lint + build clean.
+- **Student video screens — Phase 8 COMPLETE (code-level):**
+  - **`/library`** (`Library.jsx`): browses the GLOBAL `curated_library` (`listLibrary`), open to
+    any signed-in user. Free-text-category filter chips + card grid; YouTube embeds inline, other
+    links get a "Watch ↗" tile. Library nav item for both student and coach.
+  - **`/gallery`** (`Gallery.jsx`): the student's OWN `student_gallery` clips
+    (`listGalleryForStudent`), RLS-private, newest first with date + playable clip. Student nav only.
+  - **`lib/youtube.js`** (NEW): shared `youtubeId(url)` parser used by both screens.
+  - Lint + build clean.
 
 ## In Progress
 - Nothing actively mid-build. Admin roster + student portal + Phase 6 all complete at the

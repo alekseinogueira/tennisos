@@ -177,4 +177,30 @@
 - **Alternatives:** Let the insert fail with a raw DB error (poor UX); make `user_id` nullable
   (rejected before — schema/RLS churn).
 
+## 2026-06-13 — Student video screens sit outside RoleRoute; `/library` is open to all authenticated
+- **Decision:** `/library` and `/gallery` are registered inside `Layout` but **outside** the coach
+  `RoleRoute` (alongside `/feedback`, `/profile`) — any authenticated user reaches them, and RLS
+  governs what each sees. `/library` shows the whole global shelf to anyone signed in; `/gallery`
+  shows only the caller's own clips (resolved via `getStudentByUserId`, empty if no roster row).
+  Library got a nav item for **both** student and coach; Gallery is student-nav only.
+- **Why:** Matches the data model's RLS: `curated_library` is browse-by-any-authenticated, so no
+  app-layer gate is needed; `student_gallery` is `user_id = auth.uid()`-private, so a coach hitting
+  `/gallery` just sees an empty state (their own non-existent clips) — harmless, no gate needed.
+  The coach already manages the library at `/admin/videos`; the Library nav lets them preview the
+  same shelf students browse.
+- **Alternatives:** Gating both behind a student-only RoleRoute (rejected — RLS + empty states
+  already cover the coach case, and the brief says the coach sees the library too); a coach-only
+  variant of the library screen (rejected — same read, no reason to fork it).
+
+## 2026-06-13 — Extracted `youtubeId` to `lib/youtube.js`; left Feedbacks' inline copy
+- **Decision:** Pulled the YouTube URL parser into a shared `lib/youtube.js` and imported it in the
+  two new screens (`Library`, `Gallery`). Did **not** refactor `Feedbacks.jsx`, which keeps its own
+  inline copy of the same function.
+- **Why:** A shared util keeps the new code DRY; refactoring the working `Feedbacks.jsx` to import it
+  would be restructuring a working file for no functional gain (hard rule: ask before restructuring).
+  The duplication is one small pure function — low drift risk — and can be reconciled the next time
+  Feedbacks is touched for another reason.
+- **Alternatives:** Duplicate the parser into each new screen too (rejected — three copies); refactor
+  Feedbacks now to use the shared util (deferred — touches a working screen unnecessarily).
+
 <!-- New decisions go above this line, newest first. -->

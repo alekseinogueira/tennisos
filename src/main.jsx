@@ -16,6 +16,8 @@ import ComingSoon from './screens/ComingSoon'
 import StudentDashboard from './screens/StudentDashboard'
 import Profile from './screens/Profile'
 import Feedbacks from './screens/Feedbacks'
+import Library from './screens/Library'
+import Gallery from './screens/Gallery'
 import AdminHome from './screens/admin/AdminHome'
 import Students from './screens/admin/Students'
 import StudentDetail from './screens/admin/StudentDetail'
@@ -40,6 +42,8 @@ createRoot(document.getElementById('root')).render(
             <Route element={<Layout />}>
               <Route path="/" element={<StudentDashboard />} />
               <Route path="/feedback" element={<Feedbacks />} />
+              <Route path="/library" element={<Library />} />
+              <Route path="/gallery" element={<Gallery />} />
               <Route path="/profile" element={<Profile />} />
               <Route element={<RoleRoute allow={['coach', 'admin']} />}>
                 <Route path="/coach" element={<ComingSoon title="Coach Home" />} />

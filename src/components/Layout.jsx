@@ -17,10 +17,13 @@ export default function Layout() {
         // No `end` so Admin stays highlighted across /admin sub-routes.
         { to: '/admin', label: 'Admin', end: false },
         { to: '/admin/videos', label: 'Videos', end: true },
+        { to: '/library', label: 'Library', end: true },
       ]
     : [
         { to: '/', label: 'Home', end: true },
         { to: '/feedback', label: 'Feedback', end: true },
+        { to: '/library', label: 'Library', end: true },
+        { to: '/gallery', label: 'Gallery', end: true },
         { to: '/profile', label: 'Profile', end: true },
       ]
 
