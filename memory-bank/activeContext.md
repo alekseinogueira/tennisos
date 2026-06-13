@@ -4,6 +4,21 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Header UX polish shipped (2026-06-13, `55099d9`) — Layout.jsx only.** Two focused tweaks,
+deployed via the deploy hook:
+- **Hamburger account menu (☰).** Replaced the always-visible email block + "Sign out" button
+  with a single ☰ button on the right. Tapping it opens a dropdown holding the user's email, a
+  `COACH`/`STUDENT` role badge, and a Sign out action. Closes on outside click (a `mousedown`
+  listener gated on `menuOpen`, cleaned up on close/unmount). Side effect: email + role are now
+  reachable on mobile too (the old block was `sm:`-only). `aria-expanded`/`aria-haspopup` set.
+- **Nav scroll fade hint.** Added a right-edge CSS mask to the `<nav>` scroll viewport
+  (`[mask-image:linear-gradient(to_right,#000_82%,transparent)]` + `-webkit-` twin) so the
+  rightmost item fades into the forest header — a static "more →" cue that stays pinned regardless
+  of scroll position. Mask (not an overlay div) so items stay clickable. Tradeoff: on a wide
+  desktop where all items fit, the last item still fades slightly; a scroll-detection effect could
+  make it conditional if that bugs the coach later.
+- Lint clean; committed; deploy hook fired (job `amzu0zJdiVmX3HnAy2MW`, PENDING at commit time).
+
 **Mobile nav overflow bug FIXED and LIVE (2026-06-13).** Two-pass fix, both shipped:
 - v1 (`6e49a4e`): `<nav>` → `min-w-0 touch-pan-x overflow-x-auto`; page root → `overflow-x-hidden`.
 - v2 robust (`53208a8`, current): nav stays the constrained scroll viewport, items moved into an

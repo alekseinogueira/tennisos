@@ -211,4 +211,27 @@
 - **Alternatives:** Duplicate the parser into each new screen too (rejected — three copies); refactor
   Feedbacks now to use the shared util (deferred — touches a working screen unnecessarily).
 
+## 2026-06-13 — Nav scroll hint via a static CSS mask (not an overlay div or JS scroll detection)
+- **Decision:** Signal the nav's horizontal scroll with a right-edge `mask-image` linear-gradient
+  on the `<nav>` scroll viewport (`#000 82% → transparent`, plus `-webkit-` twin), fading the
+  rightmost item into the forest header. Static — applied unconditionally, no scroll-position logic.
+- **Why:** A `mask` doesn't intercept pointer events, so nav items stay clickable (an overlay div
+  on the right edge would block taps on the item beneath it). Fading to transparent reveals the
+  forest header, visually identical to fading to `#1C3526` per the brief. Static keeps it pure-CSS,
+  no JS. Tradeoff accepted: on a wide desktop where all items fit, the last item still fades slightly.
+- **Alternatives:** A gradient **overlay div** (rejected — blocks clicks on the clipped item, needs
+  `pointer-events-none` workaround and an extra element); a **scroll-detection effect** that only
+  masks when `scrollWidth > clientWidth` and un-masks at the end (deferred — more correct but adds
+  JS/state for a cosmetic hint; revisit if the desktop fade bothers the coach).
+
+## 2026-06-13 — Header account actions collapsed into a ☰ dropdown menu
+- **Decision:** Replace the always-visible email block + "Sign out" button with a single ☰ button
+  that toggles a dropdown (email + `COACH`/`STUDENT` badge + Sign out), closing on outside click via
+  a `mousedown` listener gated on the open state.
+- **Why:** Declutters the forest header and gives the account actions a single affordance; as a
+  bonus the email + role (previously `sm:`-only) become reachable on mobile inside the dropdown.
+- **Alternatives:** Keep the inline button (rejected — coach asked to collapse it); a full slide-out
+  drawer (overkill for three items); a headless-UI/Radix menu (rejected — no need for a dep, the
+  outside-click effect is a few lines and stays Tailwind-only).
+
 <!-- New decisions go above this line, newest first. -->

@@ -54,6 +54,11 @@
   code level; all await **applied migrations + live data** to smoke-test.
 
 ## Recently Fixed
+- **Header UX polish (2026-06-13, `55099d9`) — Layout.jsx only:** (1) the always-visible
+  email + "Sign out" button became a **☰ account menu** — a right-side button opening a dropdown
+  with email + `COACH`/`STUDENT` badge + Sign out, closing on outside click; (2) a **right-edge
+  mask gradient** on the nav scroll viewport fades the rightmost item into forest as a horizontal-
+  scroll hint. Tailwind-only, lint clean, deployed via the hook.
 - **Mobile nav horizontal-scroll bug — LIVE & confirmed (2026-06-13):** header nav no longer
   scrolls the whole page sideways. Final form (`53208a8`): `<nav>` is the scroll viewport
   (`min-w-0 touch-pan-x overflow-x-auto` + `.nav-scroll` hides bar / iOS momentum), inner
