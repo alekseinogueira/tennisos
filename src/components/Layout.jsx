@@ -28,26 +28,29 @@ export default function Layout() {
       ]
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden bg-sand">
+    <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-sand">
       <header className="bg-forest text-sand">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
           <span className="font-display text-2xl tracking-wide">TennisOS</span>
 
-          <nav className="flex min-w-0 touch-pan-x items-center gap-1 overflow-x-auto">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                    isActive ? 'bg-sand/15 text-sand' : 'text-sand/70 hover:text-sand'
-                  }`
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+          <nav className="nav-scroll min-w-0 touch-pan-x overflow-x-auto">
+            <ul className="flex w-max items-center gap-1">
+              {navItems.map((item) => (
+                <li key={item.to} className="shrink-0">
+                  <NavLink
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      `block rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                        isActive ? 'bg-sand/15 text-sand' : 'text-sand/70 hover:text-sand'
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
           </nav>
 
           <div className="ml-auto flex items-center gap-4">

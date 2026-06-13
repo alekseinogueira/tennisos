@@ -24,4 +24,14 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden; /* page never scrolls sideways; nav scrolls on its own */
+}
+
+/* ── horizontal-scroll nav: keep scroll functional, hide the bar, iOS momentum ── */
+.nav-scroll {
+  -webkit-overflow-scrolling: touch; /* momentum scroll on older iOS */
+  scrollbar-width: none; /* Firefox */
+}
+.nav-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
