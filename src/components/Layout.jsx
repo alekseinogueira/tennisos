@@ -46,10 +46,10 @@ export default function Layout() {
   return (
     <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-sand">
       <header className="bg-forest text-sand">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-6 md:gap-8">
           <span className="font-display text-2xl tracking-wide"><TennisOSWordmark size="sm" /></span>
 
-          <nav className="nav-scroll min-w-0 touch-pan-x overflow-x-auto [-webkit-mask-image:linear-gradient(to_right,black_75%,transparent_100%)] [mask-image:linear-gradient(to_right,black_75%,transparent_100%)] md:[-webkit-mask-image:none] md:[mask-image:none]">
+          <nav className="nav-scroll min-w-0 touch-pan-x overflow-x-auto max-md:[-webkit-mask-image:linear-gradient(to_right,black_75%,transparent_100%)] max-md:[mask-image:linear-gradient(to_right,black_75%,transparent_100%)]">
             <ul className="flex w-max flex-nowrap items-center gap-1 md:gap-3">
               {navItems.map((item) => (
                 <li key={item.to} className="shrink-0">

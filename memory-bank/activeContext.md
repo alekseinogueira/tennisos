@@ -4,6 +4,19 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Two surgical Layout.jsx nav fixes (2026-06-14).** Isolated, one per breakpoint:
+- **Fix 1 — mobile logo↔nav gap.** The header flex row gap was a single `gap-8` (2rem) at all
+  breakpoints; made responsive `gap-2 md:gap-8`. Below md the logo and nav sit ~1.5rem closer
+  (2rem→0.5rem); desktop unchanged. The account menu's `ml-auto` absorbs the slack, so only the
+  logo↔nav spacing visibly tightens. (No separator-line element exists in the file — nothing moved.)
+- **Fix 2 — desktop nav fade removed for real.** Previously the right-edge scroll mask was applied
+  always then overridden with `md:[…none]`. Switched to the `max-md:` variant so the mask is only
+  emitted below md — desktop now has zero mask rule (verified: compiled into
+  `@media not all and (width>=48rem)`). Mobile scroll-hint fade intact; active tab indicator
+  (`bg-sand/15`) untouched.
+- Lint + build clean. Note: stale `[mask-image:…]`/`md:[…none]` strings quoted in THIS file get
+  auto-scanned by Tailwind v4 into dead (unused) CSS — harmless; keep new notes prose-only.
+
 **Wordmark upgraded to real 55TC logo paths (2026-06-14).** `TennisOSWordmark.jsx` rewritten:
 no longer Bebas Neue `<text>` for "55TC" — now renders the **actual 55tc-logo.svg vector paths**
 (viewBox `0 0 920 218`, `transform` flip) in a single-`color` fill, plus an "OS" suffix as
