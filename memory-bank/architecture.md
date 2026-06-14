@@ -139,6 +139,11 @@ yet — gallery clips are added as external_url (Drive/YouTube) paste until uplo
   `dist`. `vercel.json` SPA rewrite so client routes resolve.
 - **Deploy trigger:** a **Vercel deploy hook + manual deploy** is the working path — git
   push-to-deploy stalled (builds stuck `UNKNOWN`/never built). Repair git auto-build later.
+- **Mandatory deploy order:** commit → **`git push origin master`** → fire the deploy hook →
+  verify the Production commit in Vercel. The deploy hook builds from the **GitHub source**, so
+  firing it before the push rebuilds the stale commit. Codified as the **`deploy-prod` skill** and
+  enforced by a `PreToolUse(Bash)` hook (`.claude/hooks/guard-deploy.sh`) that blocks the deploy-hook
+  curl unless `HEAD` is on `origin/master`.
 - Vercel env (Production + Preview): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` only.
   The Supabase **service-role key never goes to Vercel** — it lives only as an Edge Function secret.
 - DNS: add `portal.55tenniscrew.com` as a domain on the Vercel project; create a **CNAME

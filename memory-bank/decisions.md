@@ -3,6 +3,26 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-14 — Enforce deploy order with a PreToolUse hook (push before deploy hook)
+- **Decision:** Codify the production deploy flow as a `deploy-prod` skill AND mechanically enforce
+  it with a `PreToolUse(Bash)` hook (`.claude/hooks/guard-deploy.sh` + `.claude/settings.json`) that
+  blocks the Vercel deploy-hook curl unless local `HEAD` is already on `origin/master`. Backed by a
+  `CLAUDE.md` Hard Rule. All committed to the repo (team-wide), not local-only.
+- **Why:** Recurring failure mode — the deploy hook fires before the new commit is pushed, so Vercel
+  (which builds from the GitHub source, not the local repo) rebuilds the stale commit and production
+  silently stays old. A skill alone relies on memory; the hook makes the correct order non-bypassable.
+- **Alternatives:** Skill/memory only (rejected — not enforced); a slash command like `/ship`
+  (rejected — still manual, no guard); `.claude/settings.local.json` (rejected — gitignored, wouldn't
+  travel with the repo for future machines/sessions).
+
+## 2026-06-14 — Desktop nav drops the scroll-fade; mobile nav tightened ~30%
+- **Decision:** Remove the right-edge fade mask at `md:` and up (`md:[mask-image:none]`), keeping it
+  only below `md`; tighten mobile item spacing ~30% (`gap-2`→`gap-1.5`, link `px-3`→`px-2`).
+- **Why:** On desktop every nav item fits, so the scroll-hint fade was meaningless there. On mobile
+  the items were too spread out, hiding the third item that should cue horizontal scroll.
+- **Alternatives:** Scroll-detection to make the fade conditional everywhere (overkill); removing the
+  fade entirely (rejected — still wanted as the mobile scroll hint).
+
 ## 2026-06-13 — Ship via Vercel deploy hook + manual deploy (not git push-to-deploy)
 - **Decision:** Deploy production through a Vercel **deploy hook + manual trigger**, not raw
   GitHub push-to-deploy.

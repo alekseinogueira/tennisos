@@ -54,6 +54,16 @@
   code level; all await **applied migrations + live data** to smoke-test.
 
 ## Recently Fixed
+- **Deploy guardrails (2026-06-14, `bcff6e0`) — tooling, not app code:** codified the prod deploy
+  flow as a **`deploy-prod` skill** (commit → push → deploy hook → verify) and **enforce** it with a
+  `PreToolUse(Bash)` hook (`.claude/hooks/guard-deploy.sh` + `.claude/settings.json`) that blocks the
+  Vercel deploy-hook curl unless local `HEAD` is on `origin/master`. Plus a `CLAUDE.md` Hard Rule. All
+  committed (team-wide). Tested allow/block paths. **Activation caveat:** the hook only fires after the
+  new `.claude/settings.json` is reloaded — open `/hooks` once or restart Claude Code.
+- **Nav fade/spacing fix (2026-06-14, `dcc621a`) — Layout.jsx only:** desktop drops the scroll-fade
+  mask (`md:[mask-image:none]`, kept below `md`); mobile items tightened ~30% (`gap-2`→`gap-1.5`,
+  link `px-3`→`px-2`) so a third item shows as a horizontal-scroll cue. Font size + active indicator
+  unchanged. Lint clean; pushed + deployed via the hook.
 - **Header UX polish (2026-06-13, `55099d9`) — Layout.jsx only:** (1) the always-visible
   email + "Sign out" button became a **☰ account menu** — a right-side button opening a dropdown
   with email + `COACH`/`STUDENT` badge + Sign out, closing on outside click; (2) a **right-edge
