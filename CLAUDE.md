@@ -17,6 +17,9 @@ Single-coach tool first; build only what solves a real, recurring problem for me
 - Always ask before deleting, overwriting, or restructuring existing files.
 - One feature per session. End every session by updating memory-bank and committing.
 - Match the 55TC visual tokens below — no off-brand colors or fonts.
+- Deploy ONLY via the `deploy-prod` skill. Order is mandatory: commit → `git push origin master`
+  → fire the Vercel deploy hook → verify the Production commit. Never fire the hook before the
+  push (Vercel builds from GitHub, not local — see the `deploy-prod` skill / `.claude/hooks/guard-deploy.sh`).
 
 ## Visual Tokens (55TC)
 - Forest green `#1C3526` (primary)

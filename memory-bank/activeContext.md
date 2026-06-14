@@ -4,6 +4,16 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Deploy guardrails added (2026-06-14) — tooling, not app code.** Codified the production deploy
+flow so it can't be done out of order:
+- **`deploy-prod` skill** (`.claude/skills/deploy-prod/SKILL.md`): the canonical procedure —
+  commit → `git push origin master` → fire the Vercel deploy hook → verify the Production commit
+  in Vercel. Auto-surfaced whenever a deploy is intended.
+- **PreToolUse hook** (`.claude/settings.json` + `.claude/hooks/guard-deploy.sh`): mechanically
+  **blocks** the deploy-hook curl if local `HEAD` isn't yet on `origin/master` (Vercel builds from
+  GitHub, so firing early rebuilds the stale commit). Tested: allows when pushed, blocks when ahead.
+- **`CLAUDE.md` Hard Rule** pointing all deploys at the skill. All committed to the repo (team-wide).
+
 **Nav spacing/fade fixes (2026-06-14) — Layout.jsx only.** Two small nav tweaks on top of the
 header polish below:
 - **Desktop fade removed.** The right-edge scroll-hint mask is now `md:[mask-image:none]
