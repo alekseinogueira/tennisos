@@ -49,7 +49,7 @@ export default function Layout() {
           <span className="font-display text-2xl tracking-wide">TennisOS</span>
 
           <nav className="nav-scroll min-w-0 touch-pan-x overflow-x-auto [-webkit-mask-image:linear-gradient(to_right,black_75%,transparent_100%)] [mask-image:linear-gradient(to_right,black_75%,transparent_100%)] md:[-webkit-mask-image:none] md:[mask-image:none]">
-            <ul className="flex w-max flex-nowrap items-center gap-1.5">
+            <ul className="flex w-max flex-nowrap items-center gap-1 md:gap-3">
               {navItems.map((item) => (
                 <li key={item.to} className="shrink-0">
                   <NavLink

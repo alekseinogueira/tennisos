@@ -4,6 +4,15 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Nav item spacing tuned per breakpoint (2026-06-14) — Layout.jsx only.** Follow-up to the
+fade/spacing fix below. The `<ul>` inter-item gap was a single `gap-1.5` (6px) at every
+breakpoint; split it into responsive classes: **`gap-1.5` → `gap-1 md:gap-3`**. Per-link padding
+stays `px-2` (8px), so adjacent-item spacing (px+gap+px) went 8+6+8=22px →
+- **Mobile** `gap-1` (4px): 8+4+8 = **20px** (~−9%, the requested ~10% tightening). Horizontal
+  scroll + mobile edge-fade mask unchanged; no new page overflow.
+- **Desktop/tablet** `md:gap-3` (12px): 8+12+8 = **28px** (~+27%, the requested ~30% loosening).
+Font size, labels, routes, active indicator (`bg-sand/15`), colors, structure all untouched. Lint clean.
+
 **Deploy guardrails added (2026-06-14) — tooling, not app code.** Codified the production deploy
 flow so it can't be done out of order:
 - **`deploy-prod` skill** (`.claude/skills/deploy-prod/SKILL.md`): the canonical procedure —
