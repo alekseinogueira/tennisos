@@ -4,6 +4,18 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**"TENNISOS" text → `<TennisOSWordmark />` SVG component (2026-06-14).** New
+`src/components/TennisOSWordmark.jsx` renders the "55TC.OS" wordmark (Bebas Neue SVG `<text>`,
+variants default/dark/mono/ink, sizes sm/md/lg/xl). Replaced all three rendered "TennisOS" text
+nodes with the component, picking the variant by background:
+- **`Layout.jsx`** header `<span>` (forest bg, `text-2xl` → small): `<TennisOSWordmark size="sm" />`.
+- **`Login.jsx`** desktop hero `<h1>` (forest bg, large): `<TennisOSWordmark />` (default variant).
+- **`Login.jsx`** mobile brand `<h1>` (sand bg, `text-forest`): `<TennisOSWordmark variant="dark" />`.
+Relative imports (`./TennisOSWordmark`, `../components/TennisOSWordmark`); surrounding elements +
+classes left untouched (the now-inert font-size classes were intentionally not stripped per the
+"change nothing else" scope). Also fixed a lint blocker in the new component (unused `fontSize`
+destructure removed — behavior-neutral). Lint clean.
+
 **Nav item spacing tuned per breakpoint (2026-06-14) — Layout.jsx only.** Follow-up to the
 fade/spacing fix below. The `<ul>` inter-item gap was a single `gap-1.5` (6px) at every
 breakpoint; split it into responsive classes: **`gap-1.5` → `gap-1 md:gap-3`**. Per-link padding

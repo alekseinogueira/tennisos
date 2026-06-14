@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
 import { useAuth, isCoachRole } from '../auth/useAuth'
+import TennisOSWordmark from '../components/TennisOSWordmark'
 
 export default function Login() {
   const { session, role, loading, signIn } = useAuth()
@@ -39,7 +40,7 @@ export default function Login() {
 
         <div className="relative">
           <h1 className="font-display text-8xl leading-[0.85] tracking-wide">
-            TennisOS
+            <TennisOSWordmark />
           </h1>
           <p className="mt-3 text-sm font-medium uppercase tracking-[0.3em] text-sand/70">
             Student Portal
@@ -61,7 +62,7 @@ export default function Login() {
           {/* Compact brand mark — mobile only */}
           <div className="mb-10 lg:hidden">
             <h1 className="font-display text-6xl leading-none tracking-wide text-forest">
-              TennisOS
+              <TennisOSWordmark variant="dark" />
             </h1>
             <p className="mt-1 text-xs font-medium uppercase tracking-[0.3em] text-ink/50">
               55TC · Student Portal

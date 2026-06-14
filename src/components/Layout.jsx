@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth, isCoachRole } from '../auth/useAuth'
+import TennisOSWordmark from './TennisOSWordmark'
 
 export default function Layout() {
   const { user, role, signOut } = useAuth()
@@ -46,7 +47,7 @@ export default function Layout() {
     <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-sand">
       <header className="bg-forest text-sand">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
-          <span className="font-display text-2xl tracking-wide">TennisOS</span>
+          <span className="font-display text-2xl tracking-wide"><TennisOSWordmark size="sm" /></span>
 
           <nav className="nav-scroll min-w-0 touch-pan-x overflow-x-auto [-webkit-mask-image:linear-gradient(to_right,black_75%,transparent_100%)] [mask-image:linear-gradient(to_right,black_75%,transparent_100%)] md:[-webkit-mask-image:none] md:[mask-image:none]">
             <ul className="flex w-max flex-nowrap items-center gap-1 md:gap-3">
