@@ -48,15 +48,15 @@ export default function Layout() {
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-6">
           <span className="font-display text-2xl tracking-wide">TennisOS</span>
 
-          <nav className="nav-scroll min-w-0 touch-pan-x overflow-x-auto [-webkit-mask-image:linear-gradient(to_right,black_75%,transparent_100%)] [mask-image:linear-gradient(to_right,black_75%,transparent_100%)]">
-            <ul className="flex w-max flex-nowrap items-center gap-2">
+          <nav className="nav-scroll min-w-0 touch-pan-x overflow-x-auto [-webkit-mask-image:linear-gradient(to_right,black_75%,transparent_100%)] [mask-image:linear-gradient(to_right,black_75%,transparent_100%)] md:[-webkit-mask-image:none] md:[mask-image:none]">
+            <ul className="flex w-max flex-nowrap items-center gap-1.5">
               {navItems.map((item) => (
                 <li key={item.to} className="shrink-0">
                   <NavLink
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      `block rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                      `block rounded-lg px-2 py-1.5 text-sm font-medium transition ${
                         isActive ? 'bg-sand/15 text-sand' : 'text-sand/70 hover:text-sand'
                       }`
                     }

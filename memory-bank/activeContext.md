@@ -4,6 +4,17 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Nav spacing/fade fixes (2026-06-14) — Layout.jsx only.** Two small nav tweaks on top of the
+header polish below:
+- **Desktop fade removed.** The right-edge scroll-hint mask is now `md:[mask-image:none]
+  md:[-webkit-mask-image:none]` — it only renders below `md`. On desktop every nav item fits, so
+  the fade made no sense and now disappears. Mask still active on mobile (scroll hint intact).
+- **Mobile items tightened ~30%.** Inter-item gap `gap-2`→`gap-1.5` (8px→6px) and per-link
+  horizontal padding `px-3`→`px-2` (12px→8px). Adjacent link-text spacing went 12+8+12=32px →
+  8+6+8=22px (~31% tighter), so a third item is now visible to signal horizontal scroll. Font size
+  and active-tab indicator style untouched (still `bg-sand/15` rounded highlight). Applied at base
+  (harmless on desktop where items fit). Lint clean.
+
 **Header UX polish shipped (2026-06-13, `55099d9`) — Layout.jsx only.** Two focused tweaks,
 deployed via the deploy hook:
 - **Hamburger account menu (☰).** Replaced the always-visible email block + "Sign out" button
