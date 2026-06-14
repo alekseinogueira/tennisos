@@ -4,6 +4,14 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Wordmark upgraded to real 55TC logo paths (2026-06-14).** `TennisOSWordmark.jsx` rewritten:
+no longer Bebas Neue `<text>` for "55TC" — now renders the **actual 55tc-logo.svg vector paths**
+(viewBox `0 0 920 218`, `transform` flip) in a single-`color` fill, plus an "OS" suffix as
+`<text>` at 38% opacity for hierarchy, with a soft drop-shadow filter. Props unchanged in shape:
+`variant` (default sand / dark forest / ink), `size` (sm/md/lg/xl → height 20/32/44/56),
+`className`. The three call sites from the prior integration are **unchanged and still correct**
+(no text nodes left to replace) — only the component internals changed. Lint clean.
+
 **"TENNISOS" text → `<TennisOSWordmark />` SVG component (2026-06-14).** New
 `src/components/TennisOSWordmark.jsx` renders the "55TC.OS" wordmark (Bebas Neue SVG `<text>`,
 variants default/dark/mono/ink, sizes sm/md/lg/xl). Replaced all three rendered "TennisOS" text
