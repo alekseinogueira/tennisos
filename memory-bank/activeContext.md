@@ -4,6 +4,40 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Phase 8B — Onboarding & Student Experience COMPLETE (code-level, 2026-06-15).** Wired the full
+invite→claim flow plus two student-portal tweaks. NOT pushed/deployed (awaiting confirmation);
+Stripe (Phase 9) deliberately untouched. Six sub-steps:
+- **1 · Invite email Edge Function** — `supabase/functions/send-invite-email/index.ts` (Deno,
+  `Deno.serve`, CORS + OPTIONS). POST `{ student_name, student_email, invite_link }` → Resend API
+  (`from` "Aleksei Nogueira <55tc@55tenniscrew.com>", subject "Your 55TC portal is ready."). Key via
+  `Deno.env.get('RESEND_API_KEY')` — Edge secret only, never a VITE_ var. Verbatim branded HTML.
+  `.env.example` gained `RESEND_API_KEY` placeholder. **Deploy needs:** `supabase secrets set
+  RESEND_API_KEY=…` + `supabase functions deploy send-invite-email`.
+- **2 · Auto-fire on student create** — `StudentForm.jsx` `handleSubmit` calls
+  `supabase.functions.invoke('send-invite-email', …)` right after `createStudent` (best-effort,
+  `.catch(()=>{})`; InvitePanel copyable link stays as fallback). Fires once at creation.
+- **3 · Migration `004_profile_onboarding.sql`** (written, UNAPPLIED) — 9 `profiles` columns
+  (`ADD COLUMN IF NOT EXISTS`), public `avatars` Storage bucket, 4 owner-scoped storage policies,
+  and the `get_invite_student(email)` SECURITY DEFINER RPC for anon pre-fill.
+- **4 · `/claim` rebuilt** — new `screens/ClaimPage.jsx` (4-step onboarding, 1:1 with the approved
+  prototype; CSS verbatim in a scoped `<style>`, header uses `<TennisOSWordmark/>`). Step 1
+  `supabase.auth.signUp` → steps 2-4 UPDATE own profile (RLS; trigger already inserted the row).
+  Photo → `avatars` bucket. `db.js` gained `getStudentByEmail` (via RPC), `uploadAvatar`; clarified
+  `updateProfile` comment. `main.jsx` repointed `/claim` → ClaimPage. **Old `ClaimInvite.jsx`
+  DELETED** (orphaned). **Deploy/runtime needs: email confirmation must be OFF** (steps 2-4 need the
+  signUp session) — flagged.
+- **5 · Student nav reorder** — `Layout.jsx`: Home / Feedback / **Gallery / Library** / Profile
+  (Gallery before Library). Coach nav unchanged.
+- **6 · Credits card removed from student dashboard** — `StudentDashboard.jsx`: dropped the
+  Lesson-Credits card + its dead local fetch; "Next Session" now full-width. Ledger, `db.js`
+  `getCreditBalance`, and the admin credits hub all UNTOUCHED.
+- Lint + build clean throughout.
+
+**KNOWN GAPS / NEXT (8B):** (a) apply migration 004 + set `RESEND_API_KEY` secret + deploy the
+function; (b) disable Supabase email confirmation; (c) verify the live loop: coach creates student →
+email arrives → `/claim` pre-fills name/phone via the RPC → signUp → profile steps persist → avatar
+uploads → lands on `/`. `phone` is pre-fill only (no `profiles.phone` column — not persisted).
+
 **Two surgical Layout.jsx nav fixes (2026-06-14).** Isolated, one per breakpoint:
 - **Fix 1 — mobile logo↔nav gap.** The header flex row gap was a single `gap-8` (2rem) at all
   breakpoints; made responsive `gap-2 md:gap-8`. Below md the logo and nav sit ~1.5rem closer

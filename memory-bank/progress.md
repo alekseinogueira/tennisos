@@ -49,8 +49,21 @@
   - **`lib/youtube.js`** (NEW): shared `youtubeId(url)` parser used by both screens.
   - Lint + build clean.
 
+- **Onboarding & student experience — Phase 8B COMPLETE (code-level, 2026-06-15):**
+  - **Invite email:** `supabase/functions/send-invite-email/index.ts` (Deno + Resend, key via
+    Edge secret) sends the branded invite; `StudentForm` auto-invokes it on student create
+    (best-effort, InvitePanel link still the fallback). `.env.example` gained `RESEND_API_KEY`.
+  - **`/claim` onboarding:** new `ClaimPage.jsx` — 4 steps (account+signUp → tennis profile+avatar
+    → waiver → welcome), 1:1 with the approved prototype. `db.js` gained `getStudentByEmail` (RPC),
+    `uploadAvatar`. `main.jsx` repointed `/claim`; old `ClaimInvite.jsx` deleted.
+  - **Migration `004` (UNAPPLIED):** 9 `profiles` onboarding columns, public `avatars` bucket +
+    owner-scoped storage RLS, `get_invite_student(email)` SECURITY DEFINER RPC for anon pre-fill.
+  - **Student UX:** nav reordered to Home/Feedback/Gallery/Library/Profile; lesson-credits card
+    removed from the dashboard (ledger + admin hub untouched).
+  - Lint + build clean. NOT pushed/deployed yet.
+
 ## In Progress
-- Nothing actively mid-build. Admin roster + student portal + Phase 6 all complete at the
+- Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B all complete at the
   code level; all await **applied migrations + live data** to smoke-test.
 
 ## Recently Fixed
@@ -79,9 +92,11 @@
   reliably via that path.
 
 ## Not Started
-- Applying the Supabase migrations to a real project + seeding the coach account.
-- `.env` wiring + live smoke test of login/claim/reset + admin roster + the Phase 6 loop.
-- Coach invite Edge Function (`functions/invite`) + `lib/api.js` caller → real emailed invite.
+- Applying the Supabase migrations (now `001..004`) to a real project + seeding the coach account.
+- Setting the `RESEND_API_KEY` Edge secret + deploying `send-invite-email`; disabling email
+  confirmation in Supabase Auth (the `/claim` signUp flow needs the session for steps 2-4).
+- `.env` wiring + live smoke test of login/claim/reset + admin roster + the Phase 6 loop +
+  the 8B invite→claim→onboarding loop.
 - Coach screens still unbuilt: Packages (deferred to Stripe — no V1 UI).
 - Package-purchase credit grants (writes `lesson_credits` with a `package_id`) — deferred to Stripe.
 - Real gallery **upload**: `gallery` Storage bucket + storage RLS + upload UI (replaces the

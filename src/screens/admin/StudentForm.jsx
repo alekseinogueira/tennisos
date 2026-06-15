@@ -9,6 +9,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { createStudent, getStudent, updateStudent } from '../../lib/db'
 import InvitePanel from '../../components/InvitePanel'
+import { supabase } from '../../lib/supabase'
 
 const STATUSES = ['invited', 'active', 'inactive']
 
@@ -71,6 +72,18 @@ export default function StudentForm() {
       } else {
         // user_id stays NULL until the invite is claimed; stamp the creating coach.
         const row = await createStudent({ ...payload, created_by: user?.id ?? null })
+        // Coach creates student → invite email fires automatically. Best-effort:
+        // the copyable claim link in InvitePanel below is the fallback if it fails.
+        const inviteLink = `${window.location.origin}/claim?email=${encodeURIComponent(row.email)}`
+        supabase.functions
+          .invoke('send-invite-email', {
+            body: {
+              student_name: row.full_name,
+              student_email: row.email,
+              invite_link: inviteLink,
+            },
+          })
+          .catch(() => {})
         // Stay on-screen and surface the copyable invite link for the new student.
         setCreated(row)
         setSaving(false)

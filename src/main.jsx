@@ -11,7 +11,7 @@ import Layout from './components/Layout'
 import Login from './screens/Login'
 import ForgotPassword from './screens/ForgotPassword'
 import ResetPassword from './screens/ResetPassword'
-import ClaimInvite from './screens/ClaimInvite'
+import ClaimPage from './screens/ClaimPage'
 import ComingSoon from './screens/ComingSoon'
 import StudentDashboard from './screens/StudentDashboard'
 import Profile from './screens/Profile'
@@ -35,7 +35,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/login" element={<Login />} />
           <Route path="/forgot" element={<ForgotPassword />} />
           <Route path="/reset" element={<ResetPassword />} />
-          <Route path="/claim" element={<ClaimInvite />} />
+          <Route path="/claim" element={<ClaimPage />} />
 
           {/* Authenticated routes — gated, then wrapped in the branded shell */}
           <Route element={<ProtectedRoute />}>

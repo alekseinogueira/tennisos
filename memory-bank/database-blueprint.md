@@ -15,10 +15,25 @@
 | email      | text NOT NULL                | linking key for invites |
 | full_name  | text                         | |
 | created_at | timestamptz default now()    | |
+| *(8B onboarding, migration 004)* | | collected at `/claim` |
+| dominant_hand | text                      | Right / Left / Both |
+| tennis_level  | text                      | Never played / Beginner / Intermediate / Advanced |
+| favorite_surface | text                   | Hard / Clay / Grass / No preference |
+| favorite_player  | text                   | free text, optional |
+| date_of_birth | date                      | |
+| gender        | text                      | |
+| avatar_url    | text                      | public URL into the `avatars` Storage bucket |
+| term_accepted | boolean default false     | liability waiver accepted |
+| term_accepted_at | timestamptz            | when accepted |
 
 - Inserted by `handle_new_user()` trigger (security definer) on auth signup — no direct insert.
 - **RLS:** SELECT own (`id = auth.uid()`) OR `is_coach()`. UPDATE own non-role fields; coach may
   update any row incl. role. No client INSERT/DELETE.
+- **Onboarding (8B):** `get_invite_student(email)` SECURITY DEFINER RPC (migration 004, granted to
+  `anon`+`authenticated`) returns name/phone/email for an UNCLAIMED invite only, so the anonymous
+  `/claim` page can pre-fill before signup (the `students` RLS would otherwise return nothing).
+- **Storage:** public `avatars` bucket (migration 004); object path `{user_id}/avatar.{ext}`; storage
+  RLS = public read, owner-only write/update/delete (first path segment must equal `auth.uid()`).
 
 ## MVP business tables
 

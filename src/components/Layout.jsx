@@ -38,8 +38,8 @@ export default function Layout() {
     : [
         { to: '/', label: 'Home', end: true },
         { to: '/feedback', label: 'Feedback', end: true },
-        { to: '/library', label: 'Library', end: true },
         { to: '/gallery', label: 'Gallery', end: true },
+        { to: '/library', label: 'Library', end: true },
         { to: '/profile', label: 'Profile', end: true },
       ]
 

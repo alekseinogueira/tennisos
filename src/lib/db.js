@@ -25,7 +25,8 @@ export async function getProfile(userId) {
   )
 }
 
-/** Coach-only: update any profile (e.g. promote role). Students can't reach this. */
+/** Update a profile by id. RLS: a user may update their OWN row (non-role fields);
+ *  a coach may update any row incl. role. */
 export async function updateProfile(userId, patch) {
   return unwrap(
     await supabase.from('profiles').update(patch).eq('id', userId).select().single(),
@@ -52,6 +53,15 @@ export async function getStudentByUserId(userId) {
   return unwrap(
     await supabase.from('students').select('*').eq('user_id', userId).maybeSingle(),
   )
+}
+
+/** Onboarding pre-fill: look up an unclaimed invited student by email via the
+ *  get_invite_student RPC (SECURITY DEFINER — reachable by the anon claim visitor,
+ *  unlike a direct table select which RLS blocks). Returns { full_name, phone, email }
+ *  or null. */
+export async function getStudentByEmail(email) {
+  const rows = unwrap(await supabase.rpc('get_invite_student', { p_email: email }))
+  return rows?.[0] ?? null
 }
 
 /** Coach-only (RLS): create a roster row, pre-invite (user_id NULL). */
@@ -278,4 +288,19 @@ export async function unlinkLibraryFromFeedback(feedbackId, libraryId) {
       .eq('library_id', libraryId)
       .select(),
   )
+}
+
+// ─── storage (avatars) ───────────────────────────────────────────────────────
+
+/** Upload (or replace) the user's avatar in the public "avatars" bucket at
+ *  {userId}/avatar.{ext} and return its public URL. Storage RLS scopes writes to
+ *  the user's own {userId}/ folder. */
+export async function uploadAvatar(userId, file) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const path = `${userId}/avatar.${ext}`
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true, contentType: file.type })
+  if (error) throw error
+  return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
 }
