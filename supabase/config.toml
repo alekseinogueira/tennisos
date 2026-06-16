@@ -1,0 +1,9 @@
+# Supabase project config. Pins per-function settings so deploys don't rely on
+# CLI defaults. Project ref mirrors supabase/.temp/linked-project.json.
+project_id = "vdyvlylacsghnvtllrzj"
+
+# Invite email sender. Triggered from the coach's authenticated browser session
+# (StudentForm create flow), which sends a valid JWT (anon key), so keep JWT
+# verification ON — it blocks anonymous spam of the email endpoint at the gateway.
+[functions.send-invite-email]
+verify_jwt = true
