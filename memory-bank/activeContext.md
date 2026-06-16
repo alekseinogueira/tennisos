@@ -13,9 +13,16 @@ Stripe (Phase 9) deliberately untouched. Six sub-steps:
   `Deno.env.get('RESEND_API_KEY')` — Edge secret only, never a VITE_ var. Verbatim branded HTML.
   `.env.example` gained `RESEND_API_KEY` placeholder. **Deploy needs:** `supabase secrets set
   RESEND_API_KEY=…` + `supabase functions deploy send-invite-email`.
-- **2 · Auto-fire on student create** — `StudentForm.jsx` `handleSubmit` calls
-  `supabase.functions.invoke('send-invite-email', …)` right after `createStudent` (best-effort,
-  `.catch(()=>{})`; InvitePanel copyable link stays as fallback). Fires once at creation.
+- **2 · Auto-fire on student create** — `StudentForm.jsx` `handleSubmit` calls the Edge Function
+  right after `createStudent`, once the `inviteLink` is built (best-effort; InvitePanel copyable
+  link stays as fallback). Fires once at creation. **UPDATED 2026-06-16:** swapped the
+  `supabase.functions.invoke('send-invite-email', …)` helper for an explicit `fetch` POST to
+  `https://vdyvlylacsghnvtllrzj.supabase.co/functions/v1/send-invite-email` with
+  `Authorization: Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` and JSON body
+  `{ student_name, student_email, invite_link }`; errors now `console.error` instead of being
+  swallowed by `.catch(()=>{})`. Removed the now-unused `supabase` import from the file. Lint clean.
+  NOTE: if function logs still show no invocation, the root cause is likely function-side
+  (JWT `verify_jwt` / CORS) or a stale prod bundle, not the client call — a call already existed.
 - **3 · Migration `004_profile_onboarding.sql`** (written, UNAPPLIED) — 9 `profiles` columns
   (`ADD COLUMN IF NOT EXISTS`), public `avatars` Storage bucket, 4 owner-scoped storage policies,
   and the `get_invite_student(email)` SECURITY DEFINER RPC for anon pre-fill.
