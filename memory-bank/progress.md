@@ -60,13 +60,24 @@
     owner-scoped storage RLS, `get_invite_student(email)` SECURITY DEFINER RPC for anon pre-fill.
   - **Student UX:** nav reordered to Home/Feedback/Gallery/Library/Profile; lesson-credits card
     removed from the dashboard (ledger + admin hub untouched).
-  - Lint + build clean. NOT pushed/deployed yet.
+  - Lint + build clean. **Invite-email path DEPLOYED 2026-06-17** (frontend `fetch` fix on Vercel,
+    Edge Function deployed with PNG logo + `verify_jwt=true`, `RESEND_API_KEY` set) — end-to-end
+    email delivery still pending a real coach-creates-student send. The rest of 8B (`/claim`
+    onboarding, migration 004) remains code-level / unapplied.
 
 ## In Progress
 - Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B all complete at the
   code level; all await **applied migrations + live data** to smoke-test.
 
 ## Recently Fixed
+- **Invite-email send wired + deployed (2026-06-17, `ff812a4`→`6fc0727`):** the `send-invite-email`
+  Edge Function existed but was never being invoked. (1) `StudentForm` now POSTs to the function via
+  explicit `fetch` (anon-key auth) on student create, logging failures instead of swallowing them —
+  it replaced an existing `supabase.functions.invoke` call (a call already existed; the likely real
+  cause of "never invoked" was a stale prod bundle, now redeployed). (2) Added `supabase/config.toml`
+  pinning `verify_jwt = true`. (3) Swapped the broken inline-SVG email header logo for a hosted PNG
+  `<img>`. Frontend on Vercel + Edge Function both deployed; `RESEND_API_KEY` confirmed set; PNG
+  asset returns HTTP 200. **End-to-end delivery not yet confirmed by a real send.**
 - **Deploy guardrails (2026-06-14, `bcff6e0`) — tooling, not app code:** codified the prod deploy
   flow as a **`deploy-prod` skill** (commit → push → deploy hook → verify) and **enforce** it with a
   `PreToolUse(Bash)` hook (`.claude/hooks/guard-deploy.sh` + `.claude/settings.json`) that blocks the
@@ -93,8 +104,8 @@
 
 ## Not Started
 - Applying the Supabase migrations (now `001..004`) to a real project + seeding the coach account.
-- Setting the `RESEND_API_KEY` Edge secret + deploying `send-invite-email`; disabling email
-  confirmation in Supabase Auth (the `/claim` signUp flow needs the session for steps 2-4).
+- Disabling email confirmation in Supabase Auth (the `/claim` signUp flow needs the session for
+  steps 2-4). [`RESEND_API_KEY` secret + `send-invite-email` deploy — DONE 2026-06-17.]
 - `.env` wiring + live smoke test of login/claim/reset + admin roster + the Phase 6 loop +
   the 8B invite→claim→onboarding loop.
 - Coach screens still unbuilt: Packages (deferred to Stripe — no V1 UI).

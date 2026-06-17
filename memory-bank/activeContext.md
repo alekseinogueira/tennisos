@@ -6,18 +6,26 @@
 ## Current Focus
 **Phase 8B — Onboarding & Student Experience — invite-email path now DEPLOYED (2026-06-17).**
 Wired the full invite→claim flow plus two student-portal tweaks. Stripe (Phase 9) deliberately
-untouched. **DEPLOY STATUS (2026-06-17):** pushed `master`→`749ff6f` and shipped both halves —
+untouched. **DEPLOY STATUS (2026-06-17, master now at `6fc0727`, pushed):** shipped both halves —
 (a) Vercel production deployment `dpl_E1N4dp1cTA9BdjKEb3atQYiUSWGu` is READY on `749ff6f` (carries
-the StudentForm `fetch` fix); (b) `supabase functions deploy send-invite-email` ran (code unchanged
-→ "no change", but re-applied `verify_jwt=true` from the new `supabase/config.toml`). `RESEND_API_KEY`
-secret confirmed present. **STILL PENDING END-TO-END VERIFY:** coach must create a student in the live
-admin and confirm the email actually arrives — not yet confirmed by a real send. Six sub-steps:
+the StudentForm `fetch` fix; the later `6fc0727` logo/doc commits don't touch the frontend bundle so
+no new Vercel deploy was needed); (b) `supabase functions deploy send-invite-email` run **twice** —
+first on `749ff6f` (code unchanged → "no change", re-applied `verify_jwt=true` from the new
+`supabase/config.toml`), then on `6fc0727` which shipped **real new code** (script 5.058kB) carrying
+the SVG→PNG email-logo fix. `RESEND_API_KEY` secret confirmed present; the public PNG logo asset
+returns HTTP 200 (`image/png`, 14.5KB). **STILL PENDING END-TO-END VERIFY:** coach must create a
+student in the live admin and confirm the email actually arrives (and the header logo renders) —
+not yet confirmed by a real send. Six sub-steps:
 - **1 · Invite email Edge Function** — `supabase/functions/send-invite-email/index.ts` (Deno,
   `Deno.serve`, CORS + OPTIONS). POST `{ student_name, student_email, invite_link }` → Resend API
   (`from` "Aleksei Nogueira <55tc@55tenniscrew.com>", subject "Your 55TC portal is ready."). Key via
   `Deno.env.get('RESEND_API_KEY')` — Edge secret only, never a VITE_ var. Verbatim branded HTML.
   `.env.example` gained `RESEND_API_KEY` placeholder. **Deploy needs:** `supabase secrets set
-  RESEND_API_KEY=…` + `supabase functions deploy send-invite-email`.
+  RESEND_API_KEY=…` + `supabase functions deploy send-invite-email`. **EMAIL LOGO FIX (2026-06-17,
+  `6fc0727`):** the header logo was an inline `<svg>` (defs/filter/transform) that email clients
+  don't render — swapped for a hosted PNG `<img>` (`…/storage/v1/object/public/assets/55tcos-email-
+  logo.png`, public bucket) and dropped the SVG-only `.logo-wrap` height/filter CSS. Footer SVG left
+  as-is (cosmetic, low priority). The PNG source lives at repo root `55tcos-email-logo.png` (untracked).
 - **2 · Auto-fire on student create** — `StudentForm.jsx` `handleSubmit` calls the Edge Function
   right after `createStudent`, once the `inviteLink` is built (best-effort; InvitePanel copyable
   link stays as fallback). Fires once at creation. **UPDATED 2026-06-16:** swapped the
@@ -45,10 +53,11 @@ admin and confirm the email actually arrives — not yet confirmed by a real sen
   `getCreditBalance`, and the admin credits hub all UNTOUCHED.
 - Lint + build clean throughout.
 
-**KNOWN GAPS / NEXT (8B):** (a) apply migration 004 + set `RESEND_API_KEY` secret + deploy the
-function; (b) disable Supabase email confirmation; (c) verify the live loop: coach creates student →
-email arrives → `/claim` pre-fills name/phone via the RPC → signUp → profile steps persist → avatar
-uploads → lands on `/`. `phone` is pre-fill only (no `profiles.phone` column — not persisted).
+**KNOWN GAPS / NEXT (8B):** ~~set `RESEND_API_KEY` secret + deploy the function~~ DONE (2026-06-17).
+Remaining: (a) apply migration 004; (b) disable Supabase email confirmation; (c) verify the live
+loop: coach creates student → **email arrives + header logo renders** → `/claim` pre-fills name/phone
+via the RPC → signUp → profile steps persist → avatar uploads → lands on `/`. `phone` is pre-fill
+only (no `profiles.phone` column — not persisted).
 
 **Two surgical Layout.jsx nav fixes (2026-06-14).** Isolated, one per breakpoint:
 - **Fix 1 — mobile logo↔nav gap.** The header flex row gap was a single `gap-8` (2rem) at all

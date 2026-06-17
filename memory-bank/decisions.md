@@ -3,6 +3,39 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Email logo: hosted PNG `<img>` instead of inline SVG
+- **Decision:** In the `send-invite-email` template, replace the header inline `<svg>` 55TC logo
+  (defs + `filter` drop-shadow + `transform`-flipped paths + `<text>`) with a hosted PNG `<img>`
+  served from the public `assets` Supabase Storage bucket, and drop the SVG-only `.logo-wrap`
+  height/filter CSS. Footer SVG left untouched for now.
+- **Why:** Email clients (Gmail/Outlook/Apple Mail) strip or fail to render inline SVG, especially
+  `filter`/`defs` — the header logo was simply broken. A hosted raster PNG is the only broadly
+  reliable way to show a logo in HTML email.
+- **Alternatives:** Inline base64 PNG (rejected — bloats every send, some clients block data URIs);
+  keep the SVG (rejected — doesn't render); fix the footer SVG too now (deferred — cosmetic).
+
+## 2026-06-17 — Pin `verify_jwt = true` for send-invite-email via `supabase/config.toml`
+- **Decision:** Add `supabase/config.toml` with `[functions.send-invite-email] verify_jwt = true`
+  rather than leaving the setting to the CLI default at deploy time.
+- **Why:** No config.toml existed, so the function's JWT-verify behavior was implicit/unpinned. The
+  function is called from the coach's authenticated browser (a valid JWT — anon key or session is
+  always sent), so `true` passes normally **and** keeps the gateway rejecting anonymous callers,
+  preventing spam of the email endpoint. Pinning it makes the setting reproducible across deploys.
+- **Alternatives:** `verify_jwt = false` (rejected — opens the endpoint to anonymous email-send
+  spam); leave it implicit (rejected — non-reproducible, was the source of the "is it the JWT?"
+  uncertainty when debugging "never invoked").
+
+## 2026-06-17 — Fire the invite email via explicit `fetch` (not `supabase.functions.invoke`)
+- **Decision:** `StudentForm` calls the Edge Function with a raw `fetch` POST to the function URL
+  (anon key in the `Authorization` header), replacing the pre-existing `supabase.functions.invoke`
+  call; errors are `console.error`-logged, not swallowed.
+- **Why:** The user reported the function was "never invoked" and asked for an explicit `fetch` with
+  the anon key. A call already existed via `invoke` — rather than add a duplicate (which would
+  double-send), the existing call was converted to the requested explicit form. The likelier real
+  cause of zero invocations was a stale production bundle (now redeployed), not the call style.
+- **Alternatives:** Keep `invoke` (functionally equivalent, but didn't match the explicit-fetch
+  request and kept swallowing errors); add a second call (rejected — would double-send the email).
+
 ## 2026-06-14 — Enforce deploy order with a PreToolUse hook (push before deploy hook)
 - **Decision:** Codify the production deploy flow as a `deploy-prod` skill AND mechanically enforce
   it with a `PreToolUse(Bash)` hook (`.claude/hooks/guard-deploy.sh` + `.claude/settings.json`) that
