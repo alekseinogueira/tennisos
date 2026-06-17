@@ -4,6 +4,35 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Phase 8D — Student Profile Page (2026-06-17, code-level, NOT committed-then-deployed at write
+time — commit pending this `/umb`).** Replaced the read-only `/profile` stub ("Nothing here yet")
+with a real, editable player profile. Lint + build clean. Built in 3 approved steps, all in
+`src/screens/Profile.jsx` (full rewrite) + one `db.js` helper:
+- **Step 1 — read view.** Avatar at top (photo, or a **forest circle + sand initial** fallback —
+  inverted vs PlayerCard's sand/forest because this page is on sand, keeping the contrast rule) +
+  first/last name in Bebas Neue. Two white cards: **YOUR DETAILS** (full name · email · phone ·
+  DOB formatted `Jan 15, 1990` via a local-date parse, no TZ shift · gender) and **YOUR GAME**
+  (level · hand · surface · favorite-player value chips). Every empty field renders `—` (`dash()`
+  helper + `formatDob`). Self-fetches via `getStudentProfile(user.id)` (same merge PlayerCard uses);
+  email comes from `user.email` (auth, read-only), phone from the roster row.
+- **Step 2 — edit mode.** An **EDIT PROFILE** button (forest, header-right) flips to a separate
+  `EditView`. Editable: full name, phone, DOB, gender, level, hand, surface, favorite player; email
+  shown **disabled** (sand-tinted). Gender + the three tennis fields use the **onboarding solid-pill
+  chip selectors** (re-implemented in Tailwind to match `ClaimPage`'s `Chips`, not `<select>`s).
+  Save → new **`db.js` `updateStudentProfile({ userId, profilePatch, studentId, phone })`** (writes
+  `profiles` via `updateProfile`, then `students.phone` via `updateStudent` only if a roster row
+  exists — the two tables share no FK). Empty fields persist as `null`. Optimistic local update →
+  back to read view with a "Saved" banner; **Cancel** discards.
+- **Step 3 — avatar upload (edit mode).** Clickable avatar → hidden `image/*` file input. Validates
+  `≤ 5MB` + image type (human errors). **Uploads immediately** to Storage (`uploadAvatar` →
+  `avatars/{user_id}/avatar.{ext}`) with an instant local `objectURL` preview + an "Uploading…"
+  overlay (degrades gracefully on slow connections; Save disabled mid-upload), but the `avatar_url`
+  is **committed to `profiles` only on Save** (Cancel leaves the DB pointer untouched). objectURL
+  revoked on unmount.
+- **NOT committed-then-deployed yet at write time — commit pending this `/umb`. Do NOT deploy (per
+  request).** Live persistence still needs migration 004 applied (the 9 `profiles` onboarding
+  columns + `avatars` bucket) — same unapplied-migration blocker as 8B/8C.
+
 **Phase 8C — Student Home Dashboard (2026-06-17, code-level, NOT pushed/deployed).** Rebuilt the
 student Home (`/`) as a broadcast-style player credential. Lint + build clean. Three steps, each
 approved before applying:

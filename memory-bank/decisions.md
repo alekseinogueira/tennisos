@@ -3,6 +3,52 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Phase 8D Profile: avatar uploads immediately, `avatar_url` commits on Save
+- **Decision:** In edit mode, picking a photo **uploads to Storage right away** (`uploadAvatar` →
+  `avatars/{user_id}/avatar.{ext}`) and shows an instant local `objectURL` preview, but the
+  resulting public URL is held in local state and written to `profiles.avatar_url` **only when the
+  user hits Save** (folded into the same `updateStudentProfile` patch). Cancel leaves the DB pointer
+  untouched. Save is disabled while an upload is in flight.
+- **Why:** The user explicitly chose "upload immediately but commit on save." Uploading on file-pick
+  gives a real public URL and lets the preview reflect the actual stored image; deferring the DB
+  write to Save means a Cancel doesn't repoint the profile, and there's no orphaned `avatar_url`
+  pointing at a half-edited session. Disabling Save mid-upload avoids committing a URL before its
+  bytes exist.
+- **Alternatives:** Upload-and-persist on the spot (rejected — Cancel couldn't undo it, and it
+  diverges from the rest of the form's save-on-Save model); defer the **upload** itself to Save and
+  only preview locally (rejected — Save would then block on a network upload and couldn't show the
+  true stored image first). Known tradeoff logged in progress.md: the Storage object at the fixed
+  path is overwritten on pick even if the user later cancels.
+
+## 2026-06-17 — Phase 8D Profile: `updateStudentProfile` writes two tables; phone stays on `students`
+- **Decision:** A single `db.js` `updateStudentProfile({ userId, profilePatch, studentId, phone })`
+  helper persists the edit form: it `updateProfile`s the identity/tennis fields on `profiles`, then
+  `updateStudent`s `phone` on the roster row **only if `studentId` is present**. Phone is NOT moved
+  onto `profiles`; email stays read-only (auth-owned).
+- **Why:** `profiles` and `students` share no FK (only the auth id), and `phone` already lives on the
+  `students` roster row (there is no `profiles.phone` column — 8B noted phone is roster-only). One
+  coordinating helper keeps the two-table write in the data layer (screens never touch supabase
+  directly) and degrades gracefully for a profile with no roster row (phone simply skipped). Email is
+  managed by Supabase Auth, so it's display-only here.
+- **Alternatives:** Add a `profiles.phone` column and write everything to one table (rejected —
+  schema change + duplicates the roster's phone, drift risk); two separate calls from the screen
+  (rejected — puts orchestration in the component, against the db-layer rule); make email editable
+  (rejected — changing an auth email needs a verification flow, out of scope).
+
+## 2026-06-17 — Phase 8D Profile: re-implement onboarding chips in Tailwind (not import ClaimPage's)
+- **Decision:** The edit form's chip selectors (gender + tennis fields) are a **Tailwind**
+  re-implementation of the onboarding `Chips` pattern (pill row, solid forest when selected), not a
+  shared import of `ClaimPage`'s `Chips` component.
+- **Why:** `ClaimPage`'s `Chips` is styled by a scoped `<style>` block of plain CSS classes
+  (`.chip`/`.chip.selected`) tied to that screen's prototype-verbatim stylesheet; importing it would
+  drag that CSS context into the Tailwind-native Profile screen. Re-doing the same visual in Tailwind
+  keeps Profile consistent with its own styling system while matching the onboarding look the brief
+  asked for. Same value lists (HANDS/LEVELS/SURFACES/GENDERS) duplicated as small constants.
+- **Alternatives:** Extract a shared `Chips` component used by both (deferred — `ClaimPage` is a
+  working prototype-verbatim screen; refactoring it to a Tailwind shared component is restructuring a
+  working file for no functional gain, hard-rule "ask before restructuring"); use `<select>`s
+  (rejected — the brief explicitly requires the onboarding chip pattern, not plain selects).
+
 ## 2026-06-17 — Phase 8C Home: self-fetching widgets + merge `getStudentProfile` (no FK join)
 - **Decision:** Build the student Home as small **self-fetching** components (`PlayerCard`,
   `LastFeedbackWidget`) rather than threading data down from `StudentDashboard`. `getStudentProfile`

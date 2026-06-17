@@ -42,6 +42,19 @@ export async function updateProfile(userId, patch) {
   )
 }
 
+/** Save the student's editable profile. The identity fields live on `profiles`
+ *  (own-row UPDATE via RLS); `phone` lives on the `students` roster row and is
+ *  written separately — the two tables share no FK, only the auth id. Pass
+ *  `studentId` to persist phone; omit it (no roster row) and phone is skipped.
+ *  Returns the updated profile row. */
+export async function updateStudentProfile({ userId, profilePatch, studentId, phone }) {
+  const profile = await updateProfile(userId, profilePatch)
+  if (studentId && phone !== undefined) {
+    await updateStudent(studentId, { phone })
+  }
+  return profile
+}
+
 // ─── students (roster) ───────────────────────────────────────────────────────
 
 /** Coach: full roster. Student: RLS narrows to their own row. */

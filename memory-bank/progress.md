@@ -79,9 +79,23 @@
   - Lint + build clean. **Known gap:** no `sessions_count` column → SESSIONS chip shows `0` until a
     real source is wired.
 
+- **Student Profile page — Phase 8D COMPLETE (code-level, 2026-06-17):**
+  - **`screens/Profile.jsx`** (full rewrite): read + edit modes. Read = avatar (photo or forest-
+    circle/sand-initial) + Bebas name + two white cards, **YOUR DETAILS** (name · email · phone ·
+    DOB `Jan 15, 1990` · gender) and **YOUR GAME** (level · hand · surface · fav-player value chips);
+    empty fields → `—`. Edit = **EDIT PROFILE** button → labeled inputs + the onboarding solid-pill
+    **chip selectors** (gender + 3 tennis fields), email disabled. Save → optimistic update + "Saved"
+    banner; Cancel discards. **Avatar upload** in edit mode: `image/*` ≤ 5MB, instant local preview +
+    "Uploading…" overlay, uploads to Storage immediately but commits `avatar_url` to `profiles` only
+    on Save.
+  - **`db.js`**: `updateStudentProfile({ userId, profilePatch, studentId, phone })` — writes the
+    `profiles` identity fields, then `students.phone` separately (only if a roster row exists).
+  - Lint + build clean. **Live persistence blocked on migration 004** (the `profiles` onboarding
+    columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
+
 ## In Progress
-- Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C all complete at the
-  code level; all await **applied migrations + live data** to smoke-test.
+- Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D all complete at
+  the code level; all await **applied migrations + live data** to smoke-test.
 
 ## Recently Fixed
 - **Missing-`profiles`-row PGRST116 bug — fix committed, NOT deployed (2026-06-17, `ff00912`):**
@@ -138,6 +152,13 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Profile avatar uploads to Storage before Save commits it** (Phase 8D) — the chosen "upload
+  immediately, commit `avatar_url` on Save" flow means picking a new photo overwrites the Storage
+  object at the fixed path `avatars/{user_id}/avatar.{ext}` right away; if the user then **Cancels**,
+  the DB pointer is untouched (read view keeps the old URL) but the Storage bytes at that path may
+  already be replaced (only matters when the new file shares the old extension; a different ext writes
+  a new path and the old object is orphaned). Accepted tradeoff for an instant preview; no cache-bust
+  query on the public URL, so a same-path replacement can show stale until a hard refresh.
 - **Home SESSIONS chip is hardcoded `0`** (Phase 8C) — `PlayerCard` reads `student.sessions_count`,
   but no such column exists on `students`/`profiles`, so the `?? 0` fallback always wins. Wire a real
   source (add a column, or derive a count from `feedbacks`/lesson rows) to make it meaningful.
