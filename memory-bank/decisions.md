@@ -3,6 +3,23 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Gate the 8C→10 production deploy on coach-confirmed migration 006
+- **Decision:** Before firing the Vercel deploy hook for `5ab6924`, paused and asked the coach to
+  confirm migration `006_sessions` is applied in the live Supabase project; deployed only after a
+  "yes". Did not block on `004`/`005` (flagged them for follow-up confirmation instead).
+- **Why:** The shipped code (`CoachDashboard`, `StudentDetail`) queries the `sessions` table inside
+  a load-time `Promise.all`. If `006` weren't applied, `/coach` would render only an error banner and
+  `/admin/students/:id` would regress from a working credit hub to a hard error — a visible
+  production break on the coach's two main pages. The deploy is outward-facing and not trivially
+  reversible (would need a rollback), so a DB-state precondition the deploy-prod skill can't check
+  warranted an explicit confirmation. `004`/`005` only affect Profile-edit/avatar save and `/claim`
+  (which fail gracefully or are lower-traffic), so they didn't justify holding the whole deploy.
+- **Alternatives:** Deploy immediately per the literal instruction (rejected — would risk breaking
+  live coach pages on an unverified assumption); hold the entire deploy until ALL of `004`/`005`/`006`
+  were confirmed (rejected — over-blocking; only `006` gates the just-shipped pages, and the user
+  wanted to ship); try to verify the live schema myself (not possible — no `.env`/DB access this
+  session).
+
 ## 2026-06-17 — Post-8C–10 audit: fix only the one real bug, leave intentional patterns alone
 - **Decision:** During the pre-deploy audit of phases 8C→10, the only code change made was fixing
   `LastFeedbackWidget.formatDate` (blank date on the `created_at` timestamp fallback). The display

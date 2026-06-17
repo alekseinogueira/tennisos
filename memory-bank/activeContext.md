@@ -16,8 +16,20 @@ fallback — used when a feedback's `lesson_date` is null — produced an invali
 rendered blank; now branches on whether the value contains `T`. Lint + build clean. **Two non-bugs
 noted:** ACTIVE STUDENTS counting `status='active'` is correct (coach sets status via StudentForm);
 the "gallery by session + upload" feature named in the audit prompt was never committed in 8C–10
-(no such commit; `Gallery.jsx` is the earlier Phase 8 screen, unchanged). Committed
-`fix: post-8c-10 audit fixes`, then pushed + deployed via the `deploy-prod` skill.
+(no such commit; `Gallery.jsx` is the earlier Phase 8 screen, unchanged).
+
+**DEPLOYED & VERIFIED LIVE (2026-06-17).** Committed `fix: post-8c-10 audit fixes` (`5ab6924`),
+pushed to `origin/master`, fired the Vercel deploy hook via the `deploy-prod` skill, and **verified
+production serves `5ab6924`** (deployment `dpl_DsUQdKdF9pFSWdWx8dTZhz3j5x9A`, state READY, target
+production, `githubCommitSha 5ab6924…`, branch master). This is the **first production deploy of the
+entire Phase 8C→10 stack** (player card + home widgets, student profile, library folders, session
+scheduling + reminder email, coach dashboard HQ) plus the `ff00912` profiles fix — all of which had
+been committed-only until now. **The coach confirmed migration `006_sessions` is applied** in the
+live Supabase project (the deploy was gated on this — `/coach` and `/admin/students/:id` query the
+`sessions` table and would have hard-errored otherwise). **Still worth a manual smoke-test:** load
+`/coach` and `/admin/students/:id` on the live site, and confirm migrations `004` (profiles
+onboarding columns + `avatars` bucket — Profile edit/avatar save) and `005` (profiles self-insert —
+`/claim`) are applied; the user only explicitly confirmed `006`.
 
 **Phase 10 — Coach Dashboard HQ (2026-06-17, code-level, committed this `/umb`, NOT pushed/deployed
 per request).** Replaced the coach Home placeholder (`/coach` → `ComingSoon "Coach Home"`) with a full
@@ -482,12 +494,13 @@ Extracted the `youtubeId` URL parser into **`lib/youtube.js`** and used it in bo
 - Deploy: Vercel at `portal.55tenniscrew.com` (apex/www + n8n untouched). Stripe = later.
 
 ## Next Steps (next session)
-1. **Apply migrations `001..006`** to the Supabase project (dashboard SQL editor OR `supabase db
-   push`) — `005` (profiles self-insert RLS) is REQUIRED for the new `/claim` upsert to pass RLS;
-   `006` (`sessions` table + RLS) is REQUIRED for Phase 8F scheduling to persist; confirm `001..004`
-   are actually applied (memory still lists them UNAPPLIED). Then seed the coach account and set
-   `profiles.role='coach'`. **Then redeploy the frontend** (`deploy-prod`) so the `getProfile`/claim
-   fixes in `ff00912` + the Phase 8F scheduling UI + the Phase 10 Coach Dashboard HQ reach production.
+1. **Frontend is now DEPLOYED** (`5ab6924`, verified live 2026-06-17) — the whole 8C→10 stack +
+   `ff00912` are in production. **Remaining migration confirmation:** the coach confirmed `006`
+   (`sessions`) is applied; still **confirm `004`** (profiles onboarding columns + `avatars` bucket —
+   without it Profile edit/avatar Save throws) **and `005`** (profiles self-insert RLS — without it
+   `/claim` upsert is RLS-blocked) are applied, plus `001..003`. Then seed/verify the coach account
+   has `profiles.role='coach'`. **Smoke-test live:** `/coach` + `/admin/students/:id` (both hit
+   `sessions`), Profile edit + avatar save (needs `004`), and the `/claim` flow (needs `005`).
 2. Set `.env` locally (VITE_SUPABASE_*) and smoke-test login/claim/reset + the admin roster
    (create student → invite link → edit) + the **credit loop** (StudentDetail: record a +/−
    entry → balance + history update → student dashboard shows the live balance) + the

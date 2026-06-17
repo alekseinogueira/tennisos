@@ -145,6 +145,13 @@
   smoke-test.
 
 ## Recently Fixed
+- **Phase 8C→10 stack DEPLOYED & verified live (2026-06-17, `5ab6924`):** first production deploy of
+  player card + home widgets, student profile, library folders, session scheduling + reminder email,
+  and the coach dashboard HQ — plus the `ff00912` profiles fix — all previously committed-only.
+  Pushed to `origin/master`, fired the Vercel deploy hook via `deploy-prod`, and confirmed production
+  serves `5ab6924` (deployment `dpl_DsUQdKdF9pFSWdWx8dTZhz3j5x9A`, READY, target production). Gated
+  on the coach confirming migration `006_sessions` is applied. Migrations `004`/`005` still to be
+  confirmed (affect Profile edit/avatar + `/claim`, not the just-shipped dashboard pages).
 - **Post-8C–10 audit fix — `LastFeedbackWidget` blank date (2026-06-17, `fix: post-8c-10 audit
   fixes`):** the home "Last Session Feedback" card's `formatDate` assumed a date-only string and
   built `` `${value}T00:00:00` ``. When a feedback's `lesson_date` is null it falls back to the
@@ -217,9 +224,10 @@
   from `students.user_id` which is NULL at that point. There's no backfill in `handle_new_user`, so once
   the student claims, that session (with `user_id` NULL) still won't surface in their RLS-scoped Home
   "Next Session" widget. Sessions booked AFTER claim work normally. Accepted V1 trade-off.
-- **Phase 8F frontend not live; migration 006 unapplied** — the `sessions` table + RLS must be applied
-  (and the frontend redeployed) before scheduling persists. The `send-session-reminder` Edge Function IS
-  deployed but unverified by a real send.
+- **Phase 8F frontend now LIVE (`5ab6924`, 2026-06-17); migration 006 confirmed applied** by the coach.
+  Scheduling should now persist. Still unverified by a real end-to-end run (schedule a session →
+  confirm it persists, surfaces in the student's Next Session widget, and the `send-session-reminder`
+  email actually arrives — the Edge Function is deployed but never verified by a real send).
 - **Profile avatar uploads to Storage before Save commits it** (Phase 8D) — the chosen "upload
   immediately, commit `avatar_url` on Save" flow means picking a new photo overwrites the Storage
   object at the fixed path `avatars/{user_id}/avatar.{ext}` right away; if the user then **Cancels**,
@@ -230,10 +238,10 @@
 - **Home SESSIONS chip is hardcoded `0`** (Phase 8C) — `PlayerCard` reads `student.sessions_count`,
   but no such column exists on `students`/`profiles`, so the `?? 0` fallback always wins. Wire a real
   source (add a column, or derive a count from `feedbacks`/lesson rows) to make it meaningful.
-- **Profiles-row fix `ff00912` is committed but NOT live** — migration `005_profiles_self_insert.sql`
-  must be applied in Supabase (the `/claim` upsert is RLS-blocked without it) AND the frontend must
-  be redeployed (`deploy-prod`) before the `getProfile`/claim resilience reaches production. Until
-  then a student with no `profiles` row can still hit the PGRST116 error on the live (old) bundle.
+- **Profiles-row fix `ff00912` frontend now LIVE (`5ab6924`, 2026-06-17)** — the `getProfile`
+  `.maybeSingle()` + claim `upsertProfile` resilience is in production. **Still gated on migration
+  `005_profiles_self_insert.sql`** being applied (the `/claim` upsert is RLS-blocked without it) —
+  the user confirmed `006` but not `005`. Confirm `005` is applied before relying on the claim flow.
 - **Vercel git push-to-deploy is unreliable** — git-triggered (and CLI) builds sat in `UNKNOWN`
   / never built for this project. Working path is the **deploy hook + manual deploy**. Repair the
   git auto-build integration before relying on push-to-deploy.
