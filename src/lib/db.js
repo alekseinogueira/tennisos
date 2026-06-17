@@ -73,6 +73,20 @@ export async function getStudentByEmail(email) {
   return rows?.[0] ?? null
 }
 
+/** Home dashboard: the student's identity (profiles) + roster row (students),
+ *  resolved from one auth id. profiles and students share no FK — they only
+ *  share the auth user id (profiles.id = students.user_id) — so we fetch both
+ *  in parallel and merge. Both helpers are null-safe (maybeSingle), so an
+ *  incomplete or unclaimed student yields { profile, student } with null parts
+ *  rather than throwing. */
+export async function getStudentProfile(userId) {
+  const [profile, student] = await Promise.all([
+    getProfile(userId),
+    getStudentByUserId(userId),
+  ])
+  return { profile, student }
+}
+
 /** Coach-only (RLS): create a roster row, pre-invite (user_id NULL). */
 export async function createStudent(fields) {
   return unwrap(
@@ -166,6 +180,21 @@ export async function getFeedback(id) {
   return unwrap(
     await supabase.from('feedbacks').select('*').eq('id', id).single(),
   )
+}
+
+/** The single most recent feedback for a student (lesson_date desc, then
+ *  created_at), or null if none. RLS: a student sees only their own. */
+export async function getLastFeedback(studentId) {
+  const rows = unwrap(
+    await supabase
+      .from('feedbacks')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('lesson_date', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
+      .limit(1),
+  )
+  return rows?.[0] ?? null
 }
 
 export async function createFeedback(fields) {

@@ -3,6 +3,24 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Phase 8C Home: self-fetching widgets + merge `getStudentProfile` (no FK join)
+- **Decision:** Build the student Home as small **self-fetching** components (`PlayerCard`,
+  `LastFeedbackWidget`) rather than threading data down from `StudentDashboard`. `getStudentProfile`
+  fetches `profiles` (by `id`) and `students` (by `user_id`) **in parallel and merges** instead of a
+  PostgREST embedded join. The SESSIONS chip reads `student.sessions_count` with a `?? 0` fallback,
+  even though no such column exists yet.
+- **Why:** The spec used `<PlayerCard />` / `<LastFeedbackWidget />` with no props, so self-fetching
+  is the natural fit and keeps `StudentDashboard` pure composition. `profiles` and `students` share
+  **no foreign key** — only the same `auth.users` id (`profiles.id` = `students.user_id`) — so a
+  PostgREST `select('…, students(*)')` embed isn't available; two null-safe (`maybeSingle`) reads +
+  merge gives the same result without schema assumptions and degrades gracefully (incomplete or
+  unclaimed students → `—` placeholders). `?? 0` keeps SESSIONS from showing `undefined` now and
+  becomes correct the moment a real source is wired.
+- **Alternatives:** Add a real FK / DB view to enable a single embedded join (rejected for now —
+  schema change beyond this UI session); pass data as props from the dashboard (rejected — extra
+  threading for no gain given the no-prop spec); omit SESSIONS until a column exists (rejected — the
+  spec asked for the chip; a `0` placeholder is the honest interim, logged as a Known Issue).
+
 ## 2026-06-17 — Guarantee the `profiles` row at `/claim` via a client upsert + self-insert RLS
 - **Decision:** Stop relying solely on the `handle_new_user()` trigger to create a student's
   `profiles` row. After `signUp`, `ClaimPage` step 1 now calls a new `upsertProfile({ id, email,

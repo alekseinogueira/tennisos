@@ -65,8 +65,22 @@
     email delivery still pending a real coach-creates-student send. The rest of 8B (`/claim`
     onboarding, migration 004) remains code-level / unapplied.
 
+- **Student Home dashboard — Phase 8C COMPLETE (code-level, 2026-06-17):**
+  - **`PlayerCard.jsx`** (NEW): broadcast-style credential at the top of Home — forest + court
+    motif, circular avatar (sand-circle + forest-initial fallback), first name in Bebas Neue
+    (clamp 2.5–4rem), and a stat strip (LEVEL · ARM · SURFACE · SESSIONS). Self-fetching; missing
+    tennis fields degrade to `—`.
+  - **`LastFeedbackWidget.jsx`** (NEW): white card below Next Session — date + 120-char `body`
+    excerpt + `View →` to `/feedback`; humanized dashed-border empty state. Self-fetching.
+  - **`StudentDashboard.jsx`**: pure composition (PlayerCard → tagline → Next Session → LastFeedback);
+    old local fetch/error/state removed.
+  - **`db.js`**: `getStudentProfile(userId)` (merge `getProfile` + `getStudentByUserId`) and
+    `getLastFeedback(studentId)`.
+  - Lint + build clean. **Known gap:** no `sessions_count` column → SESSIONS chip shows `0` until a
+    real source is wired.
+
 ## In Progress
-- Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B all complete at the
+- Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C all complete at the
   code level; all await **applied migrations + live data** to smoke-test.
 
 ## Recently Fixed
@@ -124,6 +138,9 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Home SESSIONS chip is hardcoded `0`** (Phase 8C) — `PlayerCard` reads `student.sessions_count`,
+  but no such column exists on `students`/`profiles`, so the `?? 0` fallback always wins. Wire a real
+  source (add a column, or derive a count from `feedbacks`/lesson rows) to make it meaningful.
 - **Profiles-row fix `ff00912` is committed but NOT live** — migration `005_profiles_self_insert.sql`
   must be applied in Supabase (the `/claim` upsert is RLS-blocked without it) AND the frontend must
   be redeployed (`deploy-prod`) before the `getProfile`/claim resilience reaches production. Until

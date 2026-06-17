@@ -4,6 +4,30 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Phase 8C — Student Home Dashboard (2026-06-17, code-level, NOT pushed/deployed).** Rebuilt the
+student Home (`/`) as a broadcast-style player credential. Lint + build clean. Three steps, each
+approved before applying:
+- **`PlayerCard.jsx`** (NEW) — the forest "hero" at the top of Home: court motif, circular avatar
+  (`profiles.avatar_url`) with a **sand-circle + forest initial** fallback (Bebas Neue), first name
+  in Bebas Neue (`clamp(2.5rem,8vw,4rem)`), and a 10px/uppercase/2px-tracking stat strip:
+  **LEVEL · ARM · SURFACE · SESSIONS**. Self-fetching (uses `useAuth` + new `getStudentProfile`);
+  every missing tennis field degrades to `—`, never errors.
+- **`LastFeedbackWidget.jsx`** (NEW) — white card below Next Session: "LAST SESSION FEEDBACK" label,
+  date (`lesson_date` → `created_at` fallback, formatted `Jun 12, 2026`), 120-char excerpt of
+  `feedbacks.body`, optional Bebas title, `View →` link to `/feedback`. Humanized dashed-border
+  empty state ("No feedback yet. Your first session is coming."). Self-fetching.
+- **`StudentDashboard.jsx`** — collapsed to pure composition: `<PlayerCard />` → tagline
+  ("Less Theory. More Game.") → Next Session placeholder (kept as-is) → `<LastFeedbackWidget />`.
+  Dropped the old local fetch/error/state (children self-fetch). The forest hero is now the
+  PlayerCard surface, not a separate section.
+- **`db.js`** gained **`getStudentProfile(userId)`** (parallel `getProfile` + `getStudentByUserId`,
+  merged — no FK between `profiles`/`students`, they only share the auth id) and
+  **`getLastFeedback(studentId)`** (most recent, `lesson_date` desc then `created_at`, `limit(1)`).
+- **KNOWN GAP:** there is **no `sessions_count` column** in `students` (or `profiles`), so the
+  SESSIONS chip reads `0` via a `?? 0` fallback until a real source is wired (a column, or a derived
+  count from feedbacks / lesson rows). Selecting `*` makes the absent field harmless (undefined→0).
+- **NOT committed-then-deployed yet at write time of this bullet — commit pending this `/umb`.**
+
 **Root-bug fix (2026-06-17, committed `ff00912`, NOT pushed/deployed): the missing-`profiles`-row
 PGRST116 error.** Killed the "JSON object requested, multiple (or no) rows returned" failure at its
 source — a signed-up student with no `profiles` row. Three coordinated changes, lint clean,
