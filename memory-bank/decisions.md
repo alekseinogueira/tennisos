@@ -3,6 +3,28 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — PlayerCard stat sheet: 4-col label-row over value-row via a doubled map, not stacked pairs
+- **Decision:** Rebuilt the mobile stat sheet as a single `grid grid-cols-4 gap-x-3 gap-y-1` whose
+  children are `stats.map(label)` followed by `stats.map(value)` — so the four labels fill row 1 and the
+  four values fill row 2 (row-major), each value directly under its own label. Dropped the per-field
+  `<Stat>` component (and the earlier 2×2 layout). Also switched the photo+name row to center the avatar
+  against the WHOLE text block (`items-center` with given names back inside the text column), aligning
+  midpoints rather than tops.
+- **Why:** The coach's second sketch defined the structure as two real rows — one row of all labels, one
+  row of all values — not four independent label/value pairs. A `grid-cols-4` with a doubled `stats` map
+  expresses that directly: the grid guarantees four equal columns and perfect label↔value column
+  alignment with no manual width math, and it reads as the intended "spec sheet." Centering the avatar
+  against the full text block (incl. given names) is what the correction explicitly asked for ("align
+  their centers, not their tops"), which supersedes the v2 choice of centering against label+surname
+  only — so the `pl-24` given-names indent (which only existed to fake alignment when given was pulled
+  out of the row) is no longer needed and was removed.
+- **Alternatives:** Keep the 2×2 grid of stacked label/value pairs (rejected — wrong structure per the
+  sketch; it reads as four cards, not two rows); two separate flex rows, one for labels one for values
+  (rejected — columns wouldn't stay aligned unless each cell shared a fixed width; the grid does this for
+  free); keep centering against label+surname only (rejected — the correction explicitly wants the whole
+  text block centered). Flagged a fit risk: four columns at ~70px each at 375px make `ADVANCED`/`SESSIONS`
+  tight; left at `text-sm`/`tracking-[0.2em]` for now with a noted fallback to smaller value text.
+
 ## 2026-06-17 — PlayerCard v2: split into two full sibling blocks; extract name helper to lib/name.js
 - **Decision:** For the PlayerCard mobile v2, abandoned the per-value `sm:` override approach used in
   v1 and instead rendered **two complete sibling subtrees** — one `sm:hidden` (mobile), one

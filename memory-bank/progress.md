@@ -145,14 +145,21 @@
   smoke-test.
 
 ## Recently Fixed
-- **PlayerCard mobile layout v2 — aligned stat sheet + surname emphasis (2026-06-17, committed, NOT
-  deployed):** second mobile-only refinement of the home hero, desktop kept pixel-identical. PlayerCard
-  now renders two sibling blocks (`sm:hidden` mobile / `hidden sm:flex` desktop = verbatim approved
-  layout). Mobile: 80px avatar centered against label+surname; surname-first name (Bebas dominant,
-  given names lighter on a tight line below, indented to align under the surname); a full-width 2×2
-  stat grid BELOW the photo+name row (LEVEL|ARM / SURFACE|SESSIONS) using a shared `<Stat>` with label
-  stacked over value (no boxes, no dot — values left-align cleanly). Helper `formatNameAmericanStyle`
-  extracted to `src/lib/name.js` and reused by both PlayerCard and Profile. Lint + build clean.
+- **PlayerCard mobile layout v2-correction — label-row/value-row stat sheet + centered photo
+  (2026-06-17, committed, NOT yet deployed):** corrected the v2 stat layout per a second sketch. The
+  stat sheet is now a **4-col / 2-row grid** — row 1 = all four labels (LEVEL · ARM · SURFACE ·
+  SESSIONS), row 2 = all four values directly beneath, even columns across the full card width (mapped
+  `stats` twice into a row-major `grid-cols-4`; the v2 `<Stat>` helper removed as unused). Also the
+  photo + text block are now **vertically center-aligned** (`items-center`) with given names moved back
+  inside the text column (dropped the `pl-24` indent), so the avatar midpoint lines up with the whole
+  text block's midpoint. Lint + build clean. **Prod still serves the v2 2×2 grid (`1a2acbc`) until this
+  is deployed.**
+- **PlayerCard mobile layout v2 — surname emphasis + two-block split (2026-06-17, `1a2acbc`, DEPLOYED):**
+  second mobile-only refinement of the home hero, desktop kept pixel-identical. PlayerCard now renders
+  two sibling blocks (`sm:hidden` mobile / `hidden sm:flex` desktop = verbatim approved layout). Mobile:
+  80px avatar, surname-first name (Bebas dominant, given names lighter below). Helper
+  `formatNameAmericanStyle` extracted to `src/lib/name.js` and reused by both PlayerCard and Profile.
+  Shipped a 2×2 stat grid (since corrected — see above). Lint + build clean.
 - **Mobile layout — PlayerCard + Profile side-by-side + American name format (2026-06-17, DEPLOYED):**
   mobile-only UI pass, desktop kept pixel-identical (every desktop value behind an `sm:` class).
   PlayerCard home hero now avatar-left/name-right on mobile (64px avatar, 32px name, stat chips in a

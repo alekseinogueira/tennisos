@@ -4,31 +4,30 @@
 > Read this first at the start of every task.
 
 ## Current Focus
-**PlayerCard mobile layout v2 — aligned stat sheet + surname emphasis (2026-06-17, committed, NOT
-pushed/deployed per request).** Second mobile-only refinement of the home `PlayerCard` hero; desktop
-(`sm:` and up) kept pixel-identical. Lint + build clean. Rather than overriding values per-breakpoint,
-PlayerCard now renders **two separate sibling blocks** — `sm:hidden` (mobile) and `hidden sm:flex`
-(desktop, a verbatim copy of the approved layout) — so the desktop tree is guaranteed unchanged.
-- **Mobile structure:** a `flex items-center gap-4` row of **[avatar 80px (`h-20 w-20`)] · [label +
-  surname]**, with the avatar vertically centered against the label+surname wrapper only (given names
-  excluded from that row so the avatar center can't drift). **Surname** is the dominant element
-  (`font-display text-[2rem]`, same weight the first name had); **given names** sit on a tight line
-  below, indented `pl-24` (= avatar 80px + gap 16px) to line up under the surname. The
-  "55TC · PLAYER CARD" label is byte-identical to before (`text-[10px] font-medium uppercase
-  tracking-[0.3em] text-sand/55`). Name split reuses the shared `formatNameAmericanStyle`.
-- **Stat sheet:** a **full-width 2×2 grid BELOW** the photo+name row (a sibling, not beside the photo)
-  — `grid grid-cols-2 gap-x-6 gap-y-3`. Row 1 = LEVEL | ARM, Row 2 = SURFACE | SESSIONS, each spanning
-  a half of the full card width. Each field is a shared **`<Stat>`** rendering **label stacked over
-  value** (label `text-[10px] uppercase tracking-[0.2em] text-sand/50`; value `text-sm font-semibold
-  text-sand/90`), no box/border/fill, no inline dot — stacking left-aligns every value into a clean
-  column. (v1 of this round used an inline `label · value` with a middle dot; switched to stacked per
-  request.)
-- **Helper extracted to `src/lib/name.js`:** `formatNameAmericanStyle(fullName)` moved out of
-  `Profile.jsx` into a shared module and imported by both `PlayerCard` and `Profile` (no behavior
-  change to Profile — same logic, now reused not duplicated).
-- **Desktop:** unchanged — avatar 128px + first name (`clamp(2.5rem,8vw,4rem)`) + inline ·-separated
-  stat row, `items-center gap-8`. Verified computed styles identical at ≥sm.
-- **NOT pushed/deployed (per request).** Committed only.
+**PlayerCard mobile layout v2 + v2-correction — surname emphasis & label-row/value-row stat sheet
+(2026-06-17).** Two mobile-only refinements of the home `PlayerCard` hero, both keeping desktop
+(`sm:` and up) pixel-identical. PlayerCard renders **two separate sibling blocks** — `sm:hidden`
+(mobile) and `hidden sm:flex` (desktop, a verbatim copy of the approved layout) — so the desktop tree
+is guaranteed unchanged (avatar 128px + first name `clamp(2.5rem,8vw,4rem)` + inline ·-separated stat
+row, `items-center gap-8`).
+- **v2 (`1a2acbc`, DEPLOYED & verified live):** introduced the two-block split, the 80px mobile avatar
+  (`h-20 w-20`), the **surname-first name** (Bebas `text-[2rem]` dominant + given names lighter below),
+  and extracted **`formatNameAmericanStyle` to `src/lib/name.js`** (shared by PlayerCard + Profile; no
+  behavior change to Profile). Its stat sheet was a 2×2 grid (LEVEL|ARM / SURFACE|SESSIONS).
+- **v2-correction (committed this `/umb`, NOT yet pushed/deployed — prod still serves the 2×2 from
+  `1a2acbc`):** two fixes from a second sketch.
+  1. **Stat sheet is now a 4-column / 2-row grid** (`grid grid-cols-4 gap-x-3 gap-y-1`): row 1 = ALL
+     FOUR LABELS (LEVEL · ARM · SURFACE · SESSIONS), row 2 = ALL FOUR VALUES directly beneath, each
+     value under its own label, four even columns across the full card width. Rendered by mapping
+     `stats` twice (labels then values) into the row-major grid — NOT four stacked label/value pairs.
+     The shared `<Stat>` component from v2 was **removed** (unused).
+  2. **Photo + text block are vertically centered to each other** (`items-center`): given names moved
+     back INSIDE the text column (dropped the `pl-24` indent), so the avatar's midpoint aligns with the
+     midpoint of the WHOLE text block (label + surname + given), not just label+surname.
+- The "55TC · PLAYER CARD" label stays byte-identical (`text-[10px] font-medium uppercase
+  tracking-[0.3em] text-sand/55`). Lint + build clean. **Watch:** at 375px the four stat columns are
+  ~70px each — `ADVANCED`/`SESSIONS` fit but are tightish; if cramped on a real phone, drop value to
+  `text-[13px]` or label tracking to `tracking-[0.15em]`.
 
 **Mobile layout fix — PlayerCard + Profile side-by-side + American name format (2026-06-17,
 DEPLOYED per request).** Mobile-only UI pass; desktop (`sm:` and up) kept pixel-identical by wrapping

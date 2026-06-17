@@ -57,11 +57,10 @@ export default function PlayerCard() {
     <section className="relative overflow-hidden rounded-xl bg-forest px-7 py-8 text-sand sm:px-10 sm:py-10">
       <CourtMotif className="pointer-events-none absolute -right-10 -bottom-16 h-[150%] w-auto text-sand/[0.06]" />
 
-      {/* ── MOBILE (< sm): photo + name row, then full-width 2×2 stat grid ── */}
+      {/* ── MOBILE (< sm): photo + name row (centers aligned), then full-width stat grid ── */}
       <div className="relative sm:hidden">
-        {/* The avatar is vertically centered against the label + surname wrapper
-            only (items-center on this row); given names sit below, indented to
-            line up under the surname (pl-24 = avatar 80px + gap 16px). */}
+        {/* Photo and the whole text block (label + surname + given) share one
+            vertical center — items-center aligns their midpoints, not their tops. */}
         <div className="flex items-center gap-4">
           <div className="shrink-0">
             {avatarUrl ? (
@@ -87,19 +86,28 @@ export default function PlayerCard() {
             <h1 className="mt-1 font-display text-[2rem] leading-[0.9] tracking-[0.06em] text-sand">
               {surname || 'Player'}
             </h1>
+            {/* Given names — smaller / lighter, tucked tight under the surname */}
+            {given && (
+              <p className="mt-1 text-sm font-normal tracking-wide text-sand/60">
+                {given}
+              </p>
+            )}
           </div>
         </div>
-        {/* Given names — smaller / lighter, tucked tight under the surname */}
-        {given && (
-          <p className="mt-1 pl-24 text-sm font-normal tracking-wide text-sand/60">
-            {given}
-          </p>
-        )}
 
-        {/* Stat sheet — full-width 2×2, no boxes; shared <Stat> for consistent rhythm */}
-        <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3">
+        {/* Stat sheet — one row of labels over one row of values, 4 even columns
+            spanning the full card width. grid-cols-4 fills row-major: the four
+            labels land on row 1, the four values directly beneath on row 2. */}
+        <div className="mt-6 grid grid-cols-4 gap-x-3 gap-y-1">
           {stats.map((s) => (
-            <Stat key={s.label} label={s.label} value={s.value} />
+            <p key={`label-${s.label}`} className="text-[10px] uppercase tracking-[0.2em] text-sand/50">
+              {s.label}
+            </p>
+          ))}
+          {stats.map((s) => (
+            <p key={`value-${s.label}`} className="text-sm font-semibold text-sand/90">
+              {s.value}
+            </p>
           ))}
         </div>
       </div>
@@ -144,17 +152,5 @@ export default function PlayerCard() {
         </div>
       </div>
     </section>
-  )
-}
-
-/** One stat field for the mobile spec sheet — label stacked over value, no
- *  container. Shared so the label/value rhythm is identical across all four;
- *  stacking left-aligns every value into a clean column per row. */
-function Stat({ label, value }) {
-  return (
-    <div>
-      <p className="text-[10px] uppercase tracking-[0.2em] text-sand/50">{label}</p>
-      <p className="mt-0.5 text-sm font-semibold text-sand/90">{value}</p>
-    </div>
   )
 }
