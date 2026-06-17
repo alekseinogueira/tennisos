@@ -3,6 +3,19 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — FUTURE IMPROVEMENT (not built): a "mark session completed" action
+- **Decision:** Deferred, not built this session. Log only. A future phase should add a coach action
+  that sets `sessions.status='completed'` (e.g. a button on the StudentDetail Upcoming list and/or the
+  dashboard THIS WEEK rows, possibly auto-suggested once `scheduled_at` is in the past).
+- **Why:** It's the missing piece that would make the Phase 10 PENDING FEEDBACK / FEEDBACK DUE metric
+  EXACT instead of the current past-scheduled heuristic (see the entry below). Until it exists, "did
+  this lesson actually happen?" is inferred from the clock, not recorded — a no-show or rescheduled
+  session still counts as finished. Once shipped, revisit `listPendingFeedback` to tighten back toward
+  `status='completed'` (or completed OR past-scheduled-and-not-yet-marked).
+- **Alternatives:** Build it now (rejected — out of scope, one-feature-per-session rule, user asked to
+  defer); leave the heuristic permanently (rejected as the long-term answer — accountability data
+  should be coach-confirmed, not clock-inferred).
+
 ## 2026-06-17 — Phase 10 Coach Dashboard: "completed session" → past-scheduled heuristic
 - **Decision:** The PENDING FEEDBACK metric and FEEDBACK DUE list (`listPendingFeedback`) treat a
   session as **finished** when `status='completed'` OR it's a **past `scheduled`** session (cancelled
