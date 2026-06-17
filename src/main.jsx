@@ -12,7 +12,7 @@ import Login from './screens/Login'
 import ForgotPassword from './screens/ForgotPassword'
 import ResetPassword from './screens/ResetPassword'
 import ClaimPage from './screens/ClaimPage'
-import ComingSoon from './screens/ComingSoon'
+import CoachDashboard from './screens/CoachDashboard'
 import StudentDashboard from './screens/StudentDashboard'
 import Profile from './screens/Profile'
 import Feedbacks from './screens/Feedbacks'
@@ -46,7 +46,7 @@ createRoot(document.getElementById('root')).render(
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/profile" element={<Profile />} />
               <Route element={<RoleRoute allow={['coach', 'admin']} />}>
-                <Route path="/coach" element={<ComingSoon title="Coach Home" />} />
+                <Route path="/coach" element={<CoachDashboard />} />
                 {/* Admin panel — coach/admin only; students are bounced to / by RoleRoute */}
                 <Route path="/admin" element={<AdminHome />} />
                 <Route path="/admin/students" element={<Students />} />

@@ -3,6 +3,34 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Phase 10 Coach Dashboard: "completed session" → past-scheduled heuristic
+- **Decision:** The PENDING FEEDBACK metric and FEEDBACK DUE list (`listPendingFeedback`) treat a
+  session as **finished** when `status='completed'` OR it's a **past `scheduled`** session (cancelled
+  excluded), within the last 14 days, with no feedback whose `created_at >` that session's
+  `scheduled_at`. The spec literally said "completed session". SESSIONS THIS MONTH stays literal
+  (status in scheduled/completed).
+- **Why:** The app has NO action that sets `status='completed'` — scheduling only ever creates
+  `scheduled`, and the sole mutation is Cancel (`→cancelled`). A strict `status='completed'` filter
+  would make the entire accountability system permanently read 0, defeating its purpose. A session
+  whose start time has passed has, for all practical purposes, happened.
+- **Alternatives:** Strict `status='completed'` (rejected — always 0 until a mark-completed feature
+  exists); add a "mark completed" action this session (rejected — out of Phase 10 scope, one-feature-
+  per-session rule). Revisit and tighten if/when a mark-completed action ships.
+
+## 2026-06-17 — Phase 10 Coach Dashboard: white-lift metric cards, not literal sand-on-sand
+- **Decision:** Metric cards use the established white-lift treatment (`bg-white/60 border-forest/12`,
+  forest Bebas number) rather than the spec's literal "sand background", and the PENDING FEEDBACK card
+  flips to forest/sand only when its value `> 0`. FEEDBACK DUE is placed ABOVE THIS WEEK despite being
+  built second.
+- **Why:** The dashboard sits on the sand page surface (`bg-sand`); a literal sand card would be
+  invisible. White-lift matches AdminHome and the student widgets, keeping one card language. The
+  forest/sand flip draws the eye to the only action-demanding metric. Feedback-due (the accountability
+  system) is the highest-priority "owed work", so it ranks above the schedule per the UX checklist
+  ("pending feedback + this week immediately visible").
+- **Alternatives:** Literal sand cards (rejected — invisible); always-forest PENDING card (rejected —
+  loses the "all clear" calm when 0); build-order layout with This Week first (rejected — buries the
+  accountability list).
+
 ## 2026-06-17 — Phase 8F Sessions: `sessions.user_id` nullable, NO claim-gate on scheduling
 - **Decision:** The new `sessions` table (migration 006) makes `user_id` (the student RLS subject)
   **nullable** — set from `students.user_id` at schedule time, which is NULL for an invited-but-

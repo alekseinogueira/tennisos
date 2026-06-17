@@ -4,6 +4,46 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Phase 10 — Coach Dashboard HQ (2026-06-17, code-level, committed this `/umb`, NOT pushed/deployed
+per request).** Replaced the coach Home placeholder (`/coach` → `ComingSoon "Coach Home"`) with a full
+operational dashboard, `screens/CoachDashboard.jsx`. Lint + build clean. Built in 4 approved steps; the
+whole page loads via ONE parallel `Promise.all` (6 concurrent queries). Page order: header ("55TC · HQ"
+/ "Headquarters") → metrics → **Feedback Due** → **This Week** → **Recent Activity**.
+- **Step 1 — Metrics row (`db.js` + screen).** 4 cards (`grid-cols-2 md:grid-cols-4`): ACTIVE STUDENTS
+  (`countActiveStudents`, status='active'), SESSIONS THIS MONTH (`countSessionsThisMonth`, status in
+  scheduled/completed within the calendar month — local month bounds), FEEDBACKS THIS MONTH
+  (`countFeedbacksThisMonth`, created_at this month), PENDING FEEDBACK (= `listPendingFeedback().length`).
+  First three use `count:'exact', head:true` count queries. PENDING FEEDBACK card flips forest/sand when
+  `> 0` (the one action-demanding metric). Cards use the established white-lift treatment (`bg-white/60
+  border-forest/12`), NOT literal sand-on-sand (invisible on the sand page) — number in Bebas, label DM
+  Sans uppercase.
+- **Step 2 — THIS WEEK agenda (`listSessionsThisWeek`).** Mon 00:00 → next Mon 00:00 (local), soonest
+  first, incl. cancelled (dimmed + struck), joins `student:students(full_name)`. Each row: day · time
+  (Bebas) + student · location; status badge; **ADD FEEDBACK** (→ `/admin/students/:id/feedback/new`,
+  hidden when cancelled) + **CANCEL** (scheduled only; `confirm()` guard + optimistic soft-cancel via
+  `cancelSession`). Empty: "No sessions this week. Schedule one from a student's profile."
+- **Step 3 — FEEDBACK DUE (`listPendingFeedback`, reused from Step 1).** Placed ABOVE This Week
+  (accountability priority). One row per student (their most-recent uncovered session): name (Bebas) +
+  "Session {date} · location" + **WRITE FEEDBACK →**. Positive empty state ("You're all caught up.").
+  `due?.length` drives the PENDING FEEDBACK card so number + list can't disagree.
+- **Step 4 — RECENT ACTIVITY (`listRecentActivity`).** Last 5 feedbacks + last 5 sessions, merged and
+  sorted newest-first by `created_at` (the action time), up to 10 compact rows. 📋 feedback (desc =
+  title || "New feedback") / 🎾 session (desc = "Session {scheduled day} · location"); right-edge date =
+  `created_at`. Empty: "Nothing yet…".
+- **`db.js` coach-dashboard section (NEW):** `countActiveStudents`, `countSessionsThisMonth`,
+  `countFeedbacksThisMonth`, `listSessionsThisWeek`, `listPendingFeedback`, `listRecentActivity` + local
+  `startOfMonthISO`/`startOfNextMonthISO`/`startOfWeek` helpers + `MS_PER_DAY`.
+- **`main.jsx`:** `/coach` repointed `ComingSoon` → `CoachDashboard`. **`ComingSoon.jsx` is now unused**
+  but left in place (not deleted, per the ask-before-deleting rule).
+- **KEY INTERPRETATION (see decisions):** the spec's PENDING FEEDBACK / FEEDBACK DUE say "completed
+  session", but the app has NO "mark completed" action (scheduling only creates `scheduled`; the only
+  mutation is Cancel). A strict `status='completed'` filter would always be 0. So `listPendingFeedback`
+  treats a session as **finished** when `status='completed'` OR it's a **past `scheduled`** session
+  (cancelled excluded), within the last 14 days, with no feedback `created_at >` that session's
+  `scheduled_at`. SESSIONS THIS MONTH stays literal (scheduled+completed).
+- **NOT live:** like all of Phase 8x, the dashboard reads empty until **migrations 004/005/006 are
+  applied + live data exists**, and the frontend is redeployed. Committed only — NOT pushed, NOT deployed.
+
 **Phase 8F — Session Scheduling + Reminder Email (2026-06-17, code-level, NOT committed-then-deployed
 at write time — commit pending this `/umb`; do NOT deploy).** Added coach-side session scheduling, a
 branded reminder email, and wired the student Home "Next Session" widget to real data. Lint + build
@@ -432,7 +472,7 @@ Extracted the `youtubeId` URL parser into **`lib/youtube.js`** and used it in bo
    `006` (`sessions` table + RLS) is REQUIRED for Phase 8F scheduling to persist; confirm `001..004`
    are actually applied (memory still lists them UNAPPLIED). Then seed the coach account and set
    `profiles.role='coach'`. **Then redeploy the frontend** (`deploy-prod`) so the `getProfile`/claim
-   fixes in `ff00912` + the Phase 8F scheduling UI reach production.
+   fixes in `ff00912` + the Phase 8F scheduling UI + the Phase 10 Coach Dashboard HQ reach production.
 2. Set `.env` locally (VITE_SUPABASE_*) and smoke-test login/claim/reset + the admin roster
    (create student → invite link → edit) + the **credit loop** (StudentDetail: record a +/−
    entry → balance + history update → student dashboard shows the live balance) + the

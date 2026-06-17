@@ -108,6 +108,23 @@
     until applied. **Known gap:** sessions booked for an unclaimed student (`user_id` NULL) don't link
     on claim (no backfill).
 
+- **Coach Dashboard HQ — Phase 10 COMPLETE (code-level, 2026-06-17):**
+  - **`screens/CoachDashboard.jsx`** (NEW, `/coach`): the coach's operational home, replacing the
+    `ComingSoon "Coach Home"` placeholder. Header ("55TC · HQ" / "Headquarters") → **metrics row**
+    (4 cards, 2×2 mobile → 4-across desktop: ACTIVE STUDENTS · SESSIONS THIS MONTH · FEEDBACKS THIS
+    MONTH · PENDING FEEDBACK; PENDING flips forest/sand when >0) → **FEEDBACK DUE** (one row/student,
+    WRITE FEEDBACK → composer; "all caught up" empty state) → **THIS WEEK** (Mon→Sun agenda; day·time +
+    student·location, status badge, ADD FEEDBACK + CANCEL[scheduled, confirm+soft]) → **RECENT ACTIVITY**
+    (last 5 feedbacks + 5 sessions merged by created_at, 📋/🎾, compact). Whole page = ONE parallel
+    `Promise.all` (6 queries).
+  - **`db.js` coach-dashboard section** (NEW): `countActiveStudents`, `countSessionsThisMonth`,
+    `countFeedbacksThisMonth` (count-only `head:true` queries), `listSessionsThisWeek`,
+    `listPendingFeedback`, `listRecentActivity` + `startOf*` helpers.
+  - **`main.jsx`:** `/coach` → `CoachDashboard`. `ComingSoon.jsx` now unused (left in place).
+  - **Interpretation:** "completed session" → finished = completed OR past-scheduled (no mark-completed
+    action exists yet); drives PENDING FEEDBACK / FEEDBACK DUE (else always 0). See decisions + Known Issues.
+  - Lint + build clean. **Not pushed/deployed**; reads empty until migrations applied + live data exists.
+
 - **Student Profile page — Phase 8D COMPLETE (code-level, 2026-06-17):**
   - **`screens/Profile.jsx`** (full rewrite): read + edit modes. Read = avatar (photo or forest-
     circle/sand-initial) + Bebas name + two white cards, **YOUR DETAILS** (name · email · phone ·
@@ -123,8 +140,9 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
-- Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D/8E all complete at
-  the code level; all await **applied migrations + live data** to smoke-test.
+- Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D/8E/8F + the Phase 10
+  Coach Dashboard HQ are all complete at the code level; all await **applied migrations + live data** to
+  smoke-test.
 
 ## Recently Fixed
 - **Missing-`profiles`-row PGRST116 bug — fix committed, NOT deployed (2026-06-17, `ff00912`):**
@@ -181,6 +199,12 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Coach Dashboard "PENDING FEEDBACK"/"FEEDBACK DUE" uses a past-scheduled heuristic** (Phase 10) —
+  the spec says "completed session", but no UI marks a session `completed` (scheduling creates
+  `scheduled`; only Cancel mutates it). So `listPendingFeedback` treats a session as finished when
+  `status='completed'` OR it's a past `scheduled` session (cancelled excluded). Once a real "mark
+  completed" action exists, revisit whether to tighten this back to `status='completed'` only. Also:
+  `ComingSoon.jsx` is now orphaned (no importer) but kept in the tree.
 - **Sessions booked for an unclaimed student don't link on claim** (Phase 8F) — scheduling is allowed
   before a student claims (the reminder email targets the roster email), so `sessions.user_id` is set
   from `students.user_id` which is NULL at that point. There's no backfill in `handle_new_user`, so once

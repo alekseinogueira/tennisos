@@ -227,6 +227,173 @@ export async function getNextSession(studentId) {
   return rows?.[0] ?? null
 }
 
+// ─── coach dashboard (HQ) ────────────────────────────────────────────────────
+
+const MS_PER_DAY = 864e5
+
+function startOfMonthISO(d = new Date()) {
+  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString()
+}
+function startOfNextMonthISO(d = new Date()) {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1).toISOString()
+}
+
+/** Count of active students (status = 'active'). Coach RLS sees the whole roster. */
+export async function countActiveStudents() {
+  const { count, error } = await supabase
+    .from('students')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'active')
+  if (error) throw error
+  return count ?? 0
+}
+
+/** Count of sessions in the current calendar month (scheduled or completed —
+ *  cancelled excluded). Month boundaries are local to the coach. */
+export async function countSessionsThisMonth() {
+  const { count, error } = await supabase
+    .from('sessions')
+    .select('*', { count: 'exact', head: true })
+    .in('status', ['scheduled', 'completed'])
+    .gte('scheduled_at', startOfMonthISO())
+    .lt('scheduled_at', startOfNextMonthISO())
+  if (error) throw error
+  return count ?? 0
+}
+
+/** Count of feedbacks created in the current calendar month. */
+export async function countFeedbacksThisMonth() {
+  const { count, error } = await supabase
+    .from('feedbacks')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', startOfMonthISO())
+    .lt('created_at', startOfNextMonthISO())
+  if (error) throw error
+  return count ?? 0
+}
+
+/** Recent activity for the HQ feed: the last 5 feedbacks given + last 5 sessions
+ *  scheduled, merged and sorted newest-first by when the action happened
+ *  (created_at). Each item carries what the feed row needs to render. */
+export async function listRecentActivity() {
+  const [feedbacks, sessions] = await Promise.all([
+    unwrap(
+      await supabase
+        .from('feedbacks')
+        .select('id, title, created_at, student:students(full_name)')
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ),
+    unwrap(
+      await supabase
+        .from('sessions')
+        .select('id, scheduled_at, location, created_at, student:students(full_name)')
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ),
+  ])
+
+  const items = [
+    ...feedbacks.map((f) => ({
+      id: `f-${f.id}`,
+      kind: 'feedback',
+      at: f.created_at,
+      student_name: f.student?.full_name ?? 'Student',
+      title: f.title,
+    })),
+    ...sessions.map((s) => ({
+      id: `s-${s.id}`,
+      kind: 'session',
+      at: s.created_at,
+      student_name: s.student?.full_name ?? 'Student',
+      scheduled_at: s.scheduled_at,
+      location: s.location,
+    })),
+  ]
+  items.sort((a, b) => b.at.localeCompare(a.at))
+  return items
+}
+
+function startOfWeek(d = new Date()) {
+  const x = new Date(d)
+  const mondayOffset = (x.getDay() + 6) % 7 // 0 = Monday … 6 = Sunday
+  x.setHours(0, 0, 0, 0)
+  x.setDate(x.getDate() - mondayOffset)
+  return x
+}
+
+/** Sessions in the current week (Mon 00:00 → next Mon 00:00, local time), soonest
+ *  first. Includes cancelled rows (rendered distinct). Joins the student name. */
+export async function listSessionsThisWeek() {
+  const start = startOfWeek()
+  const end = new Date(start.getTime() + 7 * MS_PER_DAY)
+  return unwrap(
+    await supabase
+      .from('sessions')
+      .select(
+        'id, student_id, scheduled_at, duration_minutes, location, status, student:students(full_name)',
+      )
+      .gte('scheduled_at', start.toISOString())
+      .lt('scheduled_at', end.toISOString())
+      .order('scheduled_at', { ascending: true }),
+  )
+}
+
+/** The coach's "feedback due" accountability list: students whose most recent
+ *  FINISHED session in the last 14 days has no feedback recorded after it.
+ *  A session counts as finished when status='completed' OR it's a past
+ *  'scheduled' session (cancelled excluded) — the app has no "mark completed"
+ *  action yet, so a past scheduled session is treated as having happened.
+ *  Returns one row per student (their most recent uncovered session), newest
+ *  session first: { student_id, student_name, session_at, location }. Reused for
+ *  the PENDING FEEDBACK metric (its length) and the Step 3 FEEDBACK DUE list. */
+export async function listPendingFeedback() {
+  const now = new Date()
+  const since = new Date(now.getTime() - 14 * MS_PER_DAY).toISOString()
+  const nowIso = now.toISOString()
+
+  const [sessions, feedbacks] = await Promise.all([
+    unwrap(
+      await supabase
+        .from('sessions')
+        .select('id, student_id, scheduled_at, location, student:students(full_name)')
+        .neq('status', 'cancelled')
+        .gte('scheduled_at', since)
+        .lte('scheduled_at', nowIso)
+        .order('scheduled_at', { ascending: false }),
+    ),
+    unwrap(
+      await supabase
+        .from('feedbacks')
+        .select('student_id, created_at')
+        .gte('created_at', since),
+    ),
+  ])
+
+  const fbByStudent = new Map()
+  for (const f of feedbacks) {
+    const arr = fbByStudent.get(f.student_id) ?? []
+    arr.push(f.created_at)
+    fbByStudent.set(f.student_id, arr)
+  }
+
+  const seen = new Set() // sessions are newest-first → first hit per student is their latest
+  const due = []
+  for (const s of sessions) {
+    if (seen.has(s.student_id)) continue
+    seen.add(s.student_id)
+    const covered = (fbByStudent.get(s.student_id) ?? []).some((c) => c > s.scheduled_at)
+    if (covered) continue // a feedback after their latest session → up to date
+    due.push({
+      student_id: s.student_id,
+      student_name: s.student?.full_name ?? 'Student',
+      session_at: s.scheduled_at,
+      location: s.location,
+    })
+  }
+  return due
+}
+
 // ─── feedbacks ───────────────────────────────────────────────────────────────
 
 export async function listFeedbacksForStudent(studentId) {
