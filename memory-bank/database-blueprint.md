@@ -89,6 +89,26 @@
 - Rel: *→1 students, *→0..1 packages.
 - **RLS:** student SELECT own (`user_id = auth.uid()`); coach full CRUD. No student writes.
 
+### sessions  (scheduled lessons; subject = student)  *(migration 006)*
+| column           | type                       | notes |
+|------------------|----------------------------|-------|
+| id               | uuid PK                    | |
+| user_id          | uuid → auth.users(id) NULL | student subject (RLS); NULL until the invite is claimed |
+| student_id       | uuid NOT NULL → students(id) ON DELETE CASCADE | roster row |
+| coach_id         | uuid → auth.users(id)      | who scheduled it |
+| scheduled_at     | timestamptz NOT NULL       | start instant (stored UTC; UI builds it from a local date+time) |
+| duration_minutes | int NOT NULL default 60    | coach picks 60 or 90 |
+| location         | text                       | e.g. "Stanley Park Court 3" |
+| notes            | text                       | optional |
+| status           | session_status default 'scheduled' | enum: scheduled, completed, cancelled |
+| created_at / updated_at | timestamptz         | |
+
+- Scheduled from the admin StudentDetail page; fires the `send-session-reminder` Edge Function on
+  create (reminder goes to the roster email regardless of claim status). Cancel is a soft update
+  (`status='cancelled'`, row kept). Student Home "Next Session" widget reads `getNextSession`.
+- Rel: *→1 students.
+- **RLS:** student SELECT own (`user_id = auth.uid()`); coach full CRUD. Single-predicate policy.
+
 ### feedbacks  (written lesson feedback; subject = student)
 | column      | type                       | notes |
 |-------------|----------------------------|-------|
@@ -179,8 +199,9 @@ curated_library  (global; no student link)
 - `student_status`: invited, active, inactive
 - `credit_reason`: purchase, lesson, adjustment, refund
 - `video_source`: upload, youtube, link
+- `session_status`: scheduled, completed, cancelled
 
 ## Built later (not MVP)
 Stripe (`stripe_price_id`, checkout fn, credit-grant webhook), `student_notes` (coach-private),
-`gallery` storage bucket + real upload (replaces manual external_url paste), n8n event webhooks,
-scheduling.
+`gallery` storage bucket + real upload (replaces manual external_url paste), n8n event webhooks.
+*(Scheduling shipped in Phase 8F — see the `sessions` table above.)*

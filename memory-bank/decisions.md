@@ -3,6 +3,35 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Phase 8F Sessions: `sessions.user_id` nullable, NO claim-gate on scheduling
+- **Decision:** The new `sessions` table (migration 006) makes `user_id` (the student RLS subject)
+  **nullable** — set from `students.user_id` at schedule time, which is NULL for an invited-but-
+  unclaimed student. Unlike credits and feedback (which BLOCK unclaimed students), the SCHEDULE
+  SESSION form on the admin StudentDetail page is **always available**. The reminder email goes to
+  the roster `email` regardless of claim status.
+- **Why:** A reminder email is useful before a student has claimed — you can book a first lesson the
+  moment they're on the roster. Blocking would defeat the feature's main job. Trade-off accepted: the
+  student's in-app "Next Session" widget only lights up once they claim (RLS keys on `user_id`), and
+  a session scheduled while `user_id` is NULL won't auto-link on claim (no backfill in V1).
+- **Alternatives:** Mirror the credits/feedback claim-gate (rejected — kills pre-claim scheduling,
+  the email is the point); backfill `sessions.user_id` in `handle_new_user` on claim (deferred —
+  extra trigger complexity for an edge case; revisit if pre-claim scheduling becomes common).
+
+## 2026-06-17 — Phase 8F Sessions: honest toast + Vancouver-pinned email formatting
+- **Decision:** (a) The schedule handler **awaits** the `send-session-reminder` call and shows
+  "Session scheduled. Reminder sent." only on a real HTTP 200; on failure it shows "Session scheduled
+  — but the reminder email didn't send." (diverges from the spec's fixed success string). (b) The
+  Edge Function formats DATE/TIME with `Intl.DateTimeFormat` pinned to `America/Vancouver`.
+- **Why:** (a) The toast must not claim an email was sent when it wasn't — honest reporting over a
+  canned string. The session row is still created either way (DB insert is the source of truth; email
+  is best-effort). (b) `scheduled_at` is stored UTC; Deno's default format zone is UTC, so an
+  un-pinned formatter would print the wrong day/time. Pinning to the coach's zone makes the email read
+  correctly ("Tuesday, June 24" / "10:00 AM") regardless of where the function runs.
+- **Alternatives:** Fire-and-forget like the invite email's `.catch(console.error)` (rejected here —
+  the invite UI keeps a copyable fallback link, but the session toast explicitly promises delivery, so
+  it must reflect reality); send a pre-formatted date/time string from the client (rejected — keeps
+  formatting/locale logic in one place server-side, and the client already sends the ISO instant).
+
 ## 2026-06-17 — Phase 8E Library: hard-code the 8 category folders in the front-end (not a distinct query)
 - **Decision:** The student `/library` folder grid renders a **hard-coded** `CATEGORIES` array of the
   8 technique folders (forehand, backhand, footwork, serve, volley, slice, smash, mentality), always

@@ -177,6 +177,56 @@ export async function addCredit(fields) {
   )
 }
 
+// ─── sessions (scheduled lessons; subject = student) ─────────────────────────
+
+/** Upcoming sessions for one student (now and later), soonest first. Includes
+ *  cancelled rows so the coach still sees them (rendered visually distinct). */
+export async function listUpcomingSessionsForStudent(studentId) {
+  return unwrap(
+    await supabase
+      .from('sessions')
+      .select('*')
+      .eq('student_id', studentId)
+      .gte('scheduled_at', new Date().toISOString())
+      .order('scheduled_at', { ascending: true }),
+  )
+}
+
+/** Coach-only (RLS): schedule a session. */
+export async function createSession(fields) {
+  return unwrap(
+    await supabase.from('sessions').insert(fields).select().single(),
+  )
+}
+
+/** Coach-only (RLS): cancel a session (soft — sets status, keeps the row). */
+export async function cancelSession(id) {
+  return unwrap(
+    await supabase
+      .from('sessions')
+      .update({ status: 'cancelled' })
+      .eq('id', id)
+      .select()
+      .single(),
+  )
+}
+
+/** The single next upcoming scheduled session for a student (status 'scheduled',
+ *  in the future), soonest first, or null. RLS: a student sees only their own. */
+export async function getNextSession(studentId) {
+  const rows = unwrap(
+    await supabase
+      .from('sessions')
+      .select('*')
+      .eq('student_id', studentId)
+      .eq('status', 'scheduled')
+      .gt('scheduled_at', new Date().toISOString())
+      .order('scheduled_at', { ascending: true })
+      .limit(1),
+  )
+  return rows?.[0] ?? null
+}
+
 // ─── feedbacks ───────────────────────────────────────────────────────────────
 
 export async function listFeedbacksForStudent(studentId) {

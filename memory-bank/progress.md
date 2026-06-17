@@ -90,6 +90,24 @@
     `null`). No edit mode on the page, so only the add form changed.
   - Lint + build clean. Not deployed (per request); folder counts stay empty until live data exists.
 
+- **Session scheduling + reminder email — Phase 8F COMPLETE (code-level, 2026-06-17):**
+  - **Admin:** `StudentDetail` gained a **SCHEDULE SESSION** section above the credits card — Date /
+    Time (30-min increments 07:00–21:00) / Duration (60–90 chips) / Location / Notes → `createSession`,
+    then awaits the reminder email and shows an honest toast (real send result, not a canned string).
+    An **Upcoming** list (incl. cancelled, shown struck-through/dimmed) with per-row status badge +
+    **Cancel** (soft `status='cancelled'`).
+  - **Edge Function:** `send-session-reminder` (Deno + Resend, branded like the invite email; DATE/TIME
+    pinned to `America/Vancouver`) — **DEPLOYED** to `vdyvlylacsghnvtllrzj`. Not yet verified by a real
+    send.
+  - **Student:** Home "Next Session" widget wired to real data via new `NextSessionWidget` +
+    `getNextSession(studentId)` (next `scheduled`, future, soonest); keeps the "Coming soon" empty state.
+  - **Schema:** migration `006_sessions.sql` (UNAPPLIED) — `sessions` table, `session_status` enum, RLS
+    (student SELECT own, coach full CRUD). `db.js` gained `listUpcomingSessionsForStudent`,
+    `createSession`, `cancelSession`, `getNextSession`. Blueprint synced.
+  - Lint + build clean. **Not deployed (frontend); migration 006 unapplied** — scheduling won't persist
+    until applied. **Known gap:** sessions booked for an unclaimed student (`user_id` NULL) don't link
+    on claim (no backfill).
+
 - **Student Profile page — Phase 8D COMPLETE (code-level, 2026-06-17):**
   - **`screens/Profile.jsx`** (full rewrite): read + edit modes. Read = avatar (photo or forest-
     circle/sand-initial) + Bebas name + two white cards, **YOUR DETAILS** (name · email · phone ·
@@ -152,7 +170,7 @@
   reliably via that path.
 
 ## Not Started
-- Applying the Supabase migrations (now `001..004`) to a real project + seeding the coach account.
+- Applying the Supabase migrations (now `001..006`) to a real project + seeding the coach account.
 - Disabling email confirmation in Supabase Auth (the `/claim` signUp flow needs the session for
   steps 2-4). [`RESEND_API_KEY` secret + `send-invite-email` deploy — DONE 2026-06-17.]
 - `.env` wiring + live smoke test of login/claim/reset + admin roster + the Phase 6 loop +
@@ -163,6 +181,14 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Sessions booked for an unclaimed student don't link on claim** (Phase 8F) — scheduling is allowed
+  before a student claims (the reminder email targets the roster email), so `sessions.user_id` is set
+  from `students.user_id` which is NULL at that point. There's no backfill in `handle_new_user`, so once
+  the student claims, that session (with `user_id` NULL) still won't surface in their RLS-scoped Home
+  "Next Session" widget. Sessions booked AFTER claim work normally. Accepted V1 trade-off.
+- **Phase 8F frontend not live; migration 006 unapplied** — the `sessions` table + RLS must be applied
+  (and the frontend redeployed) before scheduling persists. The `send-session-reminder` Edge Function IS
+  deployed but unverified by a real send.
 - **Profile avatar uploads to Storage before Save commits it** (Phase 8D) — the chosen "upload
   immediately, commit `avatar_url` on Save" flow means picking a new photo overwrites the Storage
   object at the fixed path `avatars/{user_id}/avatar.{ext}` right away; if the user then **Cancels**,

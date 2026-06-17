@@ -4,6 +4,49 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Phase 8F — Session Scheduling + Reminder Email (2026-06-17, code-level, NOT committed-then-deployed
+at write time — commit pending this `/umb`; do NOT deploy).** Added coach-side session scheduling, a
+branded reminder email, and wired the student Home "Next Session" widget to real data. Lint + build
+clean. Built in 3 approved steps:
+- **Step 1 — `screens/admin/StudentDetail.jsx` + `lib/db.js` + migration 006.** New **SCHEDULE
+  SESSION** section above the credits card: Date (`<input type=date>`), Time (`<select>` of 30-min
+  increments 07:00–21:00), Duration (60/90 **chip** selector, default 60), Location (text, placeholder
+  "Stanley Park Court 3"), Notes (optional textarea). On submit: build `scheduled_at` from local
+  date+time → `new Date('YYYY-MM-DDTHH:MM').toISOString()` (stored UTC), `createSession`, then **await**
+  the `send-session-reminder` Edge Function and show an honest toast — "Session scheduled. Reminder
+  sent." only on HTTP 200, else "Session scheduled — but the reminder email didn't send." Below the
+  form: an **Upcoming** list (sessions ≥ now, soonest first, incl. cancelled) — each row shows
+  date · time (Bebas), `{n} min · location`, a status badge, and a **Cancel** button (only when
+  `status='scheduled'`). Cancel is a soft update (`cancelSession` → `status='cancelled'`); cancelled
+  rows render `line-through` + `opacity-55` (visually distinct, kept in the list). `db.js` gained
+  `listUpcomingSessionsForStudent`, `createSession`, `cancelSession`. **Migration `006_sessions.sql`
+  (UNAPPLIED):** `sessions` table + `session_status` enum (scheduled/completed/cancelled) + `updated_at`
+  trigger + RLS (student SELECT own via `user_id`, coach full CRUD). `user_id` is **nullable** and set
+  from `students.user_id` at schedule time — **no claim-gate** (see decisions: scheduling + email work
+  for unclaimed students; the email targets the roster email).
+- **Step 2 — `supabase/functions/send-session-reminder/index.ts` (NEW, DEPLOYED).** Deno + Resend,
+  modeled 1:1 on `send-invite-email` (same CORS/JSON plumbing, `from` "Aleksei Nogueira
+  <55tc@55tenniscrew.com>", hosted PNG header logo, footer SVG). POST `{ student_name, student_email,
+  scheduled_at, duration_minutes, location }`. Header headline "SEE YOU<br>ON THE<br>COURT.", subline
+  "55TC · Vancouver"; body "Hey {name}, Just confirmed — you have a session coming up…"; a white info
+  card (DATE/TIME/DURATION/LOCATION); "See you there. Less Theory. More Game." / "— Aleksei"; CTA
+  "VIEW MY PORTAL →" → https://portal.55tenniscrew.com. DATE/TIME formatted via `Intl.DateTimeFormat`
+  pinned to **`America/Vancouver`** (scheduled_at is UTC; Deno defaults to UTC otherwise). Location
+  falls back to "To be confirmed" if blank. **Deployed** to project `vdyvlylacsghnvtllrzj` (script
+  5.943kB); inherits `verify_jwt=true` from `config.toml`. **NOT end-to-end verified by a real send.**
+- **Step 3 — `components/NextSessionWidget.jsx` (NEW) + `StudentDashboard.jsx` + `lib/db.js`.** The
+  inline "Coming soon" placeholder on Home is now a self-fetching `<NextSessionWidget />` (matches
+  `LastFeedbackWidget`): resolves the roster row via `getStudentByUserId`, then new
+  **`getNextSession(studentId)`** (status `scheduled`, `scheduled_at > now()`, soonest, limit 1). If a
+  session exists → date (Bebas) + time · location on a solid white card; if none/loading → the original
+  dashed "Coming soon" empty state, verbatim. StudentDashboard stays pure composition.
+- **`database-blueprint.md` synced:** added the `sessions` table, the `session_status` enum, and moved
+  scheduling out of "Built later".
+- **NOT deployed (per request).** The frontend (Step 1/3) is code-level only; the Edge Function (Step 2)
+  IS live. `sessions` won't persist until **migration 006 is applied** (same unapplied-migration gate as
+  004/005). **KNOWN GAP:** a session scheduled while the student is unclaimed (`user_id` NULL) won't
+  surface in their Home widget even after they claim (no backfill).
+
 **Phase 8E — Library Folder System (2026-06-17, code-level, committed, NOT deployed — per request).**
 Redesigned the student `/library` from a flat filtered list into a folder-first content library, plus
 made the coach's category field a constrained select. Lint + build clean. Built in 2 approved steps:
@@ -384,11 +427,12 @@ Extracted the `youtubeId` URL parser into **`lib/youtube.js`** and used it in bo
 - Deploy: Vercel at `portal.55tenniscrew.com` (apex/www + n8n untouched). Stripe = later.
 
 ## Next Steps (next session)
-1. **Apply migrations `001..005`** to the Supabase project (dashboard SQL editor OR `supabase db
+1. **Apply migrations `001..006`** to the Supabase project (dashboard SQL editor OR `supabase db
    push`) — `005` (profiles self-insert RLS) is REQUIRED for the new `/claim` upsert to pass RLS;
-   confirm `001..004` are actually applied (memory still lists them UNAPPLIED). Then seed the coach
-   account and set `profiles.role='coach'`. **Then redeploy the frontend** (`deploy-prod`) so the
-   `getProfile`/claim fixes in `ff00912` reach production.
+   `006` (`sessions` table + RLS) is REQUIRED for Phase 8F scheduling to persist; confirm `001..004`
+   are actually applied (memory still lists them UNAPPLIED). Then seed the coach account and set
+   `profiles.role='coach'`. **Then redeploy the frontend** (`deploy-prod`) so the `getProfile`/claim
+   fixes in `ff00912` + the Phase 8F scheduling UI reach production.
 2. Set `.env` locally (VITE_SUPABASE_*) and smoke-test login/claim/reset + the admin roster
    (create student → invite link → edit) + the **credit loop** (StudentDetail: record a +/−
    entry → balance + history update → student dashboard shows the live balance) + the
