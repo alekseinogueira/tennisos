@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { getStudentProfile, updateStudentProfile, uploadAvatar } from '../lib/db'
+import { formatNameAmericanStyle } from '../lib/name'
 
 const HANDS = ['Right', 'Left', 'Both']
 const LEVELS = ['Never played', 'Beginner', 'Intermediate', 'Advanced']
@@ -29,15 +30,6 @@ function formatDob(value) {
 }
 
 const dash = (v) => (v && String(v).trim() ? v : '—')
-
-/** "Aleksei Nogueira Colaco" → { surname: "Colaco", given: "Aleksei Nogueira" }.
- *  Last whitespace token is the surname; the rest join as given names. A single-
- *  word name returns it as the surname with no given names (rendered with no comma). */
-function formatNameAmericanStyle(fullName) {
-  const parts = (fullName || '').trim().split(/\s+/).filter(Boolean)
-  if (parts.length <= 1) return { surname: parts[0] || '', given: '' }
-  return { surname: parts[parts.length - 1], given: parts.slice(0, -1).join(' ') }
-}
 
 export default function Profile() {
   const { user } = useAuth()

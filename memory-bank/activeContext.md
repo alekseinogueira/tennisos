@@ -4,6 +4,32 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**PlayerCard mobile layout v2 — aligned stat sheet + surname emphasis (2026-06-17, committed, NOT
+pushed/deployed per request).** Second mobile-only refinement of the home `PlayerCard` hero; desktop
+(`sm:` and up) kept pixel-identical. Lint + build clean. Rather than overriding values per-breakpoint,
+PlayerCard now renders **two separate sibling blocks** — `sm:hidden` (mobile) and `hidden sm:flex`
+(desktop, a verbatim copy of the approved layout) — so the desktop tree is guaranteed unchanged.
+- **Mobile structure:** a `flex items-center gap-4` row of **[avatar 80px (`h-20 w-20`)] · [label +
+  surname]**, with the avatar vertically centered against the label+surname wrapper only (given names
+  excluded from that row so the avatar center can't drift). **Surname** is the dominant element
+  (`font-display text-[2rem]`, same weight the first name had); **given names** sit on a tight line
+  below, indented `pl-24` (= avatar 80px + gap 16px) to line up under the surname. The
+  "55TC · PLAYER CARD" label is byte-identical to before (`text-[10px] font-medium uppercase
+  tracking-[0.3em] text-sand/55`). Name split reuses the shared `formatNameAmericanStyle`.
+- **Stat sheet:** a **full-width 2×2 grid BELOW** the photo+name row (a sibling, not beside the photo)
+  — `grid grid-cols-2 gap-x-6 gap-y-3`. Row 1 = LEVEL | ARM, Row 2 = SURFACE | SESSIONS, each spanning
+  a half of the full card width. Each field is a shared **`<Stat>`** rendering **label stacked over
+  value** (label `text-[10px] uppercase tracking-[0.2em] text-sand/50`; value `text-sm font-semibold
+  text-sand/90`), no box/border/fill, no inline dot — stacking left-aligns every value into a clean
+  column. (v1 of this round used an inline `label · value` with a middle dot; switched to stacked per
+  request.)
+- **Helper extracted to `src/lib/name.js`:** `formatNameAmericanStyle(fullName)` moved out of
+  `Profile.jsx` into a shared module and imported by both `PlayerCard` and `Profile` (no behavior
+  change to Profile — same logic, now reused not duplicated).
+- **Desktop:** unchanged — avatar 128px + first name (`clamp(2.5rem,8vw,4rem)`) + inline ·-separated
+  stat row, `items-center gap-8`. Verified computed styles identical at ≥sm.
+- **NOT pushed/deployed (per request).** Committed only.
+
 **Mobile layout fix — PlayerCard + Profile side-by-side + American name format (2026-06-17,
 DEPLOYED per request).** Mobile-only UI pass; desktop (`sm:` and up) kept pixel-identical by wrapping
 every desktop value in an `sm:` class. Lint + build clean. Two components:

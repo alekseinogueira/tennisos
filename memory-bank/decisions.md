@@ -3,6 +3,32 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — PlayerCard v2: split into two full sibling blocks; extract name helper to lib/name.js
+- **Decision:** For the PlayerCard mobile v2, abandoned the per-value `sm:` override approach used in
+  v1 and instead rendered **two complete sibling subtrees** — one `sm:hidden` (mobile), one
+  `hidden sm:flex` (desktop = a verbatim copy of the approved markup). The mobile stat sheet is a
+  **full-width 2×2 grid placed as a sibling below** the photo+name row (not inside the avatar row), and
+  each `<Stat>` stacks **label over value** (no box, no inline dot). Avatar (80px) is centered against a
+  wrapper holding only the label+surname, with given names pulled out to a `pl-24`-indented line below.
+  Also **extracted `formatNameAmericanStyle` from `Profile.jsx` into `src/lib/name.js`** and imported
+  it in both screens.
+- **Why:** The brief required (a) the stat grid to span the FULL card width below the photo — structurally
+  impossible while the stats live in the right column beside the avatar, so the layout had to be
+  re-parented, which a per-value `sm:` toggle on the v1 single-tree couldn't express; and (b) zero
+  desktop regression — a separate `hidden sm:flex` block that duplicates today's markup guarantees the
+  desktop computed styles are unchanged, at the cost of a duplicated avatar/label. Stacked `<Stat>`
+  (label over value) makes all four values left-align into a clean per-row column, which an inline
+  `label · value` can't (varying label widths push values to different x). Centering the avatar against
+  only label+surname (given names excluded from that flex row) prevents the avatar's vertical center
+  from drifting as the name length changes. The helper was duplicated between Profile and PlayerCard, so
+  a shared `lib/name.js` (matching the existing `lib/youtube.js` util pattern) removes the duplication.
+- **Alternatives:** Keep one responsive tree and override with `sm:` utilities (rejected — can't move
+  the stat grid from beside-the-photo to full-width-below with utilities alone); inline `label · value`
+  stat with a middle dot (built first this round, then rejected per request — stacked aligns values
+  cleanly); copy the name helper into PlayerCard (rejected — duplication; the brief explicitly said
+  reuse it); center the avatar against the whole name block incl. given names (rejected — drifts with
+  name length, violating the "don't drift" requirement).
+
 ## 2026-06-17 — Mobile layout fix: duplicate-markup `sm:` toggling to keep desktop pixel-identical
 - **Decision:** For the PlayerCard stat strip and the Profile name/EDIT-PROFILE button, rendered
   **two variants toggled by `hidden`/`sm:hidden`/`sm:block`** rather than one fluid layout. PlayerCard
