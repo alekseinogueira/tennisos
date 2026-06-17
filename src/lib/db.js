@@ -21,7 +21,16 @@ function unwrap({ data, error }) {
 /** The current user's profile row (id, role, email, full_name). RLS: own row. */
 export async function getProfile(userId) {
   return unwrap(
-    await supabase.from('profiles').select('*').eq('id', userId).single(),
+    await supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+  )
+}
+
+/** Idempotently ensure the caller's own profile row exists (id = auth.uid()).
+ *  Belt-and-suspenders alongside the handle_new_user trigger. RLS: self-insert
+ *  (role 'student' only) + own-row update. */
+export async function upsertProfile(fields) {
+  return unwrap(
+    await supabase.from('profiles').upsert(fields, { onConflict: 'id' }).select().single(),
   )
 }
 

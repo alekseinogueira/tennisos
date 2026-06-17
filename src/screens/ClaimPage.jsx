@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { getStudentByEmail, updateProfile, uploadAvatar } from '../lib/db'
+import { getStudentByEmail, updateProfile, upsertProfile, uploadAvatar } from '../lib/db'
 import TennisOSWordmark from '../components/TennisOSWordmark'
 
 const HANDS = ['Right', 'Left', 'Both']
@@ -108,16 +108,16 @@ export default function ClaimPage() {
         options: { data: { full_name: fullName } },
       })
       if (signErr) throw signErr
+      // Steps 2-4 (and the upsert below) need an active session. With email
+      // confirmation ON, signUp returns no session — fail loud and clear.
+      if (!data.session) {
+        setError('Check your email to confirm your account, then open your invite link again.')
+        return
+      }
       const uid = data.user?.id ?? null
       setUserId(uid)
-      // The trigger already inserted the profile; set the freshly-typed name.
-      if (uid) {
-        try {
-          await updateProfile(uid, { full_name: fullName })
-        } catch {
-          /* no session (email confirm on) — name still captured via signUp metadata */
-        }
-      }
+      // Guarantee the profile row exists (don't rely solely on the trigger).
+      await upsertProfile({ id: uid, email, full_name: fullName, role: 'student' })
       setStep(2)
     } catch (err) {
       setError(humanAuthError(err))
