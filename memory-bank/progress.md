@@ -145,6 +145,13 @@
   smoke-test.
 
 ## Recently Fixed
+- **Post-8C–10 audit fix — `LastFeedbackWidget` blank date (2026-06-17, `fix: post-8c-10 audit
+  fixes`):** the home "Last Session Feedback" card's `formatDate` assumed a date-only string and
+  built `` `${value}T00:00:00` ``. When a feedback's `lesson_date` is null it falls back to the
+  full-timestamp `created_at`, which made an invalid date → the date silently rendered blank. Now
+  parses directly when the value already contains `T`, else pins date-only to local midnight. Found
+  during the full phase-8C→10 audit (the only code bug; all other axes — empty/null handling, RLS,
+  awaits, Edge-fn error handling, 375px, db.js columns — passed). Lint + build clean.
 - **Missing-`profiles`-row PGRST116 bug — fix committed, NOT deployed (2026-06-17, `ff00912`):**
   the "JSON object requested, multiple (or no) rows returned" error came from a signed-up student
   with no `profiles` row. (1) `getProfile` `.single()`→`.maybeSingle()` (missing row → `null`;

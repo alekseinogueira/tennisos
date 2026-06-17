@@ -8,10 +8,11 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { getStudentByUserId, getLastFeedback } from '../lib/db'
 
-/** "Jun 12, 2026" — date-only, no timezone surprises. */
+/** "Jun 12, 2026". Handles a date-only lesson_date ("2026-06-12", pinned to
+ *  local midnight to avoid a TZ shift) AND the full-timestamp created_at fallback. */
 function formatDate(value) {
   if (!value) return ''
-  const d = new Date(`${value}T00:00:00`)
+  const d = new Date(value.includes('T') ? value : `${value}T00:00:00`)
   if (Number.isNaN(d.getTime())) return ''
   return d.toLocaleDateString('en-US', {
     month: 'short',

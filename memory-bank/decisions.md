@@ -3,6 +3,22 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Post-8C–10 audit: fix only the one real bug, leave intentional patterns alone
+- **Decision:** During the pre-deploy audit of phases 8C→10, the only code change made was fixing
+  `LastFeedbackWidget.formatDate` (blank date on the `created_at` timestamp fallback). The display
+  widgets' empty `catch {}` blocks (PlayerCard, NextSessionWidget, LastFeedbackWidget), the
+  `?? 0` SESSIONS fallback, the no-claim-gate on session scheduling, and `countActiveStudents`
+  filtering `status='active'` were all left as-is.
+- **Why:** Those are deliberate, documented patterns — graceful degradation for self-fetching home
+  widgets (they should never red-error the dashboard), the known `sessions_count` gap, the
+  email-targets-roster-email scheduling design, and a status the coach controls via StudentForm.
+  Changing them would be scope creep, not a fix. The `formatDate` blank was a genuine correctness
+  bug (silent data loss), so it was the one thing worth touching.
+- **Alternatives:** Also "harden" the empty catches to log (rejected — they're intentionally silent
+  so a missing profile never errors the page; logging would add noise without changing behavior);
+  rework `countActiveStudents` to count claimed students (rejected — `status='active'` is the
+  correct, coach-controlled signal, not a bug).
+
 ## 2026-06-17 — FUTURE IMPROVEMENT (not built): a "mark session completed" action
 - **Decision:** Deferred, not built this session. Log only. A future phase should add a coach action
   that sets `sessions.status='completed'` (e.g. a button on the StudentDetail Upcoming list and/or the

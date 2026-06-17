@@ -4,6 +4,21 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Post-8C–10 audit + deploy (2026-06-17).** Ran a full read-only audit of every change across
+phases 8C→10 (PlayerCard/home widgets, Profile, Library folders, session scheduling + reminder
+email, Coach Dashboard HQ) on 7 axes: empty/null handling, RLS (coach-all / student-own), missing
+await/race conditions, real-vs-swallowed `console.error`, 375px mobile, `db.js` table/column
+correctness, and Edge Function error handling. Verified every `db.js` column against migrations
+002/006, confirmed RLS shape on `sessions` (own via `user_id` / coach via `is_coach()`) and the
+PostgREST `student:students(full_name)` embeds (single unambiguous FK). **One real bug fixed:**
+`LastFeedbackWidget.formatDate` only handled date-only strings, so the `created_at` (full timestamp)
+fallback — used when a feedback's `lesson_date` is null — produced an invalid date and the date
+rendered blank; now branches on whether the value contains `T`. Lint + build clean. **Two non-bugs
+noted:** ACTIVE STUDENTS counting `status='active'` is correct (coach sets status via StudentForm);
+the "gallery by session + upload" feature named in the audit prompt was never committed in 8C–10
+(no such commit; `Gallery.jsx` is the earlier Phase 8 screen, unchanged). Committed
+`fix: post-8c-10 audit fixes`, then pushed + deployed via the `deploy-prod` skill.
+
 **Phase 10 — Coach Dashboard HQ (2026-06-17, code-level, committed this `/umb`, NOT pushed/deployed
 per request).** Replaced the coach Home placeholder (`/coach` → `ComingSoon "Coach Home"`) with a full
 operational dashboard, `screens/CoachDashboard.jsx`. Lint + build clean. Built in 4 approved steps; the
