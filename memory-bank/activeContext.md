@@ -4,9 +4,14 @@
 > Read this first at the start of every task.
 
 ## Current Focus
-**Phase 8B — Onboarding & Student Experience COMPLETE (code-level, 2026-06-15).** Wired the full
-invite→claim flow plus two student-portal tweaks. NOT pushed/deployed (awaiting confirmation);
-Stripe (Phase 9) deliberately untouched. Six sub-steps:
+**Phase 8B — Onboarding & Student Experience — invite-email path now DEPLOYED (2026-06-17).**
+Wired the full invite→claim flow plus two student-portal tweaks. Stripe (Phase 9) deliberately
+untouched. **DEPLOY STATUS (2026-06-17):** pushed `master`→`749ff6f` and shipped both halves —
+(a) Vercel production deployment `dpl_E1N4dp1cTA9BdjKEb3atQYiUSWGu` is READY on `749ff6f` (carries
+the StudentForm `fetch` fix); (b) `supabase functions deploy send-invite-email` ran (code unchanged
+→ "no change", but re-applied `verify_jwt=true` from the new `supabase/config.toml`). `RESEND_API_KEY`
+secret confirmed present. **STILL PENDING END-TO-END VERIFY:** coach must create a student in the live
+admin and confirm the email actually arrives — not yet confirmed by a real send. Six sub-steps:
 - **1 · Invite email Edge Function** — `supabase/functions/send-invite-email/index.ts` (Deno,
   `Deno.serve`, CORS + OPTIONS). POST `{ student_name, student_email, invite_link }` → Resend API
   (`from` "Aleksei Nogueira <55tc@55tenniscrew.com>", subject "Your 55TC portal is ready."). Key via
