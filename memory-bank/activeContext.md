@@ -4,6 +4,34 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Mobile layout fix — PlayerCard + Profile side-by-side + American name format (2026-06-17,
+DEPLOYED per request).** Mobile-only UI pass; desktop (`sm:` and up) kept pixel-identical by wrapping
+every desktop value in an `sm:` class. Lint + build clean. Two components:
+- **`components/PlayerCard.jsx` — mobile side-by-side.** The forest home hero went from mobile-stacked
+  (avatar centered above name/stats) to **avatar-left / name-right at every breakpoint** (container
+  `flex flex-row items-center gap-4 text-left sm:gap-8`; desktop was already side-by-side so this is a
+  no-op there). Avatar **64px on mobile** (`h-16 w-16 sm:h-32 sm:w-32`), initial `text-2xl sm:text-6xl`.
+  First name moved off inline `style={{fontSize:clamp(...)}}` to classes `text-[2rem]
+  sm:text-[clamp(2.5rem,8vw,4rem)]` so mobile shrinks to 32px while desktop keeps the exact clamp.
+  Stat chips **split into two blocks**: mobile = clean **2-col grid** (`grid grid-cols-2 … sm:hidden` →
+  LEVEL·ARM / SURFACE·SESSIONS, no orphan), desktop = the **unchanged** inline `·`-separated row
+  (`hidden … sm:flex sm:justify-start`).
+- **`screens/Profile.jsx` — mobile restructure (4 changes).** (1) **Removed** the "Your details on file
+  with the crew." subtitle entirely (all breakpoints — redundant with the section header). (2) **EDIT
+  PROFILE** button: header button gated `hidden … sm:block` (desktop keeps it top-right next to the
+  title); added a **mobile-only full-width** button at the very bottom (`mt-8 w-full … sm:hidden`, same
+  render condition). (3) ReadView header **side-by-side on mobile, stacked/centered preserved on
+  desktop** (`flex flex-row items-center gap-4 text-left sm:flex-col sm:items-center sm:text-center`);
+  the shared `Avatar` is now **64px on mobile** (`h-16 w-16 sm:h-28 sm:w-28`, initial `text-3xl
+  sm:text-5xl`) — used only in ReadView so EditView is untouched. (4) **Mobile-only name format**
+  "LASTNAME, First Middle" via new helper **`formatNameAmericanStyle(fullName)`** (splits on
+  whitespace, last token = surname, rest = given names; single-word name → surname only, no comma) —
+  surname prominent in Bebas Neue (renders caps) with given names smaller/lighter in DM Sans below;
+  the desktop `{firstName} {lastName}` h2 is kept verbatim behind `hidden sm:block`. This format is
+  **scoped to the Profile page only** (PlayerCard still shows first name).
+- **DEPLOYED (2026-06-17, per "u can do everything including deploy").** Committed, pushed to
+  `origin/master`, fired the Vercel deploy hook via `deploy-prod`, verified prod serves the new commit.
+
 **Post-8C–10 audit + deploy (2026-06-17).** Ran a full read-only audit of every change across
 phases 8C→10 (PlayerCard/home widgets, Profile, Library folders, session scheduling + reminder
 email, Coach Dashboard HQ) on 7 axes: empty/null handling, RLS (coach-all / student-own), missing

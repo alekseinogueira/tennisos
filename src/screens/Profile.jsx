@@ -30,6 +30,15 @@ function formatDob(value) {
 
 const dash = (v) => (v && String(v).trim() ? v : '—')
 
+/** "Aleksei Nogueira Colaco" → { surname: "Colaco", given: "Aleksei Nogueira" }.
+ *  Last whitespace token is the surname; the rest join as given names. A single-
+ *  word name returns it as the surname with no given names (rendered with no comma). */
+function formatNameAmericanStyle(fullName) {
+  const parts = (fullName || '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length <= 1) return { surname: parts[0] || '', given: '' }
+  return { surname: parts[parts.length - 1], given: parts.slice(0, -1).join(' ') }
+}
+
 export default function Profile() {
   const { user } = useAuth()
   const [profile, setProfile] = useState(null)
@@ -81,12 +90,11 @@ export default function Profile() {
           <h1 className="mt-2 font-display text-5xl tracking-[0.06em] text-forest">
             Profile
           </h1>
-          <p className="mt-3 text-ink/60">Your details on file with the crew.</p>
         </div>
         {!loading && !error && !editing && (
           <button
             onClick={startEdit}
-            className="shrink-0 rounded bg-forest px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-sand transition hover:opacity-90"
+            className="hidden shrink-0 rounded bg-forest px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-sand transition hover:opacity-90 sm:block"
           >
             Edit Profile
           </button>
@@ -118,6 +126,15 @@ export default function Profile() {
           phone={student?.phone}
           profile={profile}
         />
+      )}
+
+      {!loading && !error && !editing && (
+        <button
+          onClick={startEdit}
+          className="mt-8 w-full rounded bg-forest px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-sand transition hover:opacity-90 sm:hidden"
+        >
+          Edit Profile
+        </button>
       )}
 
       {!loading && !error && editing && (
@@ -153,13 +170,28 @@ export default function Profile() {
 // ─── Read view ────────────────────────────────────────────────────────────────
 
 function ReadView({ firstName, lastName, initial, avatarUrl, fullName, email, phone, profile }) {
+  const { surname, given } = formatNameAmericanStyle(fullName)
   return (
     <div className="space-y-6">
-      <div className="flex flex-col items-center text-center">
+      <div className="flex flex-row items-center gap-4 text-left sm:flex-col sm:items-center sm:text-center">
         <Avatar initial={initial} avatarUrl={avatarUrl} alt={firstName || 'You'} />
-        <h2 className="mt-4 font-display text-4xl leading-[0.9] tracking-[0.04em] text-forest">
-          {firstName || 'Player'} {lastName}
-        </h2>
+        <div className="min-w-0">
+          {/* Mobile — surname-first "LASTNAME, First Middle" (this page only) */}
+          <div className="sm:hidden">
+            <span className="block font-display text-4xl leading-[0.9] tracking-[0.04em] text-forest">
+              {surname || 'Player'}{given && ','}
+            </span>
+            {given && (
+              <span className="mt-1 block text-base font-medium tracking-wide text-forest/55">
+                {given}
+              </span>
+            )}
+          </div>
+          {/* Desktop — unchanged first-last */}
+          <h2 className="hidden font-display text-4xl leading-[0.9] tracking-[0.04em] text-forest sm:mt-4 sm:block">
+            {firstName || 'Player'} {lastName}
+          </h2>
+        </div>
       </div>
 
       <section className="rounded-2xl border border-forest/12 bg-white p-6">
@@ -418,13 +450,13 @@ function Avatar({ initial, avatarUrl, alt }) {
       <img
         src={avatarUrl}
         alt={alt}
-        className="h-28 w-28 rounded-full object-cover ring-2 ring-forest/15"
+        className="h-16 w-16 rounded-full object-cover ring-2 ring-forest/15 sm:h-28 sm:w-28"
       />
     )
   }
   return (
-    <div className="flex h-28 w-28 items-center justify-center rounded-full bg-forest ring-2 ring-forest/15">
-      <span className="font-display text-5xl leading-none text-sand">{initial}</span>
+    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-forest ring-2 ring-forest/15 sm:h-28 sm:w-28">
+      <span className="font-display text-3xl leading-none text-sand sm:text-5xl">{initial}</span>
     </div>
   )
 }

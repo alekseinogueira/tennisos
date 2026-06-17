@@ -145,6 +145,15 @@
   smoke-test.
 
 ## Recently Fixed
+- **Mobile layout — PlayerCard + Profile side-by-side + American name format (2026-06-17, DEPLOYED):**
+  mobile-only UI pass, desktop kept pixel-identical (every desktop value behind an `sm:` class).
+  PlayerCard home hero now avatar-left/name-right on mobile (64px avatar, 32px name, stat chips in a
+  clean 2-col grid). Profile: removed the "Your details on file with the crew." subtitle (all
+  breakpoints); EDIT PROFILE gated to desktop top + a new mobile-only full-width button at page
+  bottom; ReadView header side-by-side on mobile (64px `Avatar`, stacked/centered preserved on
+  desktop); mobile-only surname-first name "LASTNAME, First Middle" via new
+  `formatNameAmericanStyle(fullName)` helper (Profile page only — PlayerCard still shows first name).
+  Lint + build clean; committed, pushed, deployed via `deploy-prod`.
 - **Phase 8C→10 stack DEPLOYED & verified live (2026-06-17, `5ab6924`):** first production deploy of
   player card + home widgets, student profile, library folders, session scheduling + reminder email,
   and the coach dashboard HQ — plus the `ff00912` profiles fix — all previously committed-only.

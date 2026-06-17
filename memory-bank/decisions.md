@@ -3,6 +3,27 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Mobile layout fix: duplicate-markup `sm:` toggling to keep desktop pixel-identical
+- **Decision:** For the PlayerCard stat strip and the Profile name/EDIT-PROFILE button, rendered
+  **two variants toggled by `hidden`/`sm:hidden`/`sm:block`** rather than one fluid layout. PlayerCard
+  stats: a mobile 2-col `grid … sm:hidden` plus the original inline `·`-separated row `hidden … sm:flex`.
+  Profile: a mobile surname-first name block `sm:hidden` plus the original `{firstName} {lastName}` h2
+  `hidden sm:block`; the EDIT PROFILE button exists twice (desktop header `hidden sm:block`, mobile
+  bottom `sm:hidden`). Also moved PlayerCard's first-name size off an inline `style` clamp onto
+  `text-[2rem] sm:text-[clamp(2.5rem,8vw,4rem)]`.
+- **Why:** The brief was explicit — "Desktop layout is approved as-is and must NOT change… pixel-
+  identical." The mobile and desktop treatments genuinely differ in structure (grid vs separator row;
+  surname-first vs first-last; button at bottom vs top), so a single responsive element couldn't serve
+  both without altering the desktop render. Wrapping every desktop value behind `sm:` and duplicating
+  only the two divergent blocks guarantees the desktop branch is byte-for-byte the prior markup, at the
+  cost of a little duplicated JSX. Inline `style` can't be overridden by a Tailwind class (inline always
+  wins), so the clamp had to move to a class to let mobile shrink to 32px.
+- **Alternatives:** One fluid layout with responsive utilities only (rejected — couldn't reproduce the
+  desktop inline `·` row and first-last name exactly while also giving the different mobile structure);
+  a CSS `@media` block in a stylesheet (rejected — the codebase is Tailwind-utility-first, no
+  component CSS); keep the inline clamp and override with `!important` mobile class (rejected — fragile,
+  off-pattern).
+
 ## 2026-06-17 — Gate the 8C→10 production deploy on coach-confirmed migration 006
 - **Decision:** Before firing the Vercel deploy hook for `5ab6924`, paused and asked the coach to
   confirm migration `006_sessions` is applied in the live Supabase project; deployed only after a
