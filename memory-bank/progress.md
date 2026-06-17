@@ -79,6 +79,17 @@
   - Lint + build clean. **Known gap:** no `sessions_count` column → SESSIONS chip shows `0` until a
     real source is wired.
 
+- **Library folder system — Phase 8E COMPLETE (code-level, 2026-06-17):**
+  - **`screens/Library.jsx`** (full rewrite): folder-first content library. State A = grid of the 8
+    hard-coded technique folders (forest + court motif + emoji icon + Bebas label + `{n} videos` /
+    `Coming soon` badge, `grid-cols-2 md:grid-cols-3`). State B = in-folder drill-down via local state
+    (no reload): `← Library` back, Bebas header, reused video cards, per-folder "Coming soon" empty
+    state. Conditional **More** folder catches off-list/null categories. Dropped the old FilterChip row.
+  - **`screens/admin/Videos.jsx`**: add-form Category field upgraded free-text → `<select>` of the
+    8 lowercase folder values + `— Uncategorized —`. Save logic unchanged (stores lowercase value or
+    `null`). No edit mode on the page, so only the add form changed.
+  - Lint + build clean. Not deployed (per request); folder counts stay empty until live data exists.
+
 - **Student Profile page — Phase 8D COMPLETE (code-level, 2026-06-17):**
   - **`screens/Profile.jsx`** (full rewrite): read + edit modes. Read = avatar (photo or forest-
     circle/sand-initial) + Bebas name + two white cards, **YOUR DETAILS** (name · email · phone ·
@@ -94,7 +105,7 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
-- Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D all complete at
+- Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D/8E all complete at
   the code level; all await **applied migrations + live data** to smoke-test.
 
 ## Recently Fixed

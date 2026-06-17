@@ -3,6 +3,37 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Phase 8E Library: hard-code the 8 category folders in the front-end (not a distinct query)
+- **Decision:** The student `/library` folder grid renders a **hard-coded** `CATEGORIES` array of the
+  8 technique folders (forehand, backhand, footwork, serve, volley, slice, smash, mentality), always
+  shown even at count 0 ("Coming soon"). Item counts/contents are derived client-side by normalized
+  (`lowercase+trim`) matching against the loaded `curated_library` rows. A 9th **More** folder is
+  rendered only when items carry a category outside the 8 (or null/legacy).
+- **Why:** The spec requires "always show all 8 even if count is 0" — a `SELECT DISTINCT category`
+  would only surface categories that already have videos, so empty folders would vanish. Hard-coding
+  the canonical set guarantees the full grid renders against an empty/unseeded table, and keeps the
+  folder keys (lowercase) identical to the values the coach select writes (Step 2), so matching is
+  exact with no mapping table. The More folder is a safety net so a mistyped/legacy category never
+  silently hides a coach's video.
+- **Alternatives:** Query distinct categories from the DB (rejected — empty folders disappear, defeats
+  the "always 8" requirement and the premium-shelf feel); a `library_categories` lookup table seeded
+  by migration (rejected for V1 — over-engineered for a fixed single-coach taxonomy; revisit if the
+  category set needs to be coach-editable). Emoji icons chosen as explicit placeholders (spec permits)
+  over a bespoke SVG set, isolated in `CATEGORIES` so brand icons can swap in without layout changes.
+
+## 2026-06-17 — Phase 8E Library: coach category is an optional constrained select, not required
+- **Decision:** The admin Videos add form's Category became a `<select>` of the 8 lowercase folder
+  values plus a leading `— Uncategorized —` (`value=""`). It is **not required**; an empty pick saves
+  `null` (existing `form.category.trim() || null` logic, unchanged).
+- **Why:** A constrained select prevents free-text typos that would scatter videos across phantom
+  folders, while the optional `— Uncategorized —` pairs with the student-side **More** folder so a
+  video is never *blocked* from saving for lack of a category. Lowercase stored values match the
+  Library folder keys exactly (no normalization surprises).
+- **Alternatives:** Keep free-text input (rejected — typos break folder matching); make category
+  mandatory with no empty option, defaulting to `forehand` (rejected — risks silent miscategorization
+  when the coach forgets to change it; the More folder makes "optional" safe). The admin page has no
+  edit mode, so only the add form was changed.
+
 ## 2026-06-17 — Phase 8D Profile: avatar uploads immediately, `avatar_url` commits on Save
 - **Decision:** In edit mode, picking a photo **uploads to Storage right away** (`uploadAvatar` →
   `avatars/{user_id}/avatar.{ext}`) and shows an instant local `objectURL` preview, but the

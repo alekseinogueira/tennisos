@@ -8,6 +8,11 @@ import { useAuth } from '../../auth/useAuth'
 import { listLibrary, createLibraryItem, deleteLibraryItem } from '../../lib/db'
 
 const SOURCES = ['youtube', 'link']
+// The 8 library folders (lowercase values match the student Library folder keys).
+const CATEGORIES = [
+  'forehand', 'backhand', 'footwork', 'serve',
+  'volley', 'slice', 'smash', 'mentality',
+]
 const EMPTY = { title: '', category: '', external_url: '', source: 'youtube' }
 
 export default function Videos() {
@@ -114,12 +119,23 @@ export default function Videos() {
             required
             placeholder="e.g. Topspin forehand — fundamentals"
           />
-          <Field
-            label="Category"
-            value={form.category}
-            onChange={(v) => set('category', v)}
-            placeholder="e.g. forehand"
-          />
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-[0.15em] text-ink/50">
+              Category
+            </span>
+            <select
+              value={form.category}
+              onChange={(e) => set('category', e.target.value)}
+              className="mt-2 w-full rounded-xl border border-forest/15 bg-white/60 px-4 py-3 text-ink outline-none transition focus:border-forest focus:bg-white focus:ring-2 focus:ring-forest/10"
+            >
+              <option value="">— Uncategorized —</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c[0].toUpperCase() + c.slice(1)}
+                </option>
+              ))}
+            </select>
+          </label>
           <Field
             label="Link (YouTube or URL)"
             type="url"

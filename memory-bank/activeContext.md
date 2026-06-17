@@ -4,6 +4,38 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Phase 8E — Library Folder System (2026-06-17, code-level, committed, NOT deployed — per request).**
+Redesigned the student `/library` from a flat filtered list into a folder-first content library, plus
+made the coach's category field a constrained select. Lint + build clean. Built in 2 approved steps:
+- **Step 1 — `src/screens/Library.jsx` (full rewrite).** Two states, switched by local `open` state
+  (no route change / page reload):
+  - **State A — folder grid.** The **8 seeded technique categories** (forehand, backhand, footwork,
+    serve, volley, slice, smash, mentality) as forest **folder cards** — court motif (`<CourtMotif>`
+    bottom-right, sand 6%), an **emoji icon** in a sand/10 circle (explicit placeholders, isolated in
+    a `CATEGORIES` const so brand SVGs can swap in later without touching layout), Bebas Neue label,
+    and a badge: `{n} videos` (DM Sans, sand/55) or **`Coming soon`** when count is 0. Grid is
+    `grid-cols-2 md:grid-cols-3`. The 8 are **hard-coded** (always shown even at count 0) — the
+    front-end does NOT rely on a distinct-category query.
+  - **State B — inside a folder.** `← Library` back button, emoji + Bebas category header, the
+    existing video-card design **reused as-is** (YouTube embed inline / "Watch ↗" tile), and the
+    per-folder empty state: "Coming soon" + "Your coach is stocking this shelf. Check back soon."
+  - **`More` folder (kept, per request):** a 9th folder rendered **only when** items carry a category
+    outside the 8 (or null/legacy) — a safety net so a mistyped category never silently hides a video.
+    `norm()` lowercases+trims for matching; counts computed in a `useMemo`.
+  - Dropped the old per-card category eyebrow (now redundant — the folder *is* the category) and the
+    `FilterChip` row.
+- **Step 2 — `src/screens/admin/Videos.jsx`.** The add form's free-text **Category** `<Field>` →
+  a `<select>` of the same 8 lowercase folder values + a leading `— Uncategorized —` (`value=""`).
+  Styled identically to the existing Source select. **Save logic unchanged** (`handleCreate` already
+  does `category: form.category.trim() || null`), so a pick stores the lowercase value (`'forehand'`,
+  matches the Library folder key exactly) and Uncategorized stores `null` → lands in the **More**
+  folder. NOTE: the admin Videos page has **no edit mode** (create + delete only), so only the add
+  form was touched. Category kept **optional** (not forced) to pair with the More safety net.
+- **NOT deployed (per request).** Same live-data gate as 8B/8C/8D: the folder counts/contents are
+  empty until migrations are applied + the curated_library is stocked. The 8 categories are claimed
+  "seeded in the DB" by the task but there is **no seed migration in the repo** — the front-end
+  hard-codes the 8 regardless, so the grid renders the full set even with an empty table.
+
 **Phase 8D — Student Profile Page (2026-06-17, code-level, NOT committed-then-deployed at write
 time — commit pending this `/umb`).** Replaced the read-only `/profile` stub ("Nothing here yet")
 with a real, editable player profile. Lint + build clean. Built in 3 approved steps, all in
