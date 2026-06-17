@@ -4,6 +4,29 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Root-bug fix (2026-06-17, committed `ff00912`, NOT pushed/deployed): the missing-`profiles`-row
+PGRST116 error.** Killed the "JSON object requested, multiple (or no) rows returned" failure at its
+source — a signed-up student with no `profiles` row. Three coordinated changes, lint clean,
+committed only (no push, no deploy, per request):
+- **`db.js` `getProfile`:** `.single()` → `.maybeSingle()` — a missing row returns `null` instead
+  of throwing PGRST116. `AuthProvider.loadProfile` already handles `null`, so the shell no longer
+  red-errors. The four student screens (Home/Profile/Feedback/Gallery) never called
+  `profiles…single()` directly — they use `getStudentByUserId` (`maybeSingle`) and already render
+  graceful empty states, so no screen edits were needed. (If the LIVE site still red-errors, it's
+  serving an OLD bundle — needs redeploy.)
+- **`db.js` new `upsertProfile(fields)`** + **`ClaimPage` step 1:** replaced the swallowed
+  `full_name`-only UPDATE with `upsertProfile({ id, email, full_name, role:'student' })` so the
+  profile row is GUARANTEED regardless of the `handle_new_user` trigger (idempotent, `onConflict:
+  'id'`). This was the actual silent failure — the old UPDATE hit 0 rows and the `catch {}` ate it.
+- **`ClaimPage` step 1 session gate:** after `signUp`, bail with a clear human error if
+  `!data.session` (email confirmation ON) instead of silently writing with no auth.
+- **Migration `005_profiles_self_insert.sql` (UNAPPLIED):** `profiles_insert_self` RLS policy —
+  self-insert only for `id = auth.uid()` AND `role = 'student'` (blocks self-escalation). Required
+  for the client upsert to pass RLS (profiles previously had only SELECT + UPDATE policies).
+- **PENDING to make it live:** (a) **apply migration 005** in Supabase (and confirm 001–004 are
+  actually applied — memory still lists them UNAPPLIED); (b) **redeploy the frontend** via
+  `deploy-prod` so the screen/`getProfile` resilience reaches production.
+
 **Phase 8B — Onboarding & Student Experience — invite-email path now DEPLOYED (2026-06-17).**
 Wired the full invite→claim flow plus two student-portal tweaks. Stripe (Phase 9) deliberately
 untouched. **DEPLOY STATUS (2026-06-17, master now at `6fc0727`, pushed):** shipped both halves —
@@ -276,8 +299,11 @@ Extracted the `youtubeId` URL parser into **`lib/youtube.js`** and used it in bo
 - Deploy: Vercel at `portal.55tenniscrew.com` (apex/www + n8n untouched). Stripe = later.
 
 ## Next Steps (next session)
-1. **Apply migrations** to a Supabase project (dashboard SQL editor OR `supabase db push`),
-   then seed the coach account and set `profiles.role='coach'`.
+1. **Apply migrations `001..005`** to the Supabase project (dashboard SQL editor OR `supabase db
+   push`) — `005` (profiles self-insert RLS) is REQUIRED for the new `/claim` upsert to pass RLS;
+   confirm `001..004` are actually applied (memory still lists them UNAPPLIED). Then seed the coach
+   account and set `profiles.role='coach'`. **Then redeploy the frontend** (`deploy-prod`) so the
+   `getProfile`/claim fixes in `ff00912` reach production.
 2. Set `.env` locally (VITE_SUPABASE_*) and smoke-test login/claim/reset + the admin roster
    (create student → invite link → edit) + the **credit loop** (StudentDetail: record a +/−
    entry → balance + history update → student dashboard shows the live balance) + the

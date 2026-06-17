@@ -28,7 +28,9 @@
 
 - Inserted by `handle_new_user()` trigger (security definer) on auth signup — no direct insert.
 - **RLS:** SELECT own (`id = auth.uid()`) OR `is_coach()`. UPDATE own non-role fields; coach may
-  update any row incl. role. No client INSERT/DELETE.
+  update any row incl. role. INSERT: self-insert ONLY (`id = auth.uid()` AND `role = 'student'`,
+  `profiles_insert_self`, migration `005`) — lets `/claim` upsert its own row as a fallback for the
+  `handle_new_user` trigger, with no self-escalation. No client DELETE (auth.users cascade handles it).
 - **Onboarding (8B):** `get_invite_student(email)` SECURITY DEFINER RPC (migration 004, granted to
   `anon`+`authenticated`) returns name/phone/email for an UNCLAIMED invite only, so the anonymous
   `/claim` page can pre-fill before signup (the `students` RLS would otherwise return nothing).

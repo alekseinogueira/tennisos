@@ -3,6 +3,24 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — Guarantee the `profiles` row at `/claim` via a client upsert + self-insert RLS
+- **Decision:** Stop relying solely on the `handle_new_user()` trigger to create a student's
+  `profiles` row. After `signUp`, `ClaimPage` step 1 now calls a new `upsertProfile({ id, email,
+  full_name, role:'student' })` (`db.js`), backed by a new `profiles_insert_self` RLS policy
+  (migration `005`) that permits a self-insert **only** for `id = auth.uid()` **and** `role =
+  'student'`. Also: `getProfile` switched `.single()` → `.maybeSingle()` (missing row → `null`,
+  not a thrown PGRST116), and the step-1 write is gated on `data.session` (fail loud if email
+  confirmation is on) instead of swallowing the error.
+- **Why:** Root cause of the "JSON object requested, multiple (or no) rows returned" bug was a
+  signed-up user with **no** `profiles` row — the trigger may be unapplied/failed, and the old
+  step-1 code did a swallowed `full_name`-only UPDATE that hit 0 rows and silently did nothing, so
+  the row was never created. A client upsert makes the row's existence the claim flow's own
+  responsibility (idempotent with the trigger via `onConflict: 'id'`).
+- **Alternatives:** Rely only on fixing/applying the trigger (rejected — single point of failure,
+  no client-side guarantee); open a broad `profiles` INSERT policy (rejected — `role`-unrestricted
+  self-insert is a privilege-escalation hole; scoped to `'student'` instead); keep `.single()` and
+  just catch harder (rejected — `maybeSingle()` is the correct primitive for "0 or 1 row").
+
 ## 2026-06-17 — Email logo: hosted PNG `<img>` instead of inline SVG
 - **Decision:** In the `send-invite-email` template, replace the header inline `<svg>` 55TC logo
   (defs + `filter` drop-shadow + `transform`-flipped paths + `<text>`) with a hosted PNG `<img>`

@@ -70,6 +70,16 @@
   code level; all await **applied migrations + live data** to smoke-test.
 
 ## Recently Fixed
+- **Missing-`profiles`-row PGRST116 bug — fix committed, NOT deployed (2026-06-17, `ff00912`):**
+  the "JSON object requested, multiple (or no) rows returned" error came from a signed-up student
+  with no `profiles` row. (1) `getProfile` `.single()`→`.maybeSingle()` (missing row → `null`;
+  `AuthProvider` already null-safe). (2) New `upsertProfile` helper; `ClaimPage` step 1 now upserts
+  `{ id, email, full_name, role:'student' }` (idempotent with the trigger) instead of a swallowed
+  `full_name`-only UPDATE that hit 0 rows — the real silent failure. (3) Step 1 gated on
+  `data.session` (clear error if email-confirm is ON). (4) Migration `005` adds a `profiles`
+  self-insert RLS policy (`id = auth.uid()` AND `role = 'student'`) so the upsert passes RLS. Lint
+  clean. **Not live until migration 005 is applied + the frontend is redeployed.** The four student
+  screens were already null-safe (use `getStudentByUserId`/`maybeSingle`), so no screen edits.
 - **Invite-email send wired + deployed (2026-06-17, `ff812a4`→`6fc0727`):** the `send-invite-email`
   Edge Function existed but was never being invoked. (1) `StudentForm` now POSTs to the function via
   explicit `fetch` (anon-key auth) on student create, logging failures instead of swallowing them —
@@ -114,6 +124,10 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Profiles-row fix `ff00912` is committed but NOT live** — migration `005_profiles_self_insert.sql`
+  must be applied in Supabase (the `/claim` upsert is RLS-blocked without it) AND the frontend must
+  be redeployed (`deploy-prod`) before the `getProfile`/claim resilience reaches production. Until
+  then a student with no `profiles` row can still hit the PGRST116 error on the live (old) bundle.
 - **Vercel git push-to-deploy is unreliable** — git-triggered (and CLI) builds sat in `UNKNOWN`
   / never built for this project. Working path is the **deploy hook + manual deploy**. Repair the
   git auto-build integration before relying on push-to-deploy.
