@@ -25,9 +25,18 @@ row, `items-center gap-8`).
      back INSIDE the text column (dropped the `pl-24` indent), so the avatar's midpoint aligns with the
      midpoint of the WHOLE text block (label + surname + given), not just label+surname.
 - The "55TC · PLAYER CARD" label stays byte-identical (`text-[10px] font-medium uppercase
-  tracking-[0.3em] text-sand/55`). Lint + build clean. **Watch:** at 375px the four stat columns are
-  ~70px each — `ADVANCED`/`SESSIONS` fit but are tightish; if cramped on a real phone, drop value to
-  `text-[13px]` or label tracking to `tracking-[0.15em]`.
+  tracking-[0.3em] text-sand/55`). Lint + build clean.
+- **v2-polish (committed this `/umb`, NOT pushed/deployed — prod still serves `242343c`):** three
+  mobile-only refinements. (1) **Top-block spacing** — surname `mt-1` → **`mt-1.5`** so the
+  label→surname gap reads equal to surname→given (the surname's `leading-[0.9]` pulls its cap-top up
+  into the margin, so equal code margins rendered unequal). (2) **Given-names casing** — `lib/name.js`
+  now title-cases the given portion via a new `toTitleCase` ("ALEKSEI NOGUEIRA" → "Aleksei Nogueira");
+  the all-caps came from the stored `full_name`, not CSS. Surname left raw (Bebas renders caps). This
+  also title-cases Profile's mobile given line (consistent; no desktop impact). (3) **Stat grid
+  harmony** — added `text-center` (+ `gap-x-3`→`gap-x-2`, label tracking `0.2em`→`0.15em`, value
+  `text-sm`→`text-[13px]`) so the four equal columns read evenly spaced left→right (left-aligned left
+  uneven trailing gaps per label width). The ~70px-column fit risk from v2-correction is resolved by
+  the smaller value text + centering.
 
 **Mobile layout fix — PlayerCard + Profile side-by-side + American name format (2026-06-17,
 DEPLOYED per request).** Mobile-only UI pass; desktop (`sm:` and up) kept pixel-identical by wrapping

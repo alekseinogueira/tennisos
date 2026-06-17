@@ -145,8 +145,17 @@
   smoke-test.
 
 ## Recently Fixed
+- **PlayerCard mobile v2-polish — spacing + casing + grid harmony (2026-06-17, committed, NOT
+  deployed):** (1) surname `mt-1`→`mt-1.5` so the label→surname gap visually matches surname→given
+  (equal code margins rendered unequal because the surname's `leading-[0.9]` eats the top margin);
+  (2) `lib/name.js` now title-cases the given-names portion (`toTitleCase`) so "ALEKSEI NOGUEIRA" →
+  "Aleksei Nogueira" — the all-caps was from stored `full_name`, not CSS; surname stays raw (Bebas =
+  caps). Also title-cases Profile's mobile given line (consistent, no desktop impact). (3) Stat grid
+  now `text-center` with `gap-x-2`, label `tracking-[0.15em]`, value `text-[13px]` so the four equal
+  columns read evenly spaced left→right. Lint + build clean. **Prod still serves `242343c` until
+  deployed.**
 - **PlayerCard mobile layout v2-correction — label-row/value-row stat sheet + centered photo
-  (2026-06-17, committed, NOT yet deployed):** corrected the v2 stat layout per a second sketch. The
+  (2026-06-17, DEPLOYED `242343c`):** corrected the v2 stat layout per a second sketch. The
   stat sheet is now a **4-col / 2-row grid** — row 1 = all four labels (LEVEL · ARM · SURFACE ·
   SESSIONS), row 2 = all four values directly beneath, even columns across the full card width (mapped
   `stats` twice into a row-major `grid-cols-4`; the v2 `<Stat>` helper removed as unused). Also the

@@ -82,8 +82,10 @@ export default function PlayerCard() {
             <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-sand/55">
               55TC · Player Card
             </p>
-            {/* Surname — dominant element, same visual weight the first name has on desktop */}
-            <h1 className="mt-1 font-display text-[2rem] leading-[0.9] tracking-[0.06em] text-sand">
+            {/* Surname — dominant element, same visual weight the first name has on desktop.
+                mt-1.5 (not mt-1) so the label→surname gap reads equal to surname→given:
+                the surname's leading-[0.9] pulls its cap-top up into the margin above it. */}
+            <h1 className="mt-1.5 font-display text-[2rem] leading-[0.9] tracking-[0.06em] text-sand">
               {surname || 'Player'}
             </h1>
             {/* Given names — smaller / lighter, tucked tight under the surname */}
@@ -95,17 +97,18 @@ export default function PlayerCard() {
           </div>
         </div>
 
-        {/* Stat sheet — one row of labels over one row of values, 4 even columns
-            spanning the full card width. grid-cols-4 fills row-major: the four
-            labels land on row 1, the four values directly beneath on row 2. */}
-        <div className="mt-6 grid grid-cols-4 gap-x-3 gap-y-1">
+        {/* Stat sheet — one row of labels over one row of values; grid-cols-4 gives
+            four mathematically equal columns (fills row-major: labels row 1, values
+            row 2). Content is centered so the spacing reads identical scanning
+            left→right (left-aligned would leave uneven trailing gaps per label width). */}
+        <div className="mt-6 grid grid-cols-4 gap-x-2 gap-y-1 text-center">
           {stats.map((s) => (
-            <p key={`label-${s.label}`} className="text-[10px] uppercase tracking-[0.2em] text-sand/50">
+            <p key={`label-${s.label}`} className="text-[10px] uppercase tracking-[0.15em] text-sand/50">
               {s.label}
             </p>
           ))}
           {stats.map((s) => (
-            <p key={`value-${s.label}`} className="text-sm font-semibold text-sand/90">
+            <p key={`value-${s.label}`} className="text-[13px] font-semibold text-sand/90">
               {s.value}
             </p>
           ))}

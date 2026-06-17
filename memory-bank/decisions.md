@@ -3,6 +3,28 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-17 — PlayerCard v2-polish: title-case given names in the helper; center stats; mt-1.5 for optical parity
+- **Decision:** Three mobile-only tweaks. (1) Title-case the given-names portion inside
+  `formatNameAmericanStyle` (new `toTitleCase`), not via CSS — surname left raw. (2) Center the stat
+  grid (`text-center`) and shrink the value to `text-[13px]` / label tracking to `0.15em`. (3) Set the
+  surname's top margin to `mt-1.5` (vs `mt-1` on the given line) even though that makes the two code
+  margins unequal.
+- **Why:** (1) The "ALEKSEI NOGUEIRA" all-caps came from the stored `full_name`, so no CSS toggle would
+  fix it — normalizing in the shared helper guarantees title case regardless of source casing, and
+  keeps both PlayerCard and Profile consistent from one place. Surname stays raw because Bebas Neue is
+  an all-caps face (its source casing is invisible). (2) `grid-cols-4` already makes columns equal, but
+  left-aligned content leaves uneven *trailing* whitespace (short `LEVEL` → big gap before `ARM`; long
+  `SURFACE` → small gap), which is the imbalance the coach flagged; centering puts each column's content
+  on its evenly-spaced center axis so the row scans evenly. (3) Equal code margins rendered visually
+  unequal — the surname's `leading-[0.9]` pulls its cap-top up into the space above it (~4px visual for
+  label→surname vs ~7px for surname→given), so `mt-1.5` on the surname restores optical parity. Optical
+  spacing > nominally-equal margins.
+- **Alternatives:** Force casing with a CSS class (rejected — `lowercase`+`capitalize` is lossy on
+  ALL-CAPS input and per-render; the helper is the single source); title-case only in PlayerCard
+  (rejected — Profile would stay inconsistent; the helper is shared for exactly this); keep stats
+  left-aligned (rejected — that *is* the reported imbalance); keep both name margins `mt-1` (rejected —
+  renders visibly unequal); bump surname to `mt-2` (rejected — overshoots ~8px vs the ~7px target).
+
 ## 2026-06-17 — PlayerCard stat sheet: 4-col label-row over value-row via a doubled map, not stacked pairs
 - **Decision:** Rebuilt the mobile stat sheet as a single `grid grid-cols-4 gap-x-3 gap-y-1` whose
   children are `stats.map(label)` followed by `stats.map(value)` — so the four labels fill row 1 and the
