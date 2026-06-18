@@ -4,6 +4,22 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**WhatsApp platform decision — Twilio over Evolution API (2026-06-18, docs-only).** Read-only
+audit of a separate server project, `~/agente_cortes` (a Python/FastAPI video-clipping pipeline
+operated over WhatsApp), to evaluate reusing its messaging layer for the TennisOS feedback
+notifications planned in `fase-e-workflow.md` / `loops-agente.md`. Findings: it uses **Twilio**
+(WhatsApp Sandbox) — NOT Evolution API as the TennisOS plans had assumed. It has a clean outbound
+module (`src/whatsapp_client.py`: `send_message`/`send_media`/`send_preview`/`send_status_update`
+via the Twilio SDK), an inbound `POST /webhook/whatsapp` + regex `command_parser.py`, and a
+documented **n8n → HTTP node → Twilio API** pattern (`docs/n8n_setup.md`, 3 workflows: receive,
+error-alert, stuck-job monitor; ngrok tunnel). **Decision recorded:** use Twilio (already built,
+tested, n8n-integrated) for TennisOS WhatsApp; the n8n→HTTP→Twilio pattern is directly transferable;
+**replicate** the `whatsapp_client.py` pattern in n8n / an Edge Function — do NOT import the file
+(it's tied to that FastAPI app). Evolution API stays a future option if volume justifies migration.
+Captured as a "WhatsApp — Decisão de Plataforma" note in `memory-bank/planning/fase-e-workflow.md`.
+Caveats noted: Twilio Sandbox is dev-only (recipients must `join`; production needs an approved
+sender), media sends need a public URL (Supabase Storage card image works). No app code touched.
+
 **Planning docs added to the memory bank (2026-06-18, docs-only — committed, NOT pushed/deployed).**
 Created `memory-bank/planning/` with three reference documents pasted by the coach: (1)
 **`roadmap-portal.md`** — the full portal build plan, phases 8C→10 (Player Card/Home, Profile,

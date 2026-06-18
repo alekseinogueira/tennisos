@@ -339,3 +339,11 @@ ORDEM DE EXECUÇÃO
 ✅ Etapa 4 — Sync Notion → Supabase + email publicação
 🔜 Credenciais — mover Gemini key e Notion token para n8n Credentials
 🔜 Evolution API — WhatsApp quando configurado
+
+
+## WhatsApp — Decisão de Plataforma (Jun/2026)
+Twilio (já existente em ~/agente_cortes) em vez de Evolution API.
+Motivo: Twilio já está construído, testado e integrado com n8n via HTTP node.
+O padrão n8n → HTTP node → Twilio API é diretamente transferível para o TennisOS.
+Evolution API fica como opção futura se o volume justificar migração.
+Replicar o padrão de ~/agente_cortes/src/whatsapp_client.py — não importar o arquivo.

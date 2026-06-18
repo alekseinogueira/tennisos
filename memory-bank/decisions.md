@@ -3,6 +3,23 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-18 — WhatsApp notifications: use Twilio (from `~/agente_cortes`), not Evolution API
+- **Decision:** For the TennisOS feedback/loop WhatsApp notifications (planned in `fase-e-workflow.md`
+  and `loops-agente.md`), use **Twilio** — the platform already built, tested, and n8n-integrated in
+  the separate `~/agente_cortes` project — instead of Evolution API as those plans originally assumed.
+  Reuse the **n8n → HTTP node → Twilio API** pattern (documented in `~/agente_cortes/docs/n8n_setup.md`)
+  directly; **replicate** the send pattern from `~/agente_cortes/src/whatsapp_client.py` in n8n or a
+  Supabase Edge Function rather than importing the file (it's coupled to that FastAPI app). Evolution
+  API remains a future migration option if message volume justifies it.
+- **Why:** Twilio is already working end-to-end in `agente_cortes` (outbound text/media + inbound
+  webhook + n8n error/monitor workflows), so adopting it is near-zero integration cost, whereas
+  Evolution API is unbuilt. The n8n HTTP-node recipe is platform-agnostic and drops straight into the
+  TennisOS feedback-due / publish loops.
+- **Alternatives:** Build Evolution API fresh (rejected for now — self-hosted/free and the stated plan,
+  but unbuilt and no urgency at single-coach volume); import `whatsapp_client.py` as-is (rejected — tied
+  to the FastAPI app's job model, not portable). Caveats: Twilio Sandbox is dev-only (production needs an
+  approved WhatsApp sender), media sends require a public URL (Supabase Storage card image satisfies this).
+
 ## 2026-06-18 — Add a `memory-bank/planning/` folder for forward roadmap docs
 - **Decision:** Keep long-form forward-planning documents (multi-phase build plans, the n8n workflow
   rebuild plan, the agent-loops roadmap) in a dedicated `memory-bank/planning/` folder

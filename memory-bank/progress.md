@@ -148,6 +148,11 @@
   forward roadmap; **the next un-built work item from them is Phase 8G** (Gallery grouped by training
   session + `student_gallery.session_id`/`clip_type` columns + coach video upload), followed by the
   Fase-E n8n workflow rebuild and the agent loops. Nothing implemented yet — reference only.
+- **WhatsApp platform decided (2026-06-18, docs-only): Twilio, not Evolution API.** After a read-only
+  audit of `~/agente_cortes` (its WhatsApp layer uses Twilio + n8n HTTP node, fully built/tested), the
+  TennisOS notification loops will reuse the **n8n → HTTP node → Twilio API** pattern and replicate
+  `whatsapp_client.py` (not import it). Recorded in `fase-e-workflow.md` + decisions log. Evolution API
+  deferred to a future option. No code yet.
 
 ## Recently Fixed
 - **Student "NEXT SESSION" stuck on "Coming Soon" — email-case link failure (2026-06-18, `0140393`,
