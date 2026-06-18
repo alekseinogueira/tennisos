@@ -107,7 +107,12 @@
   create (reminder goes to the roster email regardless of claim status). Cancel is a soft update
   (`status='cancelled'`, row kept). Student Home "Next Session" widget reads `getNextSession`.
 - Rel: *→1 students.
-- **RLS:** student SELECT own (`user_id = auth.uid()`); coach full CRUD. Single-predicate policy.
+- **RLS (updated migration `008`, 2026-06-18):** student SELECT resolves via a **`students` join** —
+  `is_coach() OR student_id in (select id from students where user_id = auth.uid())` — so a session is
+  visible the moment the roster row is linked, independent of the denormalized `sessions.user_id`
+  (which is still set at insert but no longer load-bearing for student reads). Coach full CRUD. This
+  replaced the original single-predicate `user_id = auth.uid()`, which hid sessions booked before the
+  student claimed. The `user_id` column note above ("NULL until claimed") still holds at insert time.
 
 ### feedbacks  (written lesson feedback; subject = student)
 | column      | type                       | notes |

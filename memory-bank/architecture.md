@@ -91,7 +91,9 @@ Screens never call `supabase.auth` directly except the auth screens.
   3. Student sets password (`ClaimInvite`) → auth user created.
   4. `handle_new_user` trigger (security definer) inserts `profiles` (role 'student') and
      **auto-links**: `UPDATE students SET user_id = NEW.id, status='active'
-     WHERE email = NEW.email AND user_id IS NULL`.
+     WHERE lower(email) = lower(NEW.email) AND user_id IS NULL`. The match is **case-insensitive**
+     (migration `008`, 2026-06-18) — Supabase Auth lowercases emails, so a roster email entered in any
+     case must still link; a prior case-sensitive `=` silently matched 0 rows for UPPERCASE entries.
   4b. **Belt-and-suspenders (2026-06-17, migration `005`):** `/claim` step 1 also `upsert`s its own
      `profiles` row after `signUp`, so the row exists even if the trigger is unapplied/fails. This
      is allowed by the `profiles_insert_self` RLS policy — self-insert ONLY for `id = auth.uid()`

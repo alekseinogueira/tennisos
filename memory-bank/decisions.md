@@ -3,6 +3,33 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-18 — Email-case bug: normalize email matching + switch session RLS to a students join
+- **Decision:** Fix the "NEXT SESSION stuck on Coming Soon" bug at the root (not just the one
+  student's data). (1) Repair live data: relink the orphaned student row + backfill its session's
+  `user_id`. (2) Migration `008_email_normalize.sql` (idempotent): make `handle_new_user()` and
+  `get_invite_student()` match emails via `lower(email)`, backfill existing roster emails to lowercase,
+  and store new roster emails lowercased in `StudentForm`. (3) Rewrite the `sessions_select` RLS policy
+  to resolve student visibility via a **`students` join** — `is_coach() OR student_id in (select id
+  from students where user_id = auth.uid())` — instead of the denormalized `sessions.user_id =
+  auth.uid()`. Chose "RLS via join" over "backfill `sessions.user_id` in `handle_new_user`" (this
+  supersedes the deferred backfill option from the 2026-06-17 Phase 8F decision).
+- **Why:** Supabase Auth lowercases auth emails, but the coach can enter a roster email in any case;
+  a case-sensitive link match silently failed (0 rows), leaving `students.user_id` NULL forever. `lower()`
+  on both sides of every email match makes the link case-robust, and lowercasing on write keeps the
+  data clean going forward. The RLS-via-join is strictly more robust than backfilling a denormalized
+  column: it makes a session visible the instant the roster row is linked, regardless of when the
+  session was created, and removes the fragility that a session booked before claim is invisible
+  forever. It also generalizes — no need to remember to backfill `user_id` on every denormalized table
+  at claim time. The denormalized `sessions.user_id` is kept (cheap, still set at insert) but no longer
+  load-bearing for student reads.
+- **Alternatives:** Fix only this student's data (rejected — the bug recurs for the next UPPERCASE
+  roster entry and every pre-claim booking); backfill `sessions.user_id` in `handle_new_user` and keep
+  the `user_id`-based RLS (rejected — narrower fix, must be repeated per denormalized table, and still
+  leaves a window where a row's subject is stale); a case-insensitive `citext` column for emails
+  (deferred — heavier schema change; `lower()` matching + lowercased writes solve it without a type
+  migration). Confirmed live: 0 uppercase roster emails remain, policy reads the join, both functions
+  use `lower()`.
+
 ## 2026-06-17 — PlayerCard v2-polish: title-case given names in the helper; center stats; mt-1.5 for optical parity
 - **Decision:** Three mobile-only tweaks. (1) Title-case the given-names portion inside
   `formatNameAmericanStyle` (new `toTitleCase`), not via CSS — surname left raw. (2) Center the stat

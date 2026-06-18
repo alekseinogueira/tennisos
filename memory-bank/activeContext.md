@@ -4,6 +4,37 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Bug fix — student "NEXT SESSION" stuck on "Coming Soon" (email-case link failure) — DEPLOYED &
+DATA-REPAIRED LIVE (2026-06-18, `0140393`).** A scheduled session (reminder email sent fine) never
+surfaced in the student's Home widget. Root-caused live via `supabase db query --linked`: NOT a
+`student_id` mismatch — the `student_id` was consistent everywhere. The real fault was on `user_id`.
+`handle_new_user()` links the roster row to the auth account with a **case-sensitive** email match
+(`where email = new.email`); Supabase Auth stores emails **lowercased**, but the coach had entered the
+student in **UPPERCASE** (`ALEKSEI.NOGUEIRASOUSA@GMAIL.COM`), so the link UPDATE matched 0 rows →
+`students.user_id` stayed NULL, status stayed `invited`, the account was never claimed-linked. Two
+null-link layers both traced to this: (1) `NextSessionWidget` calls `getStudentByUserId(uid)` →
+returned `null` (no linked roster row) so `getNextSession` was never even called; (2) even past that,
+the session row's `user_id` was also NULL (copied from `students.user_id` at insert time in
+`createSession`), and the old `sessions_select` RLS keyed on `user_id = auth.uid()`, so the row was
+invisible regardless. Date/status filters were fine (scheduled, future).
+- **Fase 1 — live data repair** (via `supabase db query --linked`): relinked the student row
+  (`user_id` ← the auth id `433a077e…`, status → `active`) and backfilled the orphaned session's
+  `user_id`. Verified both consistent. Widget lights up on the student's refresh.
+- **Fase 2+3 — `008_email_normalize.sql` (idempotent, APPLIED live via `db push`):**
+  `handle_new_user()` + `get_invite_student()` now match via `lower(email)`; backfilled existing
+  roster emails to lowercase (0 uppercase rows remain); **`sessions_select` RLS rewritten to resolve
+  visibility via a `students` join** — `is_coach() OR student_id in (select id from students where
+  user_id = auth.uid())` — so a session becomes visible the moment the roster row is linked, no longer
+  depending on the denormalized `sessions.user_id`. `StudentForm.jsx` now stores `email` trimmed +
+  **lowercased**. Lint + build clean.
+- **DEPLOYED & VERIFIED LIVE (`0140393`, 2026-06-18):** committed (also tracked the previously-loose
+  `007_sessions_align.sql` + the `sessions`-columns diagnostic), pushed `origin/master`, fired the
+  Vercel hook via `deploy-prod`; production deployment `dpl_EZpLEYjKSLfMVFLFQEr74b7dLBu9` is READY on
+  `0140393`. The DB/RLS half was already live (migration applied directly). **This resolves the prior
+  Known Issue "sessions booked for an unclaimed student don't link on claim"** — the RLS-via-join makes
+  them visible on claim without a backfill trigger. **Still worth:** the coach confirming the student's
+  widget now shows the session.
+
 **PlayerCard mobile layout v2 + v2-correction — surname emphasis & label-row/value-row stat sheet
 (2026-06-17).** Two mobile-only refinements of the home `PlayerCard` hero, both keeping desktop
 (`sm:` and up) pixel-identical. PlayerCard renders **two separate sibling blocks** — `sm:hidden`

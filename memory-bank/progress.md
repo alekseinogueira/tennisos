@@ -145,6 +145,18 @@
   smoke-test.
 
 ## Recently Fixed
+- **Student "NEXT SESSION" stuck on "Coming Soon" — email-case link failure (2026-06-18, `0140393`,
+  DEPLOYED + data-repaired live):** a scheduled session never surfaced in the student's Home widget.
+  Root cause: `handle_new_user()` linked the roster row by **case-sensitive** email (`email =
+  new.email`), but Supabase Auth lowercases emails while the coach entered the student in UPPERCASE →
+  the link UPDATE hit 0 rows, so `students.user_id` stayed NULL (account never claim-linked) and the
+  session (its `user_id` copied from that NULL) was RLS-invisible. **Fix:** (Fase 1) live data repair —
+  relinked the student row + backfilled the session's `user_id`. (Fase 2+3) migration `008_email_
+  normalize.sql` (idempotent, applied) — `handle_new_user()` + `get_invite_student()` match via
+  `lower(email)`, backfilled roster emails to lowercase, and **rewrote `sessions_select` RLS to resolve
+  via a `students` join** (`student_id in (select id from students where user_id = auth.uid())`) so a
+  session is visible once the roster row links, independent of `sessions.user_id`. `StudentForm` stores
+  email lowercased. Lint + build clean; pushed + deployed (`dpl_EZpLEYjKSLfMVFLFQEr74b7dLBu9` READY).
 - **PlayerCard mobile v2-polish — spacing + casing + grid harmony (2026-06-17, committed, NOT
   deployed):** (1) surname `mt-1`→`mt-1.5` so the label→surname gap visually matches surname→given
   (equal code margins rendered unequal because the surname's `leading-[0.9]` eats the top margin);
@@ -252,11 +264,13 @@
   `status='completed'` OR it's a past `scheduled` session (cancelled excluded). Once a real "mark
   completed" action exists, revisit whether to tighten this back to `status='completed'` only. Also:
   `ComingSoon.jsx` is now orphaned (no importer) but kept in the tree.
-- **Sessions booked for an unclaimed student don't link on claim** (Phase 8F) — scheduling is allowed
-  before a student claims (the reminder email targets the roster email), so `sessions.user_id` is set
-  from `students.user_id` which is NULL at that point. There's no backfill in `handle_new_user`, so once
-  the student claims, that session (with `user_id` NULL) still won't surface in their RLS-scoped Home
-  "Next Session" widget. Sessions booked AFTER claim work normally. Accepted V1 trade-off.
+- ~~**Sessions booked for an unclaimed student don't link on claim** (Phase 8F)~~ **RESOLVED
+  (2026-06-18, `0140393`).** `sessions_select` RLS now resolves visibility via a `students` join
+  (`student_id in (select id from students where user_id = auth.uid())`) instead of the denormalized
+  `sessions.user_id`, so a session booked before claim becomes visible the moment the roster row is
+  linked — no backfill trigger needed. (The denormalized `sessions.user_id` column is kept but is no
+  longer relied on for student reads.) Note the original observed failure was compounded by the
+  email-case link bug fixed in the same commit (see Recently Fixed).
 - **Phase 8F frontend now LIVE (`5ab6924`, 2026-06-17); migration 006 confirmed applied** by the coach.
   Scheduling should now persist. Still unverified by a real end-to-end run (schedule a session →
   confirm it persists, surfaces in the student's Next Session widget, and the `send-session-reminder`
