@@ -4,6 +4,23 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Notion `Feedbacks` schema extended for Fase-E (2026-06-18, external + docs-only — committed, NOT
+pushed/deployed).** Added the 10 Fase-E pre-requisite fields to the Notion **`Feedbacks`** data source
+(`collection://3529a701-723c-80da-8250-000b4b1291bc`) via the Notion MCP `notion-update-data-source`
+DDL: 4 numbers (`rating_tecnica/intensidade/posicao/progresso`), `student_id` (rich_text), `Status`
+(select Rascunho/Revisão/Publicado), `synced_to_portal` (checkbox), `card_visual_url` (url),
+`objetivos_proxima_aula` (rich_text), **plus a 10th `Aluno`** (rich_text). No existing field
+removed/renamed; source now has **23 properties**. The live schema + caveats are recorded in
+`memory-bank/planning/fase-e-workflow.md` (new "ESTADO REAL DO SCHEMA NOTION" section) — that's the only
+in-repo change this session (the Notion change itself is external to the repo). **Caveats for the n8n
+build (Notion limits, not bugs):** the 0–10 range on the `rating_*` fields is not enforced (validate in
+the workflow); `Status` default "Rascunho" can't be set via DDL (apply in the page template or on
+insert); checkbox defaults unchecked natively. **Housekeeping pending (manual):** the multi-source
+database still has 2 empty scaffolding data sources (`Feedback treinos`, `Nova fonte de dados`, 0 pages
+each) — `in_trash` via MCP is a no-op for a sub-source of a multi-source DB, so delete them in the Notion
+UI (right-click the data-source tab → Delete). Workflows must target `Feedbacks` (`…1291bc`). Next Fase-E
+step: ETAPA 1 (Gemini prompt + numeric fields) in workflow `T7kobxM1FZM99O8l`. No app code touched.
+
 **WhatsApp platform decision — Twilio over Evolution API (2026-06-18, docs-only).** Read-only
 audit of a separate server project, `~/agente_cortes` (a Python/FastAPI video-clipping pipeline
 operated over WhatsApp), to evaluate reusing its messaging layer for the TennisOS feedback

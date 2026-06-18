@@ -352,3 +352,44 @@ Motivo: Twilio já está construído, testado e integrado com n8n via HTTP node.
 O padrão n8n → HTTP node → Twilio API é diretamente transferível para o TennisOS.
 Evolution API fica como opção futura se o volume justificar migração.
 Replicar o padrão de ~/agente_cortes/src/whatsapp_client.py — não importar o arquivo.
+
+
+## ESTADO REAL DO SCHEMA NOTION (aplicado 2026-06-18, via Notion MCP)
+
+Os 10 campos do pré-requisito foram **aplicados na data source `Feedbacks`** via
+`notion-update-data-source` (DDL `ADD COLUMN`). Data source correta a usar nos workflows:
+
+- **Feedbacks** = `collection://3529a701-723c-80da-8250-000b4b1291bc` (a que tem TODOS os dados/campos).
+  (Os ids soltos citados acima — ETAPA 4 nó 1 `3529a701-723c-80d4-9bf0-fa3166bea0f9` — estão
+  desatualizados; usar SEMPRE o `collection://…1291bc`.)
+
+10 campos adicionados (nenhum existente removido/renomeado), agora 23 propriedades no total:
+
+| Campo | Tipo Notion |
+|-------|-------------|
+| rating_tecnica | number |
+| rating_intensidade | number |
+| rating_posicao | number |
+| rating_progresso | number |
+| student_id | rich_text (UUID Supabase) |
+| Status | select — Rascunho(gray) · Revisão(yellow) · Publicado(green) |
+| synced_to_portal | checkbox (default false/unchecked) |
+| card_visual_url | url |
+| objetivos_proxima_aula | rich_text (armazena JSON array) |
+| **Aluno** | rich_text (nome do aluno p/ referência rápida) |
+
+NOTA: o plano original (bloco "CAMPOS A ADICIONAR") listava 9 campos; a execução incluiu um
+**10º campo `Aluno`** (rich_text) a pedido. `card_visual_url` é o nome real do campo de imagem
+(o ETAPA 3 chama de "Card Visual" — usar `card_visual_url`).
+
+Ressalvas (limitações do Notion, tratar no n8n, não são bugs):
+1. **range 0–10** dos `rating_*` NÃO é validado pelo Notion (number puro) — validar no workflow.
+2. **Status default "Rascunho"** NÃO é definível via DDL (sem default de coluna) — aplicar no
+   template da página ou no insert do n8n.
+3. **synced_to_portal** já nasce unchecked nativamente.
+
+Housekeeping pendente (manual, cosmético): o database multi-source ainda tem 2 data sources vazias
+de scaffolding — **Feedback treinos** (`…803b…`) e **Nova fonte de dados** (sem nome, `…807f…`),
+0 páginas cada. O `in_trash` via MCP é no-op para data source dentro de DB multi-source (não dá pra
+remover por API) — deletar manualmente na UI do Notion (botão direito na aba → Delete data source).
+Não afeta os workflows desde que apontem para `Feedbacks`.

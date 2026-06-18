@@ -3,6 +3,24 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-18 — Notion `Feedbacks` schema: apply the 10 Fase-E fields via MCP DDL; add a 10th `Aluno` field; leave stray data sources for manual cleanup
+- **Decision:** Applied the Fase-E pre-requisite Notion fields to the **`Feedbacks`** data source
+  (`collection://3529a701-723c-80da-8250-000b4b1291bc`) via `notion-update-data-source` `ADD COLUMN`
+  DDL — `rating_tecnica/intensidade/posicao/progresso` (number), `student_id` (rich_text), `Status`
+  (select: Rascunho/Revisão/Publicado), `synced_to_portal` (checkbox), `card_visual_url` (url),
+  `objetivos_proxima_aula` (rich_text), plus a **10th field `Aluno`** (rich_text) beyond the 9 in the
+  plan. No existing field removed/renamed; source now has 23 properties. Recorded the live schema in
+  `fase-e-workflow.md`.
+- **Why:** Unblocks the Fase-E n8n workflow (ETAPA 1→4) which writes these fields. `Aluno` gives a
+  quick human-readable student reference separate from `student_id` (the UUID). Used DDL via MCP because
+  it's exact, reviewable, and idempotent-safe (verified by re-fetch).
+- **Alternatives / caveats:** Could not trash the two empty stray data sources (`Feedback treinos`,
+  `Nova fonte de dados`) — `in_trash` via MCP is a **no-op for a data source inside a multi-source
+  database** (returns a misleading `deleted` flag; re-fetch shows all three live; one call 404'd). Left
+  them for **manual UI deletion** rather than risk the live database. Notion limits to flag for n8n (not
+  bugs): number range 0–10 is **not enforced** (validate in-workflow); select **default "Rascunho"**
+  can't be set via DDL (set in the page template or on n8n insert); checkbox defaults unchecked natively.
+
 ## 2026-06-18 — WhatsApp notifications: use Twilio (from `~/agente_cortes`), not Evolution API
 - **Decision:** For the TennisOS feedback/loop WhatsApp notifications (planned in `fase-e-workflow.md`
   and `loops-agente.md`), use **Twilio** — the platform already built, tested, and n8n-integrated in

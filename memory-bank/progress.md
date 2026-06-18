@@ -148,6 +148,14 @@
   forward roadmap; **the next un-built work item from them is Phase 8G** (Gallery grouped by training
   session + `student_gallery.session_id`/`clip_type` columns + coach video upload), followed by the
   Fase-E n8n workflow rebuild and the agent loops. Nothing implemented yet — reference only.
+- **Notion `Feedbacks` schema extended for Fase-E (2026-06-18, external + docs-only).** The 10
+  pre-requisite fields from `fase-e-workflow.md` are now **applied** to the Notion `Feedbacks` data
+  source (`collection://3529a701-723c-80da-8250-000b4b1291bc`, now 23 properties) via the Notion MCP:
+  4 `rating_*` numbers, `student_id`, `Status` (select), `synced_to_portal` (checkbox), `card_visual_url`
+  (url), `objetivos_proxima_aula` (rich_text), plus a 10th `Aluno` (rich_text). This **unblocks the
+  Fase-E n8n workflow rebuild** (ETAPA 1→4). Live schema + caveats recorded in `fase-e-workflow.md`.
+  Pending manual housekeeping: delete the 2 empty stray data sources in the Notion UI (MCP `in_trash`
+  is a no-op for them). Next: ETAPA 1 (Gemini prompt numeric fields) in workflow `T7kobxM1FZM99O8l`.
 - **WhatsApp platform decided (2026-06-18, docs-only): Twilio, not Evolution API.** After a read-only
   audit of `~/agente_cortes` (its WhatsApp layer uses Twilio + n8n HTTP node, fully built/tested), the
   TennisOS notification loops will reuse the **n8n → HTTP node → Twilio API** pattern and replicate
