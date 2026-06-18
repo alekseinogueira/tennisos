@@ -180,7 +180,7 @@ Dados do Notion (já parsados)
   → HTTP Request para serviço de screenshot (ou Puppeteer no servidor)
   → Imagem PNG 1080x1350 salva no Supabase Storage
   → URL da imagem salva no Notion (campo novo: "Card Visual")
-  → [Futuro] Evolution API → WhatsApp para aluno com a imagem
+  → [Futuro] Twilio WhatsApp (via ~/agente_cortes pattern) → WhatsApp para aluno com a imagem
 
 Prompt para Claude Code:
 
@@ -207,8 +207,9 @@ This node receives all parsed feedback data and must:
 3. Save the resulting image URL back to the Notion page
    (new field: "Card Visual", type: url).
 
-4. [PLACEHOLDER — do not implement yet] WhatsApp send via Evolution API.
-   Just add a disabled node with a note: "Send via Evolution API when configured."
+4. [PLACEHOLDER — do not implement yet] WhatsApp send via Twilio WhatsApp
+   (via ~/agente_cortes pattern). Just add a disabled node with a note:
+   "Send via n8n → HTTP node → Twilio API when configured."
 
 Show me the node design before building. Wait for approval.
 
@@ -338,7 +339,11 @@ ORDEM DE EXECUÇÃO
 ✅ Etapa 3 — Card visual automático
 ✅ Etapa 4 — Sync Notion → Supabase + email publicação
 🔜 Credenciais — mover Gemini key e Notion token para n8n Credentials
-🔜 Evolution API — WhatsApp quando configurado
+🔜 Twilio WhatsApp (via ~/agente_cortes pattern)
+- Use the n8n → HTTP node → Twilio API pattern already built and tested in agente_cortes
+- Replicate whatsapp_client.py send_message/send_media pattern as n8n HTTP calls
+- Credentials needed: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM
+- Evolution API deferred — revisit if message volume justifies migration
 
 
 ## WhatsApp — Decisão de Plataforma (Jun/2026)

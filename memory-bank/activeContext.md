@@ -19,6 +19,11 @@ tested, n8n-integrated) for TennisOS WhatsApp; the n8n→HTTP→Twilio pattern i
 Captured as a "WhatsApp — Decisão de Plataforma" note in `memory-bank/planning/fase-e-workflow.md`.
 Caveats noted: Twilio Sandbox is dev-only (recipients must `join`; production needs an approved
 sender), media sends need a public URL (Supabase Storage card image works). No app code touched.
+**Follow-up (same day):** aligned `fase-e-workflow.md` wording to the decision — swapped the remaining
+"Evolution API" references (the roadmap item + the Etapa-3 card-visual/placeholder node steps) to
+"Twilio WhatsApp (via ~/agente_cortes pattern)", and the roadmap now lists the required creds
+(`TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`). The "Decisão de Plataforma" note
+keeps its intentional "Twilio em vez de Evolution API" framing.
 
 **Planning docs added to the memory bank (2026-06-18, docs-only — committed, NOT pushed/deployed).**
 Created `memory-bank/planning/` with three reference documents pasted by the coach: (1)
