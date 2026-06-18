@@ -60,7 +60,7 @@ export default function StudentForm() {
     setSaving(true)
     const payload = {
       full_name: form.full_name.trim(),
-      email: form.email.trim(),
+      email: form.email.trim().toLowerCase(),
       phone: form.phone.trim() || null,
       status: form.status,
     }
