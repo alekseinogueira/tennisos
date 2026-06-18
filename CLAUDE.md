@@ -32,6 +32,12 @@ Single-coach tool first; build only what solves a real, recurring problem for me
 At the start of every task, read `memory-bank/activeContext.md` and `memory-bank/progress.md`.
 Read other memory-bank files only when the task needs them.
 
+## Planning Documents
+Before starting any new phase, also read the relevant file in memory-bank/planning/:
+- roadmap-portal.md → portal build plan (phases 8C–10)
+- fase-e-workflow.md → n8n feedback workflow plan
+- loops-agente.md → automation loops roadmap
+
 ## 55TC Design Spec (fonte de verdade: 55tenniscrew.com)
 
 CORES: forest #1C3526 · sand #F5EDE0 · ink #0D0D0D

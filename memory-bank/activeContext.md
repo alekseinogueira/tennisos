@@ -4,6 +4,20 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Planning docs added to the memory bank (2026-06-18, docs-only — committed, NOT pushed/deployed).**
+Created `memory-bank/planning/` with three reference documents pasted by the coach: (1)
+**`roadmap-portal.md`** — the full portal build plan, phases 8C→10 (Player Card/Home, Profile,
+Library folders, session scheduling + reminder email, Gallery-by-session upload, Coach Dashboard HQ),
+with the SQL, per-step prompts, and recommended order. NOTE: phases 8C/8D/8E/8F/10 are already built
+at the code level (see below) — **8G (Gallery by session + `clip_type`/`session_id` + video upload)
+is the one roadmap phase NOT yet built.** (2) **`fase-e-workflow.md`** — the n8n "Análise de Treino"
+feedback workflow plan (workflow `T7kobxM1FZM99O8l`): switch trigger GET→POST, add numeric ratings to
+the Gemini prompt, auto-generate a visual card, and a 2nd workflow `55TC - Publicar Feedback` syncing
+Notion→Supabase `feedbacks` + Resend email on coach approval. (3) **`loops-agente.md`** — the
+self-prompted agent-loop roadmap (onboarding, post-lesson feedback nudge, video analysis, retention,
+IG content). Also added a **"Planning Documents"** block to `CLAUDE.md` (after the Memory section)
+pointing future phases at these files. No app code touched; lint/build not run (docs only).
+
 **Bug fix — student "NEXT SESSION" stuck on "Coming Soon" (email-case link failure) — DEPLOYED &
 DATA-REPAIRED LIVE (2026-06-18, `0140393`).** A scheduled session (reminder email sent fine) never
 surfaced in the student's Home widget. Root-caused live via `supabase db query --linked`: NOT a

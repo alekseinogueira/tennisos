@@ -143,6 +143,11 @@
 - Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D/8E/8F + the Phase 10
   Coach Dashboard HQ are all complete at the code level; all await **applied migrations + live data** to
   smoke-test.
+- **Planning docs captured (2026-06-18, docs-only):** `memory-bank/planning/` now holds
+  `roadmap-portal.md`, `fase-e-workflow.md`, `loops-agente.md` + a `CLAUDE.md` pointer. These are the
+  forward roadmap; **the next un-built work item from them is Phase 8G** (Gallery grouped by training
+  session + `student_gallery.session_id`/`clip_type` columns + coach video upload), followed by the
+  Fase-E n8n workflow rebuild and the agent loops. Nothing implemented yet — reference only.
 
 ## Recently Fixed
 - **Student "NEXT SESSION" stuck on "Coming Soon" — email-case link failure (2026-06-18, `0140393`,

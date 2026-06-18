@@ -3,6 +3,19 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-18 — Add a `memory-bank/planning/` folder for forward roadmap docs
+- **Decision:** Keep long-form forward-planning documents (multi-phase build plans, the n8n workflow
+  rebuild plan, the agent-loops roadmap) in a dedicated `memory-bank/planning/` folder
+  (`roadmap-portal.md`, `fase-e-workflow.md`, `loops-agente.md`), separate from the always-read
+  `activeContext.md`/`progress.md`. Added a "Planning Documents" block to `CLAUDE.md` telling future
+  sessions to read the relevant planning file **before starting any new phase** (not every task).
+- **Why:** These docs are large, phase-specific, and only relevant when starting that phase — loading
+  them into every session's context would be noise. A pointer in `CLAUDE.md` plus a separate folder
+  keeps the per-task read light while making the roadmap discoverable exactly when it's needed.
+- **Alternatives:** Paste the plans into `activeContext.md` (rejected — bloats the always-read file);
+  keep them outside the repo, e.g. Notion (rejected — they drive code work, so they belong with the
+  code and the memory bank that future Claude Code sessions read).
+
 ## 2026-06-18 — Email-case bug: normalize email matching + switch session RLS to a students join
 - **Decision:** Fix the "NEXT SESSION stuck on Coming Soon" bug at the root (not just the one
   student's data). (1) Repair live data: relink the orphaned student row + backfill its session's
