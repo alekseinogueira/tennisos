@@ -4,6 +4,25 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase-E ETAPA 1 APLICADA ao vivo no n8n (2026-06-22, external — workflow `T7kobxM1FZM99O8l`).**
+Updated two Code nodes in the live "55TC - Análise de Treino" workflow: (1) **Preparar Análise** —
+the Gemini prompt now requests `rating_tecnica/intensidade/posicao/progresso` (integers 0–10) +
+`objetivos_proxima_aula` (array of `{titulo, descricao}`), all existing fields untouched; (2) **Parsear
+Resposta Gemini** — extracts + normalizes the new fields (`clampRating` 0–10, array guard) and passes
+them downstream. The `notionBody` was deliberately NOT changed (writing the new fields to Notion is
+ETAPA 2, which also must fix the wrong `database_id` `3539…` → `3529…1291bc`).
+**HOW (see decisions):** NOT via the MCP `update_workflow` (full SDK overwrite would have forced
+rebuilding all 18 nodes + two loops, risking graph corruption + dropped Drive OAuth creds). Instead used
+the **local n8n CLI** (n8n runs on THIS box under pm2, SQLite at `/root/.n8n`): `n8n export:workflow`
+→ swapped ONLY the two `jsCode` strings via Node → `n8n import:workflow`. Verified: 18 nodes,
+**connections identical**, Drive cred `ZxZW3AwdipzBTJbT` preserved on all 3 Drive nodes, both bodies
+parse. Caveat: `import:workflow` **deactivates** the workflow → had to `update:workflow --active=true`
++ pm2 restart; log confirmed `Activated workflow`. Small n8n downtime (seconds) during stop/import/restart.
+**Restore artifact (pre-change, has hardcoded tokens, OUTSIDE repo):** `/root/etapa1-work/wf-original.json`.
+**NOT yet tested by a real run** — calling the webhook runs the whole Drive+Gemini pipeline, left for the
+coach to trigger; then confirm `rating_*` + `objetivos_proxima_aula` appear in the Parsear output.
+Next: **ETAPA 2** (POST trigger + wire new fields into the Notion write + fix the DB id). No app code touched.
+
 **Notion `Feedbacks` schema extended for Fase-E (2026-06-18, external + docs-only — committed, NOT
 pushed/deployed).** Added the 10 Fase-E pre-requisite fields to the Notion **`Feedbacks`** data source
 (`collection://3529a701-723c-80da-8250-000b4b1291bc`) via the Notion MCP `notion-update-data-source`

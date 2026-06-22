@@ -143,6 +143,13 @@
 - Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D/8E/8F + the Phase 10
   Coach Dashboard HQ are all complete at the code level; all await **applied migrations + live data** to
   smoke-test.
+- **Fase-E ETAPA 1 DONE (2026-06-22, applied live in n8n, external):** workflow `T7kobxM1FZM99O8l`
+  ("55TC - Análise de Treino"). **Preparar Análise** prompt + **Parsear Resposta Gemini** now produce
+  `rating_tecnica/intensidade/posicao/progresso` (0–10, clamped) and `objetivos_proxima_aula`
+  (`[{titulo, descricao}]`). Applied via local **n8n CLI export→edit-2-strings→import** (not MCP SDK
+  overwrite — see decisions/activeContext). 18 nodes + connections + Drive creds verified unchanged;
+  re-activated after the CLI import deactivated it. `notionBody` left for ETAPA 2. **Not run end-to-end
+  yet.** Next: ETAPA 2 (POST trigger + Notion write of new fields + fix `database_id` `3539…`→`3529…1291bc`).
 - **Planning docs captured (2026-06-18, docs-only):** `memory-bank/planning/` now holds
   `roadmap-portal.md`, `fase-e-workflow.md`, `loops-agente.md` + a `CLAUDE.md` pointer. These are the
   forward roadmap; **the next un-built work item from them is Phase 8G** (Gallery grouped by training

@@ -3,6 +3,26 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-22 — Apply Fase-E ETAPA 1 n8n edits via local n8n CLI export/import, NOT the MCP SDK overwrite
+- **Decision:** To change two Code-node `jsCode` bodies in the live, ACTIVE workflow `T7kobxM1FZM99O8l`,
+  used the **local n8n CLI** (`n8n export:workflow` → swap only the two `jsCode` strings with Node →
+  `n8n import:workflow`), then re-activated (`update:workflow --active=true` + pm2 restart). Did NOT use
+  the connected MCP `update_workflow`.
+- **Why:** This MCP server exposes only `update_workflow(code)` — a **full overwrite from hand-written
+  SDK code**, with no partial/patch op. Reproducing this 18-node workflow in SDK would have meant
+  hand-rebuilding two loop structures (a batch loop + a *cyclic* poll loop `Verificar→IF→onFalse→
+  Aguardar→Verificar`) and re-encoding two large `jsCode` bodies (backticks/`${}`/mixed quotes) as
+  nested strings — high risk of corrupting the graph or **dropping credentials** (the MCP read hides
+  credential IDs, so an SDK rebuild couldn't preserve them). n8n runs locally on this box (pm2 + SQLite
+  at `/root/.n8n`), so the CLI lets us edit the **exact exported JSON** — only 2 strings change,
+  connections/credentials/positions byte-identical. Verified post-import: 18 nodes, connections equal,
+  Drive cred `ZxZW3AwdipzBTJbT` intact, bodies parse, workflow re-activated cleanly.
+- **Alternatives:** MCP SDK full overwrite (rejected — graph/credential corruption risk for a 2-field
+  change); manual paste in the n8n UI (rejected — coach is SSH-only, no editor, TUI output not
+  selectable); direct SQLite edits (rejected — hacky, corruption risk). Caveats: `import:workflow`
+  deactivates the workflow (must reactivate); requires brief n8n downtime (stop/import/restart). Restore
+  artifact kept at `/root/etapa1-work/wf-original.json` (pre-change, contains hardcoded tokens, OUTSIDE the repo).
+
 ## 2026-06-18 — Notion `Feedbacks` schema: apply the 10 Fase-E fields via MCP DDL; add a 10th `Aluno` field; leave stray data sources for manual cleanup
 - **Decision:** Applied the Fase-E pre-requisite Notion fields to the **`Feedbacks`** data source
   (`collection://3529a701-723c-80da-8250-000b4b1291bc`) via `notion-update-data-source` `ADD COLUMN`
