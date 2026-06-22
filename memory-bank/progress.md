@@ -143,6 +143,20 @@
 - Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D/8E/8F + the Phase 10
   Coach Dashboard HQ are all complete at the code level; all await **applied migrations + live data** to
   smoke-test.
+- **Fase-E ETAPA 3 DONE (2026-06-22, applied live in n8n, external):** workflow `T7kobxM1FZM99O8l` now
+  **16 nodes** — the empty `[Futuro] WhatsApp + Card Visual` noOp replaced by a 5-node card+notify tail wired to
+  **n8n stored credentials by ID (no hardcoded tokens in the new nodes)**: *Gerar HTML do Card* (Claude
+  `claude-sonnet-4-6`), *Extrair HTML*, *Upload HTML para Storage* (Supabase, `feedback-cards/{page_id}.html`),
+  *Salvar URL no Notion* (`card_visual_url`), *Notificar Coach (Twilio)* (**ACTIVE, text-only**, link → Notion
+  page). Webhook Response now reads the page id from `Criar Entrada no Notion`. **PNG deferred** (no screenshot
+  service) → `card_visual_url` points to `.html`. **Node C uses httpCustomAuth** ("Supabase Service"
+  `0toUlVDwrVTZ8BXi`) injecting `apikey`+`Authorization` — Authorization-only fails (the `sb_secret_` key is not
+  a JWT → 400 "Invalid Compact JWS"); the older httpHeaderAuth "Supabase Storage" `NdKxgh5ULJUP8hmy` is orphan.
+  Storage leg curl-validated (200). All 4 creds created via n8n CLI `import:credentials` (the UI-made ones never
+  persisted in this instance); **token values NOT recorded — names/IDs only**. **Not run end-to-end** (needs a
+  real Drive `file_id` POST; Twilio To must `join` the sandbox). Restore: `/root/etapa3-work/wf-pre-etapa3{,b}.json`.
+  Next: real e2e + hardening the OLD hardcoded nodes (Gemini/Notion = "Etapa 5"); orphan "Supabase Storage" cred
+  can be deleted; ETAPA 4 can reuse "Supabase Service".
 - **Fase-E Notion DB corrected + schema applied to the RIGHT db (2026-06-22, external):** the n8n
   integration "Conexão n8n" only reaches DBs `3539a701-723c-*` ("Teste n8n - Feedback aluno" +
   "Alunos"); the "Feedbacks" `…1291bc` extended on 2026-06-18 is in another workspace and **404s** for

@@ -4,6 +4,53 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase-E ETAPA 3 APLICADA ao vivo no n8n (2026-06-22, external — workflow `T7kobxM1FZM99O8l`, agora 16 nós).**
+Implemented the card-visual + coach-notification stage, replacing the empty `[Futuro] WhatsApp + Card Visual`
+noOp (n11) with a 5-node tail, **all wired to n8n stored credentials BY ID — zero hardcoded tokens in the new
+nodes** (unlike the legacy Gemini/Notion nodes):
+- **Gerar HTML do Card** (HTTP→Anthropic `claude-sonnet-4-6`; cred *Anthropic API* `ATKWPyC27rGJLvhg`,
+  httpHeaderAuth `x-api-key`) — generates a self-contained 55TC HTML card from the parsed Gemini data
+  (prompt built inline; pruned `notionBodyJson`, injects `session_date`).
+- **Extrair HTML** (Code) — pulls `content[0].text`; carries `notion_page_id`/`student_name`/`session_date`;
+  fallback minimal card if Claude returns non-HTML.
+- **Upload HTML para Storage** (HTTP POST→Supabase `storage/v1/object/feedback-cards/{page_id}.html`, raw
+  `text/html`, `x-upsert`) — cred **Supabase Service `0toUlVDwrVTZ8BXi` (httpCustomAuth, injects BOTH
+  `apikey`+`Authorization`)**. (First built with httpHeaderAuth Authorization-only → that FAILS, see below.)
+- **Salvar URL no Notion** (HTTP PATCH `/v1/pages/{page_id}`; cred *Notion HTTP* `CC31lqcuz7ynyYed`) — sets
+  `card_visual_url` = the public `.html` URL.
+- **Notificar Coach (Twilio)** (HTTP POST→Twilio Messages; cred *Twilio API* `eJjyGKdRBnttCZNF`, httpBasicAuth;
+  SID literal in URL, From `whatsapp:+14155238886` → To `whatsapp:+12365913560`) — **ACTIVE, text-only (no
+  MediaUrl)**: "Feedback gerado para {student} — {date}. Revise e publique: https://www.notion.so/{page_id}".
+- **Webhook Response** rewired `$json.id` → `$('Criar Entrada no Notion').first().json.id` (Twilio is now the
+  last node, so `$json` no longer carries the page id).
+**Credentials — all created via n8n CLI `import:credentials`** (the 3 the coach said he made in the UI never
+persisted in THIS instance — DB + API both showed only Drive + Notion-native; there is exactly one n8n on this
+box). Imported as plaintext-`data` objects that n8n `cipher.encryptV2`-encrypts on import, assigned to personal
+project `0bSOozEStbKMfPi6`; temp JSONs `shred`-deleted. **Token VALUES are deliberately NOT recorded in the
+memory bank (coach request) — only credential names/IDs (IDs are n8n entity ids, not secrets).**
+**Supabase apikey fix (caveat #2, CONFIRMED):** the new `sb_secret_…` key is NOT a JWT — a Storage call with
+`Authorization: Bearer` only returns **400 "Invalid Compact JWS"**; WITH the `apikey` header (same secret) →
+**200**. A single HTTP node carries only ONE generic credential, so httpHeaderAuth (one header) can't send both;
+switched node C to **httpCustomAuth "Supabase Service"** (both headers, no hardcode, no `baseURL` surprise vs
+`supabaseApi`). The earlier *Supabase Storage* httpHeaderAuth (`NdKxgh5ULJUP8hmy`) is now **ORPHAN** (deletable).
+Storage leg validated by curl (upload/public-GET/delete all **200**) against the existing PUBLIC `feedback-cards`
+bucket (coach created it).
+**PNG deferred:** no HTML→PNG screenshot service is configured (none of the supplied creds cover it) — the render
+step was dropped; `card_visual_url` points to the `.html` for now (re-insert a render node + flip `.html`→`.png`
+later).
+**HOW/verify:** same method as ETAPA 1/2 — CLI export→deterministic Node transform (assert unique-or-throw)→
+import→`update:workflow --active=true`→`pm2 restart`. Confirmed via the n8n API: active, 16 nodes, new chain,
+4 creds attached, Webhook Response updated. A stray `{}` test POST died in ~0.6s at Download (undefined file_id)
+— **no Notion/Twilio side effects**.
+**Restore artifacts (OUTSIDE repo):** `/root/etapa3-work/wf-pre-etapa3.json` (pre-ETAPA-3) +
+`wf-pre-etapa3b.json` (pre-node-C-fix); transforms `transform.js`/`transform2.js`. **NOT run end-to-end** —
+needs a real Drive `file_id` POST (coach to trigger: `POST /webhook/analisar-treinos` with
+`{file_id, student_name, student_id, session_date}`). **Twilio caveat:** the To number must `join` the Twilio
+sandbox or delivery is refused. **Next:** real e2e test; then credential hardening of the OLD nodes (Gemini key +
+Notion token still hardcoded in n08/n10/n15/n16 — the long-standing "Etapa 5"); optionally delete the orphan
+*Supabase Storage* cred; ETAPA 4 (Notion→Supabase publish sync) can reuse the *Supabase Service* httpCustomAuth.
+No app code touched.
+
 **Fase-E ETAPA 2 APLICADA ao vivo no n8n (2026-06-22, external — workflow `T7kobxM1FZM99O8l`, agora 12 nós).**
 Rebuilt the trigger section from the scan-based GET flow to the direct POST flow. Same n8n-CLI
 export/edit/import method as ETAPA 1 (deterministic Node transform `/root/etapa1-work/transform-etapa2.js`,

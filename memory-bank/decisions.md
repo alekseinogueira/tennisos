@@ -3,6 +3,50 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-22 — Fase-E ETAPA 3 build: card-visual via Claude + ACTIVE Twilio coach-notify; PNG deferred; notify link → Notion page
+- **Decision:** Implemented the `[Futuro]` noOp (n11) in `T7kobxM1FZM99O8l` as a 5-node tail (16 nodes total):
+  Claude (`claude-sonnet-4-6`) generates a self-contained 55TC HTML card → *Extrair HTML* → upload the HTML to
+  Supabase Storage `feedback-cards/{page_id}.html` → PATCH Notion `card_visual_url` → an **active, text-only**
+  Twilio WhatsApp to the coach. The notify text links to the **Notion page** (`https://www.notion.so/{page_id}`),
+  NOT the portal.
+- **Why:** Coach wanted the visual card auto-generated and an immediate "go review/publish" nudge. Claude (vs a
+  deterministic template) was chosen because the coach had already created an Anthropic credential for it and
+  wanted the flexibility. **PNG deferred:** no HTML→PNG screenshot service is configured (none of the supplied
+  creds cover it), so the render step was dropped and `card_visual_url` points to the `.html` for now (re-insert
+  a render node + flip `.html`→`.png` later). **Link → Notion:** review/publish happens in Notion (coach sets
+  `Status=Publicado`, which drives ETAPA 4) and the portal has **no `/admin/feedbacks` route**, so the portal URL
+  the coach first proposed would 404; the Notion page id is already in scope at the Twilio node.
+- **Alternatives:** Deterministic HTML template (cheaper/idempotent, no Anthropic dep — rejected per coach
+  preference, kept as the easy fallback); htmlcsstoimage or local Puppeteer for the PNG (deferred); Twilio as a
+  disabled placeholder (rejected — coach wanted it live now); portal `/admin/feedbacks` or `/admin` link
+  (rejected — route doesn't exist / not where publishing happens). Not yet run end-to-end (needs a real Drive
+  `file_id`); Twilio sandbox requires the recipient to `join` first.
+
+## 2026-06-22 — Fase-E credentials: n8n stored creds by ID (create via CLI import); node C needs httpCustomAuth (apikey+Authorization), not httpHeaderAuth
+- **Decision:** The ETAPA-3 nodes authenticate via **n8n stored credentials referenced by ID — no hardcoded
+  tokens in the new nodes** (unlike the legacy Gemini/Notion nodes). Created them with the local n8n CLI
+  **`import:credentials`** (data as a plaintext object → n8n `cipher.encryptV2` encrypts on import; assigned to
+  personal project `0bSOozEStbKMfPi6`; temp JSON `shred`-deleted): *Anthropic API* (`ATKWPyC27rGJLvhg`,
+  httpHeaderAuth `x-api-key`), *Notion HTTP* (`CC31lqcuz7ynyYed`, httpHeaderAuth Authorization), *Twilio API*
+  (`eJjyGKdRBnttCZNF`, httpBasicAuth — SID/token from `~/agente_cortes/.env`), and *Supabase Service*
+  (`0toUlVDwrVTZ8BXi`, **httpCustomAuth** injecting `apikey`+`Authorization`). A *Supabase Storage* httpHeaderAuth
+  (`NdKxgh5ULJUP8hmy`) was created first but is now **orphan**. **Token values are deliberately NOT recorded in
+  the memory bank (coach request) — only credential names/IDs (IDs are n8n entity ids, not secrets).**
+- **Why:** The 3 creds the coach said he made in the n8n UI did **not** exist in this instance (the SQLite DB +
+  the public API both showed only Drive + Notion-native; there is exactly one n8n on this box) — a UI save never
+  persisted, so CLI import is the reliable path and yields proper encrypted-at-rest creds referenced by ID.
+  **httpCustomAuth for Supabase** because the new `sb_secret_…` key is **not a JWT**: a Storage call with
+  `Authorization: Bearer` only returns **400 "Invalid Compact JWS"**, while adding the `apikey` header (same
+  secret) returns **200** — and a single HTTP node carries only ONE generic credential, so httpHeaderAuth (one
+  header) can't send both; httpCustomAuth carries both headers from one cred with no hardcode (and no `baseURL`
+  side-effect vs the `supabaseApi` predefined type). Proven by curl (upload/public-GET/delete all 200) against
+  the public `feedback-cards` bucket.
+- **Alternatives:** Hardcode tokens in node headers like the old nodes (rejected — coach explicitly wanted no new
+  debt; that's "Etapa 5"); recreate the creds in the UI (the coach's first ask — abandoned once the DB proved
+  they weren't there and he chose CLI creation); `supabaseApi` predefined credential (works and is reusable for
+  ETAPA 4, but its `authenticate` also sets a `/rest/v1` baseURL — httpCustomAuth is more predictable for the
+  absolute Storage URL); add `apikey` as a static node header (rejected — re-hardcodes the secret).
+
 ## 2026-06-22 — Fase-E Notion target is "Teste n8n - Feedback aluno" (NOT "Feedbacks" …1291bc); apply schema there + dedup "Assimilação técnica"
 - **Decision:** The Fase-E Notion destination is the data source **"Teste n8n - Feedback aluno"**
   (`collection://3539a701-723c-8055-b621-000b41a0fdbc`, REST `database_id`
