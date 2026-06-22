@@ -3,6 +3,29 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-22 — Fase-E Notion target is "Teste n8n - Feedback aluno" (NOT "Feedbacks" …1291bc); apply schema there + dedup "Assimilação técnica"
+- **Decision:** The Fase-E Notion destination is the data source **"Teste n8n - Feedback aluno"**
+  (`collection://3539a701-723c-8055-b621-000b41a0fdbc`, REST `database_id`
+  `3539a701-723c-80d4-9bf0-fa3166bea0f9`) — the DB the n8n workflow already writes to. Applied the 10
+  Fase-E fields + a dedup fix there: `Qualidade Técnica` option "Assimilação técnica" renamed to
+  **"Em Desenvolvimento"**, leaving "Assimilação técnica" only in `Progresso Geral`. Keep the workflow's
+  existing `database_id` (`3539…80d4`) — **reverses** the earlier ETAPA-2 plan to switch it to `3529…`.
+- **Why:** The n8n integration "Conexão n8n" is scoped to one workspace; the Notion search API shows it
+  only sees "Teste n8n - Feedback aluno" + "Alunos" (both `3539a701-723c-*`). The "Feedbacks" DS
+  (`…1291bc`, extended 2026-06-18) lives in another workspace and returns **404** to the n8n token even
+  after the coach shared it — unreachable, so the 2026-06-18 work was on the wrong DB. A REST test page
+  create+archive against `3539…80d4` succeeded (the integration's 400 "property not found" earlier, vs
+  404 for the others, was the tell that THIS db was the accessible one). The two duplicate
+  "Assimilação técnica" options (in `Qualidade Técnica` and `Progresso Geral`) caused fill-in ambiguity;
+  `Progresso Geral` is the semantic owner, so only `Qualidade Técnica`'s copy was renamed.
+- **Alternatives:** Target "Feedbacks" `…1291bc` (rejected — unreachable by the n8n integration; would
+  require a new integration in that workspace or moving the DB); rename the option in-place to preserve
+  page values (not possible via the DDL, which keys options by name — it did a replace, emptying 1 page
+  "Kathely 05/05", which was then restored to "Em Desenvolvimento" via REST PATCH — the intended end
+  state anyway). Caveats: `Status` select has no DDL default ("Rascunho" set in template/insert);
+  `rating_*` 0–10 not enforced by Notion (handled by ETAPA-1 `clampRating`). ETAPA-2 prompt fix reduces
+  to just `qualidade_tecnica` → "Em Desenvolvimento" (other selects already match this DB).
+
 ## 2026-06-22 — Apply Fase-E ETAPA 1 n8n edits via local n8n CLI export/import, NOT the MCP SDK overwrite
 - **Decision:** To change two Code-node `jsCode` bodies in the live, ACTIVE workflow `T7kobxM1FZM99O8l`,
   used the **local n8n CLI** (`n8n export:workflow` → swap only the two `jsCode` strings with Node →

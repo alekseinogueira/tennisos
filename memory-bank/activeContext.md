@@ -4,6 +4,34 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase-E: DB Notion correto identificado + 10 campos aplicados NELE (2026-06-22, external).**
+Big correction this session. The Notion integration the n8n workflow uses (**"Conexão n8n"**, token
+hardcoded in node "Criar Entrada no Notion") only sees DBs in ONE workspace — confirmed via the Notion
+search API it returns exactly two: **"Teste n8n - Feedback aluno"** (`3539a701-723c-80d4-9bf0-fa3166bea0f9`)
+and **"Alunos"** (`3539a701-723c-8017-97bb-dfa7e0bcc6ca`). The **"Feedbacks"** data source
+(`collection://3529a701-…-1291bc`) that was extended with the 10 Fase-E fields on 2026-06-18 is in a
+**different workspace** and is **NOT accessible** to "Conexão n8n" (REST returns 404 even after sharing) —
+so **that 2026-06-18 schema work was on the WRONG database** (see decisions; the activeContext/progress
+entries below from 2026-06-18 about `…1291bc` are stale for the n8n path).
+- **Correct production target (confirmed by coach):** data source **"Teste n8n - Feedback aluno"** =
+  `collection://3539a701-723c-8055-b621-000b41a0fdbc`; its **REST `database_id` is
+  `3539a701-723c-80d4-9bf0-fa3166bea0f9`** (verified writable: a test page created + archived OK; title
+  property is **"Nome"**, NOT "Nome da aula"). This is the id the workflow already uses — **it was correct
+  all along**; discard the earlier ETAPA-2 plan to change it to `3529…`.
+- **APPLIED to the correct DB via Notion MCP (`notion-update-data-source` DDL):** 10 fields (12→22 props):
+  `rating_tecnica/intensidade/posicao/progresso` (number), `student_id` (text), `Status`
+  (select Rascunho/Revisão/Publicado), `synced_to_portal` (checkbox), `card_visual_url` (url),
+  `objetivos_proxima_aula` (text), `Aluno` (text). **Dedup fix:** `Qualidade Técnica` option
+  "Assimilação técnica" → **"Em Desenvolvimento"** (`Progresso Geral` keeps "Assimilação técnica" as its
+  semantic owner). The rename was a **replace** (new option id), which emptied 1 page ("Kathely 05/05") —
+  **restored** that page to "Em Desenvolvimento" via REST PATCH. No other field changed.
+- **Caveats:** `Status` has no DDL default (set "Rascunho" in template/insert); `rating_*` range 0–10 not
+  enforced by Notion (covered by ETAPA-1 `clampRating`).
+- **ETAPA 2 implications:** keep workflow `database_id = 3539…80d4`; the ONLY Gemini-prompt select to fix
+  is `qualidade_tecnica` → "Em Desenvolvimento" (the others already match this DB); "Alunos" DB id above
+  is available for ETAPA 4 (student email lookup). **Next:** ETAPA 2 (POST trigger + remove 6 nodes +
+  rewire + write the new fields into the Notion body) — apply via the same n8n CLI export/import method.
+
 **Fase-E ETAPA 1 APLICADA ao vivo no n8n (2026-06-22, external — workflow `T7kobxM1FZM99O8l`).**
 Updated two Code nodes in the live "55TC - Análise de Treino" workflow: (1) **Preparar Análise** —
 the Gemini prompt now requests `rating_tecnica/intensidade/posicao/progresso` (integers 0–10) +

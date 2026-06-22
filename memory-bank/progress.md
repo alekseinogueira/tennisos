@@ -143,6 +143,14 @@
 - Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D/8E/8F + the Phase 10
   Coach Dashboard HQ are all complete at the code level; all await **applied migrations + live data** to
   smoke-test.
+- **Fase-E Notion DB corrected + schema applied to the RIGHT db (2026-06-22, external):** the n8n
+  integration "Conexão n8n" only reaches DBs `3539a701-723c-*` ("Teste n8n - Feedback aluno" +
+  "Alunos"); the "Feedbacks" `…1291bc` extended on 2026-06-18 is in another workspace and **404s** for
+  n8n — so the 2026-06-18 fields landed on the **wrong** DB. Re-applied the 10 Fase-E fields (now 22
+  props) + the `Qualidade Técnica` dedup ("Assimilação técnica"→"Em Desenvolvimento") to the **correct**
+  data source `collection://3539a701-723c-8055-b621-000b41a0fdbc` (REST `database_id`
+  `3539a701-723c-80d4-9bf0-fa3166bea0f9`, verified writable). Restored the 1 affected page (Kathely
+  05/05). Workflow `database_id` was already correct — discard the planned `3529…` change.
 - **Fase-E ETAPA 1 DONE (2026-06-22, applied live in n8n, external):** workflow `T7kobxM1FZM99O8l`
   ("55TC - Análise de Treino"). **Preparar Análise** prompt + **Parsear Resposta Gemini** now produce
   `rating_tecnica/intensidade/posicao/progresso` (0–10, clamped) and `objetivos_proxima_aula`
