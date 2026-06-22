@@ -151,6 +151,16 @@
   data source `collection://3539a701-723c-8055-b621-000b41a0fdbc` (REST `database_id`
   `3539a701-723c-80d4-9bf0-fa3166bea0f9`, verified writable). Restored the 1 affected page (Kathely
   05/05). Workflow `database_id` was already correct — discard the planned `3529…` change.
+- **Fase-E ETAPA 2 DONE (2026-06-22, applied live in n8n, external):** workflow `T7kobxM1FZM99O8l`
+  rebuilt scan-GET → direct-POST. Removed 6 scan nodes (18→12); **Webhook** GET→POST (path
+  `analisar-treinos`, body `{file_id, student_name, student_id, session_date}`); **Download** file id
+  from `body.file_id`; **Upload** Content-Type static `video/mp4`; **Preparar/Parsear** read the body,
+  `qualidade_tecnica` option → "Em Desenvolvimento" (+ guard); **notionBody** keeps `database_id 3539…80d4`
+  / title `Nome` and adds `Status=Rascunho`, `student_id`, `rating_*`, `objetivos_proxima_aula` (numbered
+  text); **Webhook Response** returns `{success, notion_page_id}`. CLI export→edit→import, re-activated,
+  pm2 restart; verified active/12 nodes/POST/creds. **Not run end-to-end yet** (coach to POST a real
+  `file_id`). Restore: `/root/etapa1-work/wf-pre-etapa2-restore.json`. Next: ETAPA 3 (Card Visual) +
+  credential hardening. (Discard the old "fix `database_id` → `3529…`" note below — `3539…80d4` is correct.)
 - **Fase-E ETAPA 1 DONE (2026-06-22, applied live in n8n, external):** workflow `T7kobxM1FZM99O8l`
   ("55TC - Análise de Treino"). **Preparar Análise** prompt + **Parsear Resposta Gemini** now produce
   `rating_tecnica/intensidade/posicao/progresso` (0–10, clamped) and `objetivos_proxima_aula`

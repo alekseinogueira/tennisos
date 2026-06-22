@@ -4,6 +4,49 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase-E ETAPA 2 APLICADA ao vivo no n8n (2026-06-22, external — workflow `T7kobxM1FZM99O8l`, agora 12 nós).**
+Rebuilt the trigger section from the scan-based GET flow to the direct POST flow. Same n8n-CLI
+export/edit/import method as ETAPA 1 (deterministic Node transform `/root/etapa1-work/transform-etapa2.js`,
+each jsCode/param edit asserted unique-or-throw). Changes:
+- **REMOVED 6 nodes** (18→12): `Ler Último Scan`, `Listar Vídeos no Drive`, `Extrair Lista de Arquivos`,
+  `Split In Batches`, `Obter Pasta do Aluno`, `Salvar Scan e Preparar Resposta`.
+- **Webhook** `GET → POST` (path kept **`analisar-treinos`** — note the trailing **s**, the plan doc's
+  `/analisar-treino` is wrong; the real registered path is `analisar-treinos`). Body:
+  `{ file_id, student_name, student_id, session_date }`.
+- **Download Vídeo do Drive** file id: `$('Split In Batches')…id` → **`$('Webhook').first().json.body.file_id`**.
+  Drive OAuth cred `ZxZW3AwdipzBTJbT` preserved.
+- **Upload para Gemini File API** Content-Type: was `$('Split In Batches')…mimeType` (dead) → static
+  **`video/mp4`** (body carries no mime; matches the hardcoded `video/mp4` in Preparar). *(extra fix not
+  in the plan — caught because Upload still referenced the deleted Split node.)*
+- **Preparar Análise**: studentName/fileId/fileName from `body` (fileName falls back to `file_id` — POST
+  has no filename); mimeType `video/mp4`. Gemini prompt `qualidade_tecnica` option
+  **`Assimilação técnica` → `Em Desenvolvimento`** (the ONE select fix per the 2026-06-22 DB correction;
+  `progresso_geral` keeps `Assimilação técnica`).
+- **Parsear Resposta Gemini**: `dateStart` from **`body.session_date`** (was `Split…createdTime`); dropped
+  the now-dead `staticData.processedVideos` push (its consumer `Salvar Scan` was deleted — was an unbounded
+  leak); added a **guard** mapping `qualidade_tecnica === 'Assimilação técnica' → 'Em Desenvolvimento'`
+  (defends the dedup fix — Notion auto-creates select options, so a stale value would re-introduce the dupe).
+  **notionBody** keeps `database_id 3539a701-723c-80d4-9bf0-fa3166bea0f9` + title prop **`Nome`** (both
+  confirmed correct on 2026-06-22) and gained: `Status` (select **`Rascunho`** — so ETAPA-4's "Publicado"
+  poll never auto-publishes a fresh draft; option already exists), `student_id` (rich_text from body),
+  `rating_tecnica/intensidade/posicao/progresso` (number, `clampRating` 0–10), `objetivos_proxima_aula`
+  (rich_text, **human-readable numbered list** `N. titulo: descricao`, 2000-char cap).
+- **Webhook Response**: now returns the contract `{{ { success:true, notion_page_id: $json.id } }}`
+  (the `$json.id` is the Notion page id, flowing through `[Futuro] WhatsApp + Card Visual` noOp).
+- **New main chain** (verified live): Webhook → Download → Upload → Verificar Estado → Estado Ativo?
+  → Preparar → Analisar → Parsear → Criar Notion → [Futuro] noOp → Webhook Response; the poll loop
+  (Estado Ativo? false → Aguardar → Verificar) is unchanged.
+**HOW/verify:** `import:workflow` (deactivates) → `update:workflow --active=true` → `pm2 restart n8n`;
+log confirmed `Activated workflow … T7kobxM1FZM99O8l`, export re-check shows active/12 nós/POST/cred intact.
+Both Code nodes pass a `vm.Script` syntax check; no lingering refs to the 6 deleted nodes.
+**Restore artifact (pre-ETAPA-2, hardcoded tokens, OUTSIDE repo):** `/root/etapa1-work/wf-pre-etapa2-restore.json`
+(also `wf-current.json`); built file `wf-etapa2.json`. **NOT yet tested by a real POST** — left for the
+coach to call the webhook with a real `file_id`; then confirm a Notion page is created with the new
+fields + `Status=Rascunho` and the response returns `notion_page_id`. **objetivos_proxima_aula caveat
+for ETAPA 4:** stored as readable text, NOT JSON — ETAPA 4's `next_session_goals` jsonb will need to parse
+the `N. titulo: descricao` lines (or revisit the format). Next: **ETAPA 3** (Card Visual node) then
+credentials hardening (Gemini key + Notion token still hardcoded in nodes). No app code touched.
+
 **Fase-E: DB Notion correto identificado + 10 campos aplicados NELE (2026-06-22, external).**
 Big correction this session. The Notion integration the n8n workflow uses (**"Conexão n8n"**, token
 hardcoded in node "Criar Entrada no Notion") only sees DBs in ONE workspace — confirmed via the Notion
