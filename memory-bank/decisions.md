@@ -3,6 +3,34 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-23 — Fase E2 ETAPA 1: single `students[]` payload contract; repoint to `students[0]` now and defer the split to ETAPA 3; reuse the proven CLI method
+- **Decision:** Opened Fase E2 (multi-aluno + deeper prompt). ETAPA 1 reshapes the `55TC - Análise de Treino`
+  (`T7kobxM1FZM99O8l`) webhook payload from the flat `{ file_id, student_name, student_id, session_date }` to a
+  single canonical `{ file_id, session_date, students: [{ student_id, name, visual_cue }, ...] }` — **one format
+  always** (an individual lesson is just a 1-item array; **no fallback** to the old flat shape, per coach). The
+  3 Code nodes that read per-student body fields (Preparar Análise, Parsear Resposta Gemini, Extrair HTML) now
+  read `body.students[0]`, which **preserves single-student behavior byte-for-byte** while validating the new
+  contract. No node added/removed, no connection change.
+- **Why repoint to `students[0]` instead of building multi-student now:** keeps ETAPA 1 a pure, isolated
+  structural change that can't regress the working single-lesson pipeline — the multi-student fan-out is a
+  separate concern. The actual N-way work splits cleanly: ETAPA 2 = the Gemini prompt + parsing emit an **array
+  of N**; ETAPA 3 = a Split node turns that array into N independent page-creation runs.
+- **Why the split belongs AFTER parsing (ETAPA 3), never before Gemini:** the video is the **same** for every
+  student in a group lesson, so Download → Upload-to-Gemini → the Gemini call must stay a **single pass** (one
+  upload, one model call analyzing everyone). Splitting before Gemini would re-upload + re-bill the same video N
+  times. The only thing that fans out is the *response*, so the Split sits between the parse and the Notion write.
+- **Why the n8n CLI export→transform→import method again (not MCP overwrite):** identical reasoning to ETAPA 1–3
+  / 5 of Fase E — the available n8n MCP only offers a full-workflow overwrite (`update_workflow`), which would
+  rebuild all 16 nodes + the wait-loop and risks dropping the by-ID credentials. A deterministic Node transform
+  with assert-unique-or-throw on each of the 5 string swaps is surgical and leaves the graph + creds provably
+  intact (re-export confirmed). Alternatives considered: MCP partial update (not exposed by this MCP); hand-editing
+  in the n8n UI (not reproducible, no restore artifact).
+- **`visual_cue` accepted-but-unused in ETAPA 1:** it rides in the payload now but is only consumed by the Gemini
+  prompt for visual identity matching (ETAPA 2) — recording it early so the coach can start sending the real
+  payload shape before the prompt work lands.
+- **Not run e2e:** a synthetic POST needs a real Drive `file_id` (else it dies at Download), so the real
+  group-lesson e2e is bundled with ETAPA 2/3 or left to the coach — same rhythm as every Fase E etapa.
+
 ## 2026-06-23 — Fase-E ETAPA 4 completion: plain UNIQUE index for the upsert; activate via MCP publish + read-only safety check before going live
 - **Decision:** Finished the ETAPA-4 work the crashed session left non-live (the n8n workflow
   `55TC - Publicar Feedback` `yk7iENBUAGMj3M6a` was already built **with credentials attached** — the MCP
