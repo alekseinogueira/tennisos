@@ -3,6 +3,32 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-23 — Fase-E ETAPA 3 tail tested via a throwaway tail-only workflow (real side-effects, no Drive/Gemini); fixed Claude max_tokens truncation
+- **Decision:** To run the "synthetic test of the final segment" (real Notion draft + real WhatsApp, **without**
+  the Drive→Gemini pipeline), I built a **temporary throwaway workflow** = the 6 tail nodes copied **verbatim
+  (creds-by-ID intact, from the CLI export)** + a Manual Trigger + two synthetic Code nodes **named exactly
+  `Webhook` and `Parsear Resposta Gemini`** (so the tail's `$('Webhook')`/`$('Parsear Resposta Gemini')`
+  references resolve), imported via CLI, then executed via MCP `execute_workflow(executionMode:"manual")`. Ran
+  clean (exec `22`): real Notion page `3889a701…2741`, Claude HTML, Supabase 200, `card_visual_url` set, Twilio
+  SID `SMb8ea7668…` (`queued`, no error) — **coach confirmed the WhatsApp arrived.** Then cleaned up (Notion page
+  trashed, temp workflow archived).
+- **Why this method:** the two MCP run tools are both wrong for "synthetic input + real tail side-effects":
+  `test_workflow` **force-pins every HTTP/credentialed node** (simulated data → no real Notion/Twilio), and
+  `execute_workflow(production)` would run the whole video pipeline (needs a real Drive `file_id`). The tail's
+  tokens live **encrypted inside n8n** (values intentionally unrecorded), so the test **must** run through n8n —
+  a curl re-implementation was impossible (no Twilio/Anthropic/Supabase token in hand). A throwaway copy isolates
+  the test from the live active workflow and reuses the exact production node configs + creds.
+- **Bugfix found+applied to PRODUCTION:** the Claude node hit **`stop_reason: max_tokens` (4096)** → the card HTML
+  was **truncated** (no `</html>`), and `Extrair HTML` accepted it (only checked for an opening `<!DOCTYPE|<html`).
+  Fixed in `T7kobxM1FZM99O8l` via CLI export→transform(assert unique-or-throw)→import→reactivate→`pm2 restart`:
+  `max_tokens 4096→8000` + `Extrair HTML` now also requires `</html>` (else falls back). Restore artifact
+  `/root/etapa3-work/wf-pre-etapa3c-restore.json`.
+- **Alternatives:** `test_workflow` (rejected — no real side-effects); `execute_workflow(production)` with a real
+  `file_id` (rejected — not synthetic, no file on hand, runs Gemini); saving `pinData` on the live workflow then
+  manual-running it (rejected — riskier edit to the live active workflow; pinData via the SDK is awkward, and the
+  throwaway copy is cleaner/safer). Left unfixed: the Storage object's `text/plain` content-type (logged as a
+  Known Issue; PNG render is deferred anyway).
+
 ## 2026-06-22 — Fase-E ETAPA 3 build: card-visual via Claude + ACTIVE Twilio coach-notify; PNG deferred; notify link → Notion page
 - **Decision:** Implemented the `[Futuro]` noOp (n11) in `T7kobxM1FZM99O8l` as a 5-node tail (16 nodes total):
   Claude (`claude-sonnet-4-6`) generates a self-contained 55TC HTML card → *Extrair HTML* → upload the HTML to

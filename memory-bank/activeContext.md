@@ -4,6 +4,39 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase-E ETAPA 3 — teste sintético do trecho final RODADO COM SUCESSO + 2 bugfixes aplicados (2026-06-23,
+external — workflow `T7kobxM1FZM99O8l`).** Fechei a pendência da sessão anterior: validei ao vivo o tail
+(card visual + notificação) gerando **side-effects reais** (rascunho real no Notion + WhatsApp real recebido
+pelo coach), **sem rodar o pipeline Drive→Gemini**.
+- **Método (escolha minha):** nem `test_workflow` (força-pin em TODO nó HTTP/credencial → zero side-effect real)
+  nem `execute_workflow` production (rodaria o vídeo inteiro, exige `file_id` real) servem. Como os tokens do
+  tail vivem **encriptados dentro do n8n** (valores não registrados → não dá pra curl direto), o teste TEM que
+  passar pelo n8n. Montei um **workflow temporário descartável** = os 6 nós do tail **verbatim (com creds por ID
+  intactas, vindas do export CLI)** + Manual Trigger + 2 nós Code sintéticos **nomeados `Webhook` e `Parsear
+  Resposta Gemini`** (pra resolver os `$('...')` downstream). Importei via CLI, habilitei `availableInMCP:true`,
+  rodei via MCP `execute_workflow(manual)` (exec `22`, ~46s, success).
+- **Resultado por nó (todos success):** Criar Notion → página real `3889a701-723c-819d-bd7d-cfc3f2a62741`
+  (DB `3539…80d4`, Status=Rascunho, todos os campos OK); Gerar HTML (Claude `claude-sonnet-4-6`) → HTML 55TC OK
+  visualmente; Extrair HTML → OK; Upload Supabase → 200 (`feedback-cards/{id}.html`, GET público 200, 10.570 B);
+  Salvar URL no Notion → `card_visual_url` setado; **Twilio → SID `SMb8ea7668…`, status `queued`, error_code null,
+  to `whatsapp:+12365913560` — COACH CONFIRMOU recebimento.**
+- **🐞 BUG REAL ACHADO + CORRIGIDO (afeta produção, mesmo nó):** Claude bateu **`stop_reason: max_tokens` (4096)**
+  → o HTML do card saiu **truncado** (sem `</html>`, ~10,5 KB). O `Extrair HTML` aceitava mesmo assim (só checava
+  presença de `<!DOCTYPE|<html`, não fechamento). **Fixes aplicados ao workflow de PRODUÇÃO** via CLI
+  export→transform(assert unique-or-throw)→import→`update:workflow --active=true`→`pm2 restart`: (1) *Gerar HTML
+  do Card* `max_tokens 4096 → 8000`; (2) *Extrair HTML* passa a exigir `</html>` (`... || !/<\/html>/i.test(html)`)
+  → HTML incompleto agora cai no fallback. Verificado pós-import: **active, 16 nós, ambos os fixes presentes,
+  cred Twilio (`eJjyGKdRBnttCZNF`) intacta.** Restore artifact: `/root/etapa3-work/wf-pre-etapa3c-restore.json`.
+- **Caveat menor (NÃO corrigido):** o objeto no Storage é servido como `content-type: text/plain` (não `text/html`)
+  → navegador pode baixar em vez de renderizar. Baixa prioridade (PNG está adiado; o `.html` é placeholder).
+- **Limpeza:** página de teste Notion **trashed** (`in_trash:true`, 200); workflow temp `TESTTAILFASEE01`
+  **archived** via MCP. **Leftover:** o `.html` de teste no bucket `feedback-cards` NÃO foi removido (sem acesso
+  ao service key fora do n8n) — deletar pela dashboard do Supabase se quiser; é inócuo (upsert sobrescreve).
+- **Next:** o tail está VALIDADO end-to-end de forma sintética. Falta ainda um teste com **vídeo real** (`file_id`
+  do Drive) pra exercitar Drive+Gemini; **ETAPA 4** (sync Notion→Supabase no publish + email Resend); e o
+  hardening dos nós LEGADOS hardcodados (Gemini key em n08/n15/n16 + Notion token em n10 = "Etapa 5"). Sem código
+  de app tocado.
+
 **Fase-E ETAPA 3 APLICADA ao vivo no n8n (2026-06-22, external — workflow `T7kobxM1FZM99O8l`, agora 16 nós).**
 Implemented the card-visual + coach-notification stage, replacing the empty `[Futuro] WhatsApp + Card Visual`
 noOp (n11) with a 5-node tail, **all wired to n8n stored credentials BY ID — zero hardcoded tokens in the new

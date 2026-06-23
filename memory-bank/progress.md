@@ -157,6 +157,17 @@
   real Drive `file_id` POST; Twilio To must `join` the sandbox). Restore: `/root/etapa3-work/wf-pre-etapa3{,b}.json`.
   Next: real e2e + hardening the OLD hardcoded nodes (Gemini/Notion = "Etapa 5"); orphan "Supabase Storage" cred
   can be deleted; ETAPA 4 can reuse "Supabase Service".
+- **Fase-E ETAPA 3 TAIL TESTADO end-to-end (sintético) + 2 bugfixes em produção (2026-06-23, external):**
+  rodei o teste sintético do trecho final do `T7kobxM1FZM99O8l` com **side-effects reais** (rascunho real no
+  Notion + WhatsApp real, **confirmado recebido**) **sem o pipeline Drive→Gemini** — via um workflow temporário
+  descartável (6 nós do tail verbatim com creds por ID + Manual Trigger + 2 Code sintéticos nomeados `Webhook`/
+  `Parsear Resposta Gemini`), executado por MCP `execute_workflow(manual)` (exec `22`, success). Todos os nós
+  OK: Notion page `3889a701…2741`, Claude HTML, Supabase upload 200, `card_visual_url`, Twilio SID `SMb8ea7668…`
+  (`queued`, sem erro). **Bug achado:** Claude batia `max_tokens:4096` → card HTML truncado, e o `Extrair HTML`
+  aceitava. **Corrigido em produção:** `max_tokens 4096→8000` + `Extrair HTML` agora exige `</html>` (senão
+  fallback). Verificado: active/16 nós/fixes presentes/creds intactas. Limpeza: Notion test page trashed, temp
+  workflow `TESTTAILFASEE01` archived (leftover: `.html` de teste no bucket, inócuo). Next: teste com vídeo real
+  + ETAPA 4 + hardening dos nós legados hardcodados.
 - **Fase-E Notion DB corrected + schema applied to the RIGHT db (2026-06-22, external):** the n8n
   integration "Conexão n8n" only reaches DBs `3539a701-723c-*` ("Teste n8n - Feedback aluno" +
   "Alunos"); the "Feedbacks" `…1291bc` extended on 2026-06-18 is in another workspace and **404s** for
@@ -315,6 +326,11 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Fase-E card HTML served as `content-type: text/plain`** (ETAPA 3, found 2026-06-23) — the Supabase Storage
+  object at `feedback-cards/{page_id}.html` comes back `text/plain`, so a browser may download it instead of
+  rendering. Low priority (PNG render is deferred; the `.html` is a placeholder). Fix later by forcing the
+  upload's stored content-type to `text/html` (or re-introduce the PNG render step). The truncation bug
+  (Claude `max_tokens`) found in the same test was already fixed (4096→8000 + `</html>` fallback guard).
 - **Coach Dashboard "PENDING FEEDBACK"/"FEEDBACK DUE" uses a past-scheduled heuristic** (Phase 10) —
   the spec says "completed session", but no UI marks a session `completed` (scheduling creates
   `scheduled`; only Cancel mutates it). So `listPendingFeedback` treats a session as finished when
