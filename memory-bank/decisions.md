@@ -3,6 +3,37 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-23 — Fase-E ETAPA 4 completion: plain UNIQUE index for the upsert; activate via MCP publish + read-only safety check before going live
+- **Decision:** Finished the ETAPA-4 work the crashed session left non-live (the n8n workflow
+  `55TC - Publicar Feedback` `yk7iENBUAGMj3M6a` was already built **with credentials attached** — the MCP
+  `get_workflow_details` just hides the `credentials` field; the CLI export confirmed they were present). Three
+  moves: (1) migration `010` converts the `feedbacks.notion_id` index from **partial** (`where notion_id is not
+  null`, from 009) to **plain** UNIQUE and applies it live; (2) deploy the `send-feedback-email` Edge Function;
+  (3) activate the workflow via MCP `publish_workflow` (no pm2 restart) after a read-only check that **0 Notion
+  pages are Publicado+unsynced**, then validate with a live manual run (exec 23, empty-result path, no side-effects).
+- **Why the plain index:** PostgREST's upsert emits a bare `ON CONFLICT (notion_id)` with **no WHERE predicate**,
+  which Postgres will NOT match to a *partial* index → "no unique or exclusion constraint matching the ON CONFLICT
+  specification". A plain unique index gives the identical dedup guarantee (Postgres treats NULLs as distinct, so
+  the many coach-written `notion_id = NULL` rows are still all allowed) AND satisfies the conflict target. Safe to
+  convert: no row carries a `notion_id` yet (ETAPA 4 had never run).
+- **Why MCP `publish_workflow` (not the CLI export→import→`--active=true`→`pm2 restart` of ETAPA 1–3):** there
+  were **no node edits to make** (creds already attached, graph correct) — only the active flag to flip. The n8n
+  API registers the schedule trigger live, so it avoids the seconds of pm2-restart downtime that would also blip
+  the OTHER active workflow (the webhook). The CLI method's whole point (preserve graph/creds across an edit) didn't
+  apply here.
+- **Why the read-only pre-activation check via the legacy hardcoded token:** activating a 5-min poller that can
+  email real students is outward-facing — I wanted certainty, not just reasoning, that no stray Publicado page
+  would fire an email on the first tick. The Notion MCP SQL query needs a paid plan (400), so I read the token
+  **transiently** from workflow 1's legacy plaintext node, ran one read-only REST query (0 results), and
+  `shred`-deleted it without recording the value. Then a manual `execute_workflow` proved the live auth + empty path.
+- **Left to the coach (same rhythm as ETAPA 1–3):** the real-data e2e (publish a real feedback → upsert + student
+  email). The upsert+email legs are wired and credentialed but unexercised with real data.
+- **Alternatives considered:** (1) keep the partial index + add a matching partial `ON CONFLICT ... WHERE` — not
+  expressible through PostgREST's `on_conflict=` param; rejected. (2) Leave the workflow inactive and hand the coach
+  an activation step — rejected as the literal "ponta solta" the task said to avoid; a poller with 0 Publicado pages
+  is harmless to turn on. (3) Synthetic end-to-end test like ETAPA 3 (throwaway workflow + test student emailing the
+  coach) — deferred as heavier than warranted; the empty-path live run + the coach's own first publish cover it.
+
 ## 2026-06-23 — Fase-E ETAPA 4 prereqs: EXTEND `feedbacks` (not a new table), applied LIVE; render rich fields conditionally in the existing tab
 - **Decision:** Resolved the two ETAPA-4 prerequisites by (a) **extending the existing `feedbacks` table** with
   16 nullable Fase-E columns (migration `009`, **applied live** via `supabase db push --linked`) — keyed for

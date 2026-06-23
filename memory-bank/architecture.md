@@ -168,6 +168,9 @@ n8n already runs at n8n.55tenniscrew.com. Integration seams to leave open:
 - **Inbound (n8n → TennisOS):** n8n writes back via service-role (e.g., agente_cortes-produced
   clip → insert `student_gallery` row + `feedback_gallery_links`). `student_gallery.source` +
   `external_ref` columns exist so external content slots in cleanly.
+  *(REALIZED 2026-06-23, Fase-E ETAPA 4: the `55TC - Publicar Feedback` n8n workflow upserts
+  `feedbacks` via service-role on Notion publish, then calls the `send-feedback-email` Edge Function —
+  the canonical instance of this seam. Status in progress.md.)*
 - Keep every secret-bearing call behind the Edge Function pattern (`lib/api.js` → `functions/*`).
 - **Stripe (later):** `packages.stripe_price_id`, a checkout Edge Function, credits granted on
   webhook. Schema is shaped for it; not implemented in MVP.
