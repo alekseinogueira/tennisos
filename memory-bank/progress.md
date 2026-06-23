@@ -174,6 +174,20 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
+- **Fase E2 ETAPA 2 DONE (2026-06-23, applied live in n8n, external):** reescrevi o **prompt do Gemini**
+  (`Preparar Análise`) e o **parsing** (`Parsear Resposta Gemini`) do `T7kobxM1FZM99O8l` para multi-aluno +
+  profundidade técnica (skill `aleksei-tennis-method`, colada pelo coach — não está no servidor). **Schema
+  inalterado.** Prompt monta um roster (`students` + `visual_cue`), instrui voz Professor Aleksei / foco externo
+  / ancorado / diagnóstico / cascata de erro, e pede **array de N objetos** (1/aluno, ordem do payload, `student_id`
+  ecoado); `maxOutputTokens 2048→8192`. Parsing normaliza o array, **casa por `student_id`→nome→índice**, fallback
+  honesto por aluno sem throw, `buildNotionBody` extraído. **Emissão = 1 item (`students[0]`, tail intacto) +
+  `analisesMulti` (array completo) para a Etapa 3** (decisão do coach: sem fan-out agora). CLI export→transform
+  (assert unique-or-throw + guarda idempotência + `vm.Script`)→import→reactivate→`pm2 restart`; re-export confirma
+  active/16 nós/só 2 nós mudaram/connections+creds idênticas/8192 presente/2048 sumiu. **Teste unitário offline do
+  parsing (3 casos: grupo ordem-trocada, objeto-único, JSON inválido) PASSA.** Sem deploy. Restore (600):
+  `/root/etapa7-work/wf-pre-e2-etapa2.json`. **Não rodado e2e real** (precisa de `file_id` Drive + chamada billable
+  ao Gemini). Next: **Etapa 3** (Split/fan-out N páginas + tail por-aluno; consome `analisesMulti`; pendência:
+  Twilio 1 msg/aluno vs 1 resumo/aula) — precisa de aprovação do plano.
 - **Fase E2 ETAPA 1 DONE (2026-06-23, applied live in n8n, external):** começou a **Fase E2 — Análise
   Multi-Aluno + Prompt Técnico** (plano em `planning/fase-e2-multialuno-prompt-tecnico.md`). Etapa 1 =
   contrato novo do payload do webhook do `T7kobxM1FZM99O8l`: `{ file_id, session_date, students:[{ student_id,

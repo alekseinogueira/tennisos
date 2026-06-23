@@ -144,8 +144,12 @@ Antes de aplicar:
 
 ### Etapa 2 — Novo prompt do Gemini (conteúdo + multi-aluno)
 
-**Status:** planejada, não iniciada. Depende da Etapa 1 estar aplicada (o prompt
-precisa saber que vai receber uma lista de alunos).
+**Status:** ✅ APLICADA ao vivo no n8n (2026-06-23). Prompt do `Preparar Análise`
+reescrito (roster + voz Professor Aleksei + foco externo + array de N); parsing do
+`Parsear Resposta Gemini` casa N análises por `student_id`→nome→índice e emite 1 item
+(`students[0]`) + `analisesMulti` (array completo p/ a Etapa 3). Schema inalterado.
+Validada por re-export + teste unitário offline. Skill `aleksei-tennis-method` NÃO
+existe no servidor — coach colou o conteúdo. Ver activeContext/decisions.
 
 **O que muda:**
 - O prompt passa a instruir o Gemini a:

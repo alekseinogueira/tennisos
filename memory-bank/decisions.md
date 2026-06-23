@@ -3,6 +3,40 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-23 — Fase E2 ETAPA 2: deeper multi-student Gemini prompt + array-of-N parsing; emit only `students[0]` and carry the full array in `analisesMulti`; identity is always the payload's
+- **Decision:** Rewrote the two Code nodes of `55TC - Análise de Treino` (`T7kobxM1FZM99O8l`). `Preparar Análise`
+  now builds a **roster** from `students` (name + `visual_cue`) and instructs Gemini, in the Professor Aleksei
+  voice, to identify each student by their cue, analyze **each one**, and return a **JSON array of N objects**
+  (one per student, in payload order, echoing `student_id` verbatim) — with **external focus** (ball/trajectory/
+  target, never an isolated body segment) even in the written feedback, observations anchored to specific video
+  moments, a diagnostic tone (no empty praise), and the error cascade (distance→contact→prep→…). `Parsear Resposta
+  Gemini` now parses/normalizes that array and **matches each analysis to a payload student by `student_id` →
+  name (case-insensitive) → positional index**. `maxOutputTokens 2048→8192`. **Schema unchanged** (same Notion/
+  Supabase fields/enums).
+- **Why emit only `students[0]` (not fan out N items now):** in n8n a Code node returning N items auto-fans-out
+  every downstream node, but the tail (Criar Notion, Gerar HTML, Extrair HTML, Webhook Response) still reads
+  `students[0]`/`.first()` from ETAPA 1 — fanning out now would create N pages through a single-student tail and
+  leave a **broken intermediate state**. So ETAPA 2 emits one item with the **exact same keys as today** (tail
+  byte-for-byte unaffected) and exposes the full per-student array in an **additive `analisesMulti`** field. The
+  fan-out (Split + per-student tail) is ETAPA 3's job, consuming `analisesMulti`. This keeps ETAPA 2 non-breaking
+  and independently testable. Alternative considered: emit N now (rejected — breaks the tail until ETAPA 3).
+- **Why identity comes from the payload, not Gemini's echo:** the prompt asks Gemini to echo `student_id`, but the
+  parser sets `student_id`/`name` on each output item (and in `buildNotionBody`) from the **payload** student, not
+  the model's echo — the echo is used only as the matching key. The model can mis-transcribe an opaque UUID, so the
+  payload stays authoritative; matching degrades name→index if the echo is wrong.
+- **Why ground on the pasted skill, not the plan's BASE TEÓRICA:** the `aleksei-tennis-method` skill does **not**
+  exist on this server (`/mnt/skills/user/` is empty); the coach pasted it. It carries his actual voice/phrasing
+  and the method (OPTIMAL/Wulf external focus, Gallwey Inner Game, implicit/analogical learning, the 7-step error
+  cascade), which the research-summary BASE TEÓRICA lacks. Alternative (use BASE TEÓRICA only) was offered and the
+  coach chose to paste the skill.
+- **Why the n8n CLI export→transform→import method again:** same reasoning as every Fase E/E2 etapa — the MCP only
+  offers a full-workflow overwrite that risks the graph + by-ID creds. Here the transform replaces the **entire**
+  `jsCode` of the 2 nodes (not string-substitution) with assert-unique-or-throw + idempotency guards (`Professor
+  Aleksei`/`analisesMulti` must be ABSENT pre-edit) + `vm.Script` syntax checks; re-export proved only the 2 nodes
+  changed, connections + creds identical. Validated additionally by an **offline unit test** of the parser (group
+  swapped-order, single-object, invalid-JSON) before declaring done. **No e2e with a real video** (needs a real
+  Drive `file_id` + a billable Gemini call) — deferred to ETAPA 3/coach, same as the Fase E etapas.
+
 ## 2026-06-23 — Fase E2 ETAPA 1: single `students[]` payload contract; repoint to `students[0]` now and defer the split to ETAPA 3; reuse the proven CLI method
 - **Decision:** Opened Fase E2 (multi-aluno + deeper prompt). ETAPA 1 reshapes the `55TC - Análise de Treino`
   (`T7kobxM1FZM99O8l`) webhook payload from the flat `{ file_id, student_name, student_id, session_date }` to a

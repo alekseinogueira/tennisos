@@ -4,6 +4,48 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase E2 ETAPA 2 APLICADA ao vivo no n8n (2026-06-23, external — workflow `T7kobxM1FZM99O8l`).**
+Reescrevi o **prompt do Gemini** (`Preparar Análise`) e o **parsing** (`Parsear Resposta Gemini`) para multi-aluno
++ profundidade técnica, fundamentados na skill `aleksei-tennis-method` (coach colou o conteúdo — **não existe no
+servidor**, `/mnt/skills/user/` vazio). **Schema do Notion/Supabase INALTERADO** (mesmos campos/enums; mantidos os
+nomes reais do código `aplicacao_em_jogo`/`esforco_intensidade`, não os do plano).
+- **`Preparar Análise`** (2500→5391 chars): prompt agora monta um **roster** dos `students` (nome + `visual_cue`)
+  e instrui o Gemini, na voz Professor Aleksei, a (a) identificar cada aluno pelo cue e analisar **cada um**, (b)
+  retornar um **array JSON de N objetos** (1/aluno, **na ordem do payload**, ecoando `student_id` verbatim), (c)
+  usar **foco externo** (bola/trajetória/alvo, nunca segmento corporal) inclusive no texto escrito, ancorar em
+  momentos do vídeo, tom diagnóstico (não elogio vazio), cascata de erro (distância→contato→preparação→…), calibrar
+  pelo nível visível. `maxOutputTokens 2048→8192` (N análises não cabem em 2048). `studentName/fileName/fileLink`
+  continuam = `students[0]` (compat com o tail).
+- **`Parsear Resposta Gemini`** (3887→5779 chars): passa a parsear/normalizar um **array de N**. Aceita array puro,
+  `{analises:[...]}`, ou 1 objeto (envolve). Casa cada análise ao aluno do payload **por `student_id` → nome
+  (case-insensitive) → índice**; sem correspondência → `errorAnalysis` honesto por aluno (sem throw). Mantém
+  `clampRating 0–10`, guarda `Assimilação técnica→Em Desenvolvimento`, `foco_principal` string→array — agora **por
+  item**. `buildNotionBody(student, analysis)` extraído (pronto pro fan-out da Etapa 3). **Identidade SEMPRE do
+  payload** (não do echo do Gemini — payload é autoritativo).
+- **Emissão (decisão do coach): 1 item (`students[0]`), NÃO fan-out.** O item emitido tem **exatamente** as mesmas
+  chaves de hoje (`...analise + studentName/fileName/fileLink/analisadoEm/notionBodyJson`) → o tail (Criar Notion,
+  Gerar HTML, Extrair HTML, Webhook Response) **não muda**. O array completo vai em **`analisesMulti`** (aditivo,
+  ignorado pelo tail atual, consumido pela Etapa 3 quando ela ligar o Split/fan-out). Etapa 2 é não-quebrante e
+  testável isolada.
+- **HOW/verify (método provado):** CLI `export:workflow` → transform Node determinístico
+  (`/root/etapa7-work/transform-e2-etapa2.js`: substitui INTEGRALMENTE o `jsCode` dos 2 nós, com assert
+  unique-or-throw + guarda de idempotência `Professor Aleksei`/`analisesMulti` ausentes + `vm.Script` nos 2) →
+  `import:workflow` (desativa) → `update:workflow --active=true` → `pm2 restart n8n`. Re-export pós-restart
+  confirma: **active, 16 nós, só os 2 nós mudaram, connections + credenciais idênticas**, `8192` presente / `2048`
+  sumiu, `analisesMulti`/`buildNotionBody`/array-parse presentes; log `Activated workflow … T7kobxM1FZM99O8l`.
+  **Sem deploy** (puro n8n).
+- **Teste unitário OFFLINE do parsing (risco zero, sem tocar o pipeline) — 3 casos PASSAM:** (A) grupo 2 alunos,
+  resposta array em **ordem trocada** → casa por `student_id` (Maria→S2/Backhand invertida), emite `students[0]`
+  (Joao/S1), `analisesMulti=2`, clamp 15→10, guarda qualidade, foco string→array, `notionBody` por-aluno correto;
+  (B) individual + **objeto único** (modelo não retornou array) → envolve em array de 1, normaliza; (C) **JSON
+  inválido** → fallback honesto por aluno, **sem throw**, len casa o roster.
+- **Restore (fora do repo, 600):** `/root/etapa7-work/wf-pre-e2-etapa2.json`; transformado: `wf-e2-etapa2.json`;
+  corpos novos: `preparar.js`/`parsear.js`. **NÃO rodado e2e real** — precisa de `file_id` Drive real + é 1
+  chamada real (e billable) ao Gemini; o e2e com vídeo de grupo fica junto da Etapa 3 ou com o coach (mesmo
+  protocolo da Fase E). **Next: Etapa 3** (Split após o parsing → fan-out de N páginas no Notion + tail por-aluno;
+  consome `analisesMulti`; decisão pendente: Twilio 1 msg/aluno vs 1 resumo/aula — recomendação do plano: 1
+  resumo) — exige aprovação do plano antes de aplicar.
+
 **Fase E2 ETAPA 1 APLICADA ao vivo no n8n (2026-06-23, external — workflow `T7kobxM1FZM99O8l`).**
 Início da **Fase E2 — Análise Multi-Aluno + Prompt Técnico Aprofundado** (plano em
 `memory-bank/planning/fase-e2-multialuno-prompt-tecnico.md`). Etapa 1 = mudança ESTRUTURAL do contrato do
