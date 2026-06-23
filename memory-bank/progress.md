@@ -4,6 +4,14 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Rotação REAL das credenciais Gemini + Notion COMPLETA (2026-06-23, live, external).** Fecha o resíduo
+  de segurança da Fase-E (a ETAPA 5 fez só o hardening). Coach gerou nova chave Gemini (**formato novo
+  `AQ.…`**, funciona via `?key=`) + novo token Notion; atualizei os VALORES das 2 creds n8n por ID (`Gemini
+  API` `QzDFsG1HIbE8SYLa`, `Notion HTTP` `CC31lqcuz7ynyYed`) via `import:credentials` (nós intactos, valores
+  não registrados). Validado por smoke test direto na API antes de revogar (Gemini 200, Notion 200, DB de
+  produção 200); n8n reiniciado, workflows ativos. Coach revogou as antigas. **`shred` em 19 arquivos
+  plaintext** (restores `etapa1/3/4/5-work/` + `.new`); sweep final = 0 segredos plaintext. **Fase-E 100%
+  fechada, inclusive segurança.**
 - **Fase-E ETAPA 5 COMPLETA (2026-06-23, live, external) — credential hardening do `55TC - Análise de
   Treino` (`T7kobxM1FZM99O8l`):** os 4 nós LEGADOS que guardavam segredo em texto puro agora usam credenciais
   n8n encriptadas **by ID**. Criada cred nova **`httpQueryAuth` "Gemini API" (`QzDFsG1HIbE8SYLa`)** (injeta
@@ -12,8 +20,8 @@
   removido. Re-export pós-`pm2 restart` confirma: active, 16 nós, connections idênticas, **0 segredos
   hardcoded**, 9 nós com auth 100% por credencial. Sem deploy (puro n8n). Restore (com tokens antigos, fora do
   repo): `/root/etapa5-work/wf-pre-etapa5-restore.json`. **Fecha o "Problema 4" da Fase-E → ETAPA 1–5 + WF2
-  completos.** Caveat: a chave Gemini + token Notion antigos seguem válidos no Google/Notion até serem
-  revogados/rotacionados (o restore ainda os contém em plaintext).
+  completos.** ~~Caveat: chave/token antigos seguem válidos até revogar~~ **RESOLVIDO 2026-06-23 pela rotação
+  real** (ver entrada acima) — antigos revogados, restore plaintext `shred`-apagado.
 - **Fase-E ETAPA 4 COMPLETA (2026-06-23, live + validada):** workflow n8n **`55TC - Publicar Feedback`**
   (`yk7iENBUAGMj3M6a`) ATIVO — schedule a cada 5 min: query Notion (Status=Publicado & synced_to_portal=false
   no DB `3539…80d4`) → mapeia props→campos flat (parseGoals→jsonb, clampInt 0–10) → lookup do aluno em

@@ -4,6 +4,27 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Rotação REAL das credenciais Gemini + Notion CONCLUÍDA (2026-06-23, external — n8n).** Fecha o último
+resíduo de segurança da Fase-E: a ETAPA 5 tinha feito o *hardening* (mover segredos hardcoded → creds n8n
+encriptadas), mas as chaves ANTIGAS seguiam válidas no provedor e havia ~18 cópias plaintext espalhadas.
+Esta sessão rotacionou de fato:
+- **Coach gerou** no console: nova chave Gemini (Google AI Studio — **formato novo `AQ.…`**, 53 chars, NÃO
+  `AIza`; funciona igual via `?key=`) + novo token Notion (`ntn_…`, 50 chars), e os colocou em
+  `/root/rotacao-work/{gemini,notion}.new` (600) via terminal do servidor.
+- **Atualizei os VALORES das 2 creds n8n** (overwrite **por ID**, nós intactos) via `rotacao-work/rotate.sh`
+  → `n8n import:credentials --projectId=0bSOozEStbKMfPi6`: `Gemini API` (`QzDFsG1HIbE8SYLa`, httpQueryAuth,
+  `data.name="key"`) e `Notion HTTP` (`CC31lqcuz7ynyYed`, httpHeaderAuth, `data.value="Bearer <token>"`).
+  JSON de import `shred`-apagado na hora. **Valores NÃO registrados** (convenção das ETAPAs).
+- **Validado ANTES de revogar:** smoke test direto na API (lendo dos `.new`, sem imprimir) — Gemini list-models
+  **200**, Notion `users/me` **200**, Notion query do DB de produção `3539…80d4` **200**. `pm2 restart n8n` →
+  online, ambos workflows ativos (`T7kobxM1FZM99O8l` + `yk7iENBUAGMj3M6a`).
+- **Coach revogou as chaves antigas** no Google/Notion (a pedido "vá em frente").
+- **Limpeza plaintext:** `shred` em **19 arquivos** — os ~17 restores com `AIza…`/`ntn_…` em
+  `etapa1/3/4/5-work/` (a maioria estava 644 = exposição real na box) + os 2 `.new`. Sweep final confirma
+  **0 segredos plaintext** nas pastas de trabalho. Sobraram só transforms + `*-cred-id.txt` (IDs n8n, não
+  segredos) + exports sem segredo. **Sem deploy** (puro n8n). **A Fase-E está agora 100% fechada,
+  inclusive segurança** (ETAPA 1–5 + WF2 + rotação real).
+
 **Fase-E ETAPA 5 CONCLUÍDA — hardening de credenciais do workflow `55TC - Análise de Treino`
 (`T7kobxM1FZM99O8l`): ZERO tokens hardcoded restantes, tudo por credencial n8n (2026-06-23, external).**
 Fechei a última pendência da Fase-E ("Problema 4 — Credenciais hardcodadas" / a "Etapa 5" referida em
@@ -30,9 +51,8 @@ armazenadas (encriptadas) do n8n, **by ID**, exatamente como os nós novos da ET
 - **Sem deploy** (nada de app/migration — puramente n8n). **Restore artifact (FORA do repo, root-only 600, COM
   os tokens antigos):** `/root/etapa5-work/wf-pre-etapa5-restore.json`; transformado sem segredos:
   `wf-etapa5.json`. O arquivo standalone com a chave plaintext (`cred-gemini.json`) foi **`shred`-apagado**.
-- **Caveat:** o `wf-pre-etapa5-restore.json` ainda contém os tokens antigos em texto puro (é o ponto do restore;
-  mesma convenção dos restores da ETAPA 1–3). Se quiser zerar de vez, **revogue/rotacione** a chave Gemini e o
-  token Notion antigos no console do Google/Notion — eles continuam válidos até serem revogados.
+- **Caveat RESOLVIDO (2026-06-23):** os tokens antigos em plaintext nos restores foram **rotacionados +
+  revogados + `shred`-apagados** (ver "Rotação REAL" no topo). `wf-pre-etapa5-restore.json` não existe mais.
 - **Next (resíduos não-bloqueantes):** e2e real com vídeo (coach dispara o POST); opcional content-type
   `text/html` no card do Storage (Known Issue ETAPA 3); deletar a cred órfã `Supabase Storage`
   (`NdKxgh5ULJUP8hmy`). **A Fase-E está funcionalmente COMPLETA** (ETAPA 1–5 + workflow 2 ativos).
