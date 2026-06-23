@@ -4,6 +4,56 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase-E ETAPA 4 CONCLUÍDA — workflow `55TC - Publicar Feedback` ATIVO + migration 010 aplicada +
+Edge Function de email deployada (2026-06-23, external + infra).** Retomei a ETAPA 4 da sessão que
+travou. Diagnóstico: a sessão anterior já tinha construído quase tudo, mas deixou pontas soltas (nada
+estava live). O que ela deixou no working tree (não-commitado) + no n8n:
+- **Workflow n8n `55TC - Publicar Feedback` (`yk7iENBUAGMj3M6a`)** — CRIADO pela sessão travada via MCP
+  (builderVariant mcp), 9 nós, grafo linear correto, **credenciais JÁ anexadas por ID** (a view do MCP
+  `get_workflow_details` OMITE o campo `credentials`, mas o export CLI confirma: *Notion HTTP*
+  `CC31lqcuz7ynyYed` nos 2 nós Notion; *Supabase Service* `0toUlVDwrVTZ8BXi` nos 3 nós Supabase/Edge).
+  Estava **inativo** (`active:false`, triggerCount 0). Fluxo: `A cada 5 minutos` (schedule) → `Buscar
+  Publicados no Notion` (POST query DB `3539a701-723c-80d4-9bf0-fa3166bea0f9`, filtro Status=Publicado
+  AND synced_to_portal=false) → `Mapear Páginas` (Code: props Notion→campos flat, parseGoals do texto
+  `N. titulo: descricao`→jsonb, clampInt 0–10) → `Buscar Aluno no Supabase` (GET students por student_id
+  → user_id/email/full_name) → `Montar Payload` → `Aluno tem conta?` (IF has_user) → `Upsert Feedback no
+  Supabase` (POST `/rest/v1/feedbacks?on_conflict=notion_id`, Prefer merge-duplicates) → `Marcar
+  Sincronizado no Notion` (PATCH synced_to_portal=true) → `Enviar Email ao Aluno` (POST Edge Function).
+- **Migration `010_feedbacks_notion_id_unique.sql`** — converte o índice UNIQUE **parcial** de 009
+  (`where notion_id is not null`) num índice **plain** (mesmo dedup; Postgres trata NULLs como distintos)
+  porque o upsert do PostgREST emite `ON CONFLICT (notion_id)` SEM WHERE, que NÃO casa com índice parcial
+  (senão "no unique or exclusion constraint matching the ON CONFLICT specification"). Estava **local-only**.
+- **Edge Function `send-feedback-email/index.ts`** (NODE 5) — email PT-BR branded 55TC ("SEU FEEDBACK
+  CHEGOU.", CTA → portal/feedback), `verify_jwt=false` (config.toml) + **guard por service-role key**
+  (aceita só se `apikey` OU `Authorization` == SUPABASE_SERVICE_ROLE_KEY; o cred "Supabase Service" do n8n
+  manda ambos). Body: `{student_name, student_email, feedback_date?, focus_next?}`. Estava **não deployada**.
+
+**O que ESTA sessão fez (fechou as pontas, tudo live + validado):**
+1. **Migration 010 APLICADA** via `supabase db push --linked` (`migration list` confirmava 010 local sem
+   par no remote → agora aplicada). Habilita o upsert `on_conflict=notion_id`.
+2. **Edge Function `send-feedback-email` DEPLOYADA** (`supabase functions deploy`, projeto
+   `vdyvlylacsghnvtllrzj`, script 6.7kB). **Guard verificado:** POST sem service key → **401** (curl).
+3. **Verificação read-only de segurança ANTES de ativar:** confirmei **0 páginas Status=Publicado &
+   synced_to_portal=false** no Notion (curl direto à REST API com o token legado hardcodado do workflow 1,
+   lido transientemente e `shred`-apagado — não registrado). Logo ativar não dispara email a aluno real.
+4. **Workflow ATIVADO** via MCP `publish_workflow` (sem pm2 restart — a API do n8n registra o schedule
+   trigger live). Agora `active:true`, triggerCount 1.
+5. **Teste live (exec `23`, manual, success, sem side-effects):** `Buscar Publicados no Notion` autenticou
+   no Notion e retornou `results:[]`; `Mapear Páginas` → 0 itens; nós downstream (upsert/email) **skipados**
+   por falta de input. Prova que a cred Notion + o caminho de query funcionam live e que o caso vazio
+   degrada limpo.
+- **Caveat / ponta deixada DE PROPÓSITO (igual ETAPA 1–3):** o **e2e real com dados** (publicar um feedback
+  real no Notion → upsert real + email real ao aluno) NÃO foi rodado — fica pro coach disparar (mudar uma
+  página real p/ Status=Publicado). As pernas upsert+email ainda não exercitadas com dados reais.
+- **Caveat funcional (não-bug):** se o aluno NÃO tem conta (user_id NULL), o IF `Aluno tem conta?` corta
+  no false-branch → a página **não** é marcada synced_to_portal, então re-aparece no poll a cada 5 min
+  (sem side-effect) até o aluno reivindicar a conta; aí sincroniza. É by-design (`feedbacks.user_id` é NOT
+  NULL — não dá pra upsertar sem user_id). Custo: re-query barata a cada 5 min enquanto pendente.
+- **Restore/artifacts:** `/root/etapa4-work/wf-publicar-orig.json` (export do workflow pré-ativação, com
+  creds). **Repo:** migration 010 + função + config.toml commitados ESTA sessão. **Next:** e2e real (coach);
+  depois o hardening dos nós LEGADOS hardcodados (Gemini/Notion = "Etapa 5"); opcional: forçar
+  `content-type: text/html` no card do Storage (Known Issue da ETAPA 3); cred orfã "Supabase Storage" deletável.
+
 **Fase-E ETAPA 4 PRÉ-REQUISITOS RESOLVIDOS — `feedbacks` estendida (migration 009 APLICADA LIVE) +
 aba Feedback rica construída (2026-06-23).** Desbloqueei a ETAPA 4 (sync Notion→Supabase): a tabela
 `feedbacks` era minimalista (`title`/`body`/`lesson_date`) e não tinha onde receber o payload da Fase-E.

@@ -4,6 +4,16 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Fase-E ETAPA 4 COMPLETA (2026-06-23, live + validada):** workflow n8n **`55TC - Publicar Feedback`**
+  (`yk7iENBUAGMj3M6a`) ATIVO — schedule a cada 5 min: query Notion (Status=Publicado & synced_to_portal=false
+  no DB `3539…80d4`) → mapeia props→campos flat (parseGoals→jsonb, clampInt 0–10) → lookup do aluno em
+  `students` → IF tem conta → **upsert `feedbacks` on_conflict=notion_id** → marca synced_to_portal=true no
+  Notion → **email branded PT-BR via Edge Function `send-feedback-email`**. Credenciais por ID (*Notion HTTP*,
+  *Supabase Service*). **Migration `010` (índice UNIQUE plain em `notion_id`, requisito do upsert) APLICADA
+  live; Edge Function DEPLOYADA** (guard service-role → 401 sem chave, verificado). Run live de validação
+  (exec 23, success): query Notion autenticou, 0 publicados → 0 itens → nós de escrita skipados, **sem
+  side-effects**. **E2e real com dados deixado pro coach** (publicar um feedback real). Fecha o loop Fase-E:
+  vídeo→Gemini→Notion(rascunho)→card→coach publica→portal+email.
 - **Fase-E ETAPA 4 pré-requisitos (2026-06-23):** `feedbacks` estendida com 16 colunas Fase-E
   (migration `009`, **APLICADA live** no Supabase) — `notion_id` UNIQUE parcial (chave de upsert),
   ratings 0–10, focus_areas[], next_session_goals jsonb, selects qualitativos, card_visual_url,
@@ -146,6 +156,17 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
+- **Fase-E ETAPA 4 DONE (2026-06-23, applied live, external):** the crashed session had already built the
+  n8n workflow `55TC - Publicar Feedback` (`yk7iENBUAGMj3M6a`, creds attached) + migration 010 + the
+  `send-feedback-email` function, but left them all non-live. This session finished it: **applied migration
+  010** (`db push`), **deployed the function** (guard 401-verified), **confirmed 0 Publicado+unsynced Notion
+  pages** (read-only, transient legacy token), **activated** the workflow (MCP `publish_workflow`, no pm2
+  restart), and **validated** with a live manual run (exec 23, success, empty-result path, no side-effects).
+  Real-data e2e (publish a real feedback → upsert + student email) left to the coach, same as ETAPA 1–3.
+  Caveat: unclaimed student (user_id NULL) → IF false-branch → page stays unsynced and re-polls every 5 min
+  (no side-effect) until claim (by design — `feedbacks.user_id` is NOT NULL). Restore: `/root/etapa4-work/
+  wf-publicar-orig.json`. Next: real e2e + legacy-node hardening ("Etapa 5") + optional `text/html`
+  content-type fix on the ETAPA-3 card.
 - Nothing actively mid-build. Admin roster + student portal + Phase 6/7/8/8B/8C/8D/8E/8F + the Phase 10
   Coach Dashboard HQ are all complete at the code level; all await **applied migrations + live data** to
   smoke-test.

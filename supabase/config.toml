@@ -7,3 +7,11 @@ project_id = "vdyvlylacsghnvtllrzj"
 # verification ON — it blocks anonymous spam of the email endpoint at the gateway.
 [functions.send-invite-email]
 verify_jwt = true
+
+# Feedback "your analysis is ready" email. Triggered server-to-server by the n8n
+# "55TC - Publicar Feedback" workflow (ETAPA 4), which has no Supabase user JWT —
+# so JWT verification is OFF at the gateway. The function instead guards itself by
+# requiring the service-role key (n8n sends it via its "Supabase Service" cred as
+# both apikey and Authorization), rejecting anything else with 401.
+[functions.send-feedback-email]
+verify_jwt = false
