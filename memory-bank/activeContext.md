@@ -4,6 +4,47 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase E2 ETAPA 3 APLICADA ao vivo no n8n (2026-06-23, external — workflow `T7kobxM1FZM99O8l`, agora 17 nós).**
+Fan-out multi-aluno: o `T7kobxM1FZM99O8l` agora cria **N páginas no Notion + N cards (1/aluno)** numa aula em
+grupo, reusando a cauda existente — **sem nó Split dedicado** (a sessão anterior tinha caído logo no início desta
+etapa; `etapa8-work/` só tinha um export, nada aplicado, estado limpo). Decisão do coach desta sessão: **Twilio =
+1 resumo por aula** (não 1 msg/aluno).
+- **`Parsear Resposta Gemini` (n09)** — emissão trocada de 1 item (`students[0]` + `analisesMulti`) para **N itens**
+  (`return perStudent.map(...)`, `pairedItem:{item:0}`). Cada item carrega seu próprio `notionBodyJson` (do
+  `buildNotionBody` da Etapa 2) + `studentName = s.name` (per-aluno, p/ o card não confundir nomes). O n8n roda
+  cada nó da cauda 1×/item automaticamente → o fan-out É o split. `analisesMulti` removido da emissão (cada item
+  já É a análise dele).
+- **Rewire `.first()` → `.item`** nos nós que leem dados por-aluno (senão todos pegariam o aluno 0): **Gerar HTML
+  do Card** (n20, ref a Parsear), **Extrair HTML** (n21, refs a Criar Notion + Parsear) — este passou a
+  **`runOnceForEachItem`** (`$json`+`.item`, retorna 1 obj/item) e seu `student_name`/fallback agora usam o nome do
+  aluno corrente — e **Salvar URL no Notion** (n23, 2 refs a Extrair HTML). O `$('Webhook').first().body` fica
+  `.first()` (compartilhado pela aula). `Criar Entrada no Notion` já lia `={{ $json.notionBodyJson }}` → fan-out
+  automático, sem mudança.
+- **Nó NOVO `Resumir Aula` (n25, Code allItems)** inserido entre `Salvar URL no Notion` e `Notificar Coach`:
+  agrega via `$('Extrair HTML').all()` → `{count, studentNames, namesText, notion_page_ids, session_date}`.
+- **`Notificar Coach (Twilio)` (n24)** — body vira resumo lendo `$json` (a saída do Resumir Aula): *"Feedback
+  gerado para N aluno(s) da aula de {data}: {nomes}. Revise no Notion: https://www.notion.so/<DB sem hífens>"*
+  (link do **banco** "Teste n8n - Feedback aluno" `3539a701723c80d49bf0fa3166bea0f9`, não de página individual,
+  por sugestão do coach). **`Webhook Response` (n13)** → `{success:true, students:N, notion_page_ids:[...]}` lendo
+  `$('Resumir Aula').first()`.
+- **Conexões:** `Salvar URL no Notion → Resumir Aula → Notificar Coach (Twilio) → Webhook Response`. Webhook
+  Response continua respondendo **1×** (Resumir Aula reconverge N→1 antes do Twilio).
+- **HOW/verify (método provado):** CLI `export:workflow` → transform Node determinístico
+  (`/root/etapa8-work/transform-e3.js`: replace unique-or-throw em cada edit + assert de string exata + guarda de
+  idempotência `Resumir Aula`/`n25` ausentes) → `import:workflow` (desativa) → `update:workflow --active=true` →
+  `pm2 restart n8n`. Re-export pós-restart confirma: **active, 17 nós, Resumir Aula presente, fan-out em n09,
+  n21=runOnceForEachItem, Twilio resumo, cadeia Salvar→Resumir→Twilio→Response, 9 credenciais intactas**; log
+  `Activated workflow … T7kobxM1FZM99O8l`. `vm.Script` OK nos 3 Code nodes. **Sem deploy** (puro n8n).
+- **Teste offline do fan-out (risco zero) — PASSA:** grupo de 2 alunos, Gemini retorna array em **ordem trocada**
+  → emite **2 itens** na ordem do roster (Joao/S1, Maria/S2), cada `notionBodyJson` com o nome certo, clamp 15→10
+  + guarda `Em Desenvolvimento` aplicados ao aluno certo, `studentName` per-item correto, `pairedItem` setado.
+- **⚠️ Pendência de validação (mesmo padrão de toda Fase E):** o **e2e real de aula em grupo** NÃO foi rodado —
+  valida (a) o `.item` paired-item resolvendo o aluno certo em cada card/página sob fan-out real e (b) o resumo
+  Twilio com N>1. Validei a camada de dados offline + o `.item` é o idioma padrão do n8n, mas a prova final
+  precisa de um POST com `file_id` Drive real (chamada billable ao Gemini) — fica com o coach (ou um run sintético
+  de 2 itens no futuro). Restore (600): `/root/etapa8-work/wf-pre-e3.json`; transformado: `wf-e3.json`;
+  re-export live: `wf-verify-e3.json`. **Fase E2 COMPLETA (Etapas 1–3)** salvo esse e2e real.
+
 **Fase E2 ETAPA 2 APLICADA ao vivo no n8n (2026-06-23, external — workflow `T7kobxM1FZM99O8l`).**
 Reescrevi o **prompt do Gemini** (`Preparar Análise`) e o **parsing** (`Parsear Resposta Gemini`) para multi-aluno
 + profundidade técnica, fundamentados na skill `aleksei-tennis-method` (coach colou o conteúdo — **não existe no

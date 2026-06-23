@@ -3,6 +3,34 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-23 — Fase E2 ETAPA 3: fan-out N alunos via `Parsear` emitindo N itens (sem nó Split), `Resumir Aula` reconverge N→1, Twilio = 1 resumo/aula
+- **Decision:** No `55TC - Análise de Treino` (`T7kobxM1FZM99O8l`, agora 17 nós), `Parsear Resposta Gemini` passou
+  a **emitir N itens** (1/aluno, `pairedItem:{item:0}`, cada um com seu `notionBodyJson`) em vez de 1 item +
+  `analisesMulti`. A cauda existente (Criar Notion → Gerar HTML → Extrair HTML → Upload Storage → Salvar URL) roda
+  1×/item automaticamente → **N páginas + N cards**. Os nós que liam dados por-aluno trocaram `.first()`→`.item`
+  (Gerar HTML, Extrair HTML [agora `runOnceForEachItem`], Salvar URL). Nó novo **`Resumir Aula`** (Code allItems)
+  agrega N→1 antes do Twilio; `Webhook Response` retorna `{success, students:N, notion_page_ids:[...]}`.
+- **Why no dedicated Split/Loop node:** o `Parsear` já construía o array per-aluno (`buildNotionBody` da Etapa 2);
+  fazer o Code node retornar N itens é o mecanismo de fan-out nativo do n8n — cada nó downstream roda 1×/item sem
+  nó extra. Alternativa (nó `Split Out`/`Loop Over Items`) foi rejeitada: mais nós, mesmo efeito, e o array já
+  estava pronto na saída do parser.
+- **Why `.item` (não `.all()[idx]`):** os nós HTTP da cauda (Gerar HTML, Salvar URL) só conseguem referenciar
+  upstream via expressão — `$('Node').item` resolve o item pareado ao item corrente pela cadeia de `pairedItem`
+  (HTTP nodes preservam 1:1). Index-alignment via `.all()[idx]` só serve em Code node e dependeria de ordem; `.item`
+  é o idioma padrão. Risco aceito e anotado em Known Issues: o e2e de grupo (pairing sob fan-out real) ainda não foi
+  exercido — validado só no nível de dados offline.
+- **Why Twilio = 1 resumo/aula (não 1 msg/aluno):** decisão do coach (o plano já recomendava). Receber 5 WhatsApp
+  para a mesma aula é mais ruído que ajuda, e ele revisa tudo no Notion antes de publicar. O resumo lista os nomes
+  e linka o **banco** Notion ("Teste n8n - Feedback aluno", id sem hífens), não páginas individuais — não existe uma
+  página única "da aula". Alternativa (1 msg/aluno) ficaria dentro do fan-out com agregação só antes do Webhook
+  Response; rejeitada pelo coach.
+- **Why `studentName=s.name` per-item:** no mundo single-student `studentName===name`; no fan-out, deixar
+  `studentName=roster[0].name` faria o card do aluno 2 carregar o nome do aluno 1 no JSON enviado ao Claude (e no
+  fallback do Extrair HTML). Setar per-item evita mismatch de nome no card.
+- **Where it stopped / state on resume:** a sessão anterior caiu **logo no início da Etapa 3** — `etapa8-work/`
+  só tinha um export do estado pós-Etapa-2 (idêntico, byte a byte), sem transform nem mudança de grafo, working
+  tree limpo. Nada meio-aplicado; retomada do ponto plano→aprovação→aplicar.
+
 ## 2026-06-23 — Fase E2 ETAPA 2: deeper multi-student Gemini prompt + array-of-N parsing; emit only `students[0]` and carry the full array in `analisesMulti`; identity is always the payload's
 - **Decision:** Rewrote the two Code nodes of `55TC - Análise de Treino` (`T7kobxM1FZM99O8l`). `Preparar Análise`
   now builds a **roster** from `students` (name + `visual_cue`) and instructs Gemini, in the Professor Aleksei

@@ -211,7 +211,17 @@ Antes de aplicar:
 
 ### Etapa 3 — Loop de criação de páginas no Notion (1 por aluno)
 
-**Status:** planejada, não iniciada. Depende das Etapas 1 e 2.
+**Status:** ✅ APLICADA ao vivo no n8n (2026-06-23). `Parsear` passou a emitir N
+itens (fan-out, `pairedItem:{item:0}`) — sem nó Split dedicado; a cauda existente
+(Criar Notion → Gerar HTML → Extrair HTML → Upload Storage → Salvar URL) roda
+1×/aluno reusando os nós/credenciais. Refs `.first()`→`.item` nos nós que leem
+dados por-aluno (Gerar HTML, Extrair HTML [agora `runOnceForEachItem`], Salvar URL).
+Novo nó **`Resumir Aula`** (`n25`, Code allItems) agrega N→1 antes do Twilio.
+**Decisão do coach: Twilio = 1 resumo por aula** ("Feedback gerado para N aluno(s)
+da aula de [data]: [nomes]. Revise no Notion: <link do banco>"); `Webhook Response`
+retorna `{success, students:N, notion_page_ids:[...]}`. Validada por re-export (17
+nós, creds intactas) + teste offline de fan-out (2 alunos, ordem trocada do Gemini).
+Ver activeContext/progress. ~~planejada, não iniciada. Depende das Etapas 1 e 2.~~
 
 **O que muda:**
 - Hoje, "Criar Entrada no Notion" recebe 1 objeto e cria 1 página.

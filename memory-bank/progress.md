@@ -174,6 +174,19 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
+- **Fase E2 ETAPA 3 DONE (2026-06-23, applied live in n8n, external):** fan-out multi-aluno no `T7kobxM1FZM99O8l`
+  (agora **17 nós**) — uma aula em grupo gera **N páginas no Notion + N cards**. **Sem nó Split dedicado:**
+  `Parsear Resposta Gemini` passou a **emitir N itens** (`perStudent.map`, `pairedItem:{item:0}`, cada item com seu
+  `notionBodyJson` + `studentName=s.name`) → o n8n roda a cauda 1×/item. Refs `.first()`→`.item` nos nós por-aluno
+  (Gerar HTML, Extrair HTML [agora `runOnceForEachItem`], Salvar URL no Notion); `$('Webhook')` fica `.first()`.
+  Nó novo **`Resumir Aula` (n25)** agrega N→1 antes do Twilio. **Decisão do coach: Twilio = 1 resumo/aula**
+  ("Feedback gerado para N aluno(s)…: nomes. Revise no Notion: <link do banco>"); **Webhook Response** retorna
+  `{success, students:N, notion_page_ids:[...]}` (reconverge → responde 1×). CLI export→transform(unique-or-throw +
+  idempotência)→import→reactivate→`pm2 restart`; re-export confirma active/17 nós/Resumir Aula/fan-out/creds
+  intactas; `vm.Script` OK. **Teste offline do fan-out (2 alunos, ordem trocada) PASSA.** Sem deploy. Restore (600):
+  `/root/etapa8-work/wf-pre-e3.json`. **E2e real de aula em grupo NÃO rodado** (precisa de `file_id` Drive + Gemini
+  billable; valida o `.item` pairing sob fan-out real + resumo Twilio N>1) — fica com o coach. **Fase E2 completa
+  (Etapas 1–3) salvo esse e2e real.**
 - **Fase E2 ETAPA 2 DONE (2026-06-23, applied live in n8n, external):** reescrevi o **prompt do Gemini**
   (`Preparar Análise`) e o **parsing** (`Parsear Resposta Gemini`) do `T7kobxM1FZM99O8l` para multi-aluno +
   profundidade técnica (skill `aleksei-tennis-method`, colada pelo coach — não está no servidor). **Schema
@@ -398,6 +411,14 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Fase E2 fan-out depende do paired-item (`.item`) do n8n — e2e de grupo não validado** (ETAPA 3, 2026-06-23).
+  Sob fan-out (N alunos), `Gerar HTML`/`Extrair HTML`/`Salvar URL` usam `$('...').item` p/ pegar o aluno corrente;
+  se o pairing resolver errado, cards/páginas saem com dados trocados (mismatch silencioso). A camada de dados foi
+  validada offline (2 alunos, ordem trocada → matching certo) e `.item` é o idioma padrão do n8n, mas o **e2e real
+  de aula em grupo** (POST com `file_id` Drive real, chamada billable ao Gemini) ainda não rodou — fica com o coach
+  (ou um run sintético de 2 itens no futuro). Confirmar que cada card/página tem o nome certo + o resumo Twilio
+  lista N alunos antes de confiar no grupo em produção. (Aula individual = N=1 → comporta como antes, só o texto do
+  Twilio virou resumo "1 aluno(s)".)
 - **Fase-E card HTML served as `content-type: text/plain`** (ETAPA 3, found 2026-06-23) — the Supabase Storage
   object at `feedback-cards/{page_id}.html` comes back `text/plain`, so a browser may download it instead of
   rendering. Low priority (PNG render is deferred; the `.html` is a placeholder). Fix later by forcing the
