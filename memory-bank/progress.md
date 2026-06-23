@@ -4,6 +4,12 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Fase-E ETAPA 4 pré-requisitos (2026-06-23):** `feedbacks` estendida com 16 colunas Fase-E
+  (migration `009`, **APLICADA live** no Supabase) — `notion_id` UNIQUE parcial (chave de upsert),
+  ratings 0–10, focus_areas[], next_session_goals jsonb, selects qualitativos, card_visual_url,
+  `source`. Aba Feedback do portal (`Feedbacks.jsx`) renderiza os campos ricos (barras de rating,
+  pills, objetivos), degradando p/ feedback coach-escrito. Lint+build limpos. **Frontend NÃO deployado**
+  (migration sim). Desbloqueia a ETAPA 4 (sync Notion→Supabase).
 - Context infrastructure (CLAUDE.md, memory-bank, slash commands, explorer agent).
 - Architecture design (`architecture.md`) and database blueprint (`database-blueprint.md`).
 - App scaffold (Vite + React 19 + Tailwind v4 + react-router-dom v7), lint clean on npm.

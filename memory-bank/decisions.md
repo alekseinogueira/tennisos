@@ -3,6 +3,28 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-06-23 — Fase-E ETAPA 4 prereqs: EXTEND `feedbacks` (not a new table), applied LIVE; render rich fields conditionally in the existing tab
+- **Decision:** Resolved the two ETAPA-4 prerequisites by (a) **extending the existing `feedbacks` table** with
+  16 nullable Fase-E columns (migration `009`, **applied live** via `supabase db push --linked`) — keyed for
+  upsert by a **partial UNIQUE `notion_id`** (`where notion_id is not null`) + a `source` discriminator
+  (`'coach'` vs `'video_analysis'`); and (b) **enriching the existing `Feedbacks.jsx` card in place** to render
+  ratings/focus/goals/card **all conditionally**, so coach-handwritten rows look exactly as before. Reused
+  `lesson_date`=session_date, `body`=coach_analysis, `title`=session name. RLS untouched.
+- **Why:** the Fase-E plan itself says "Upsert no Supabase tabela feedbacks" — one Feedback tab for the student
+  regardless of whether a note was hand-written or AI-generated. Additive nullable columns keep the
+  FeedbackComposer path and all existing rows working untouched (zero migration risk). Applied live now (coach
+  asked) because Supabase is linked and 001–008 are already in sync remotely, so `009` pushes cleanly alone.
+- **Carry-over for ETAPA 4:** the n8n upsert runs with the **service key** (bypasses RLS) and **must set
+  `user_id`** (resolved from the student) so the student's SELECT-own policy sees the row; `next_session_goals`
+  is `jsonb` while Notion stores `objetivos_proxima_aula` as the text `N. titulo: descricao` — ETAPA 4 parses
+  those lines into `[{titulo,descricao}]` at upsert time.
+- **Alternatives considered:** (1) a **separate `session_analyses` table** — rejected: splits the student's
+  feedback across two tabs/queries and contradicts the plan; (2) fixing the JSON in the n8n ETAPA-2 Parsear node
+  so Notion stores clean JSON — deferred (coach chose the migration+view scope, not the n8n change); the text
+  format is regular and parseable downstream. (3) RLS-via-students-join (like sessions migration 008) so the
+  upsert needn't set `user_id` — deferred; populating `user_id` in the upsert is simpler and matches the
+  existing single-predicate policy.
+
 ## 2026-06-23 — Fase-E ETAPA 3 tail tested via a throwaway tail-only workflow (real side-effects, no Drive/Gemini); fixed Claude max_tokens truncation
 - **Decision:** To run the "synthetic test of the final segment" (real Notion draft + real WhatsApp, **without**
   the Drive→Gemini pipeline), I built a **temporary throwaway workflow** = the 6 tail nodes copied **verbatim

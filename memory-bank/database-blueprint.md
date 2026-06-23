@@ -122,12 +122,33 @@
 | student_id  | uuid NOT NULL → students(id)   | |
 | coach_id    | uuid → auth.users(id)      | author |
 | title       | text                       | |
-| body        | text NOT NULL              | the feedback content |
-| lesson_date | date                       | |
+| body        | text NOT NULL              | the feedback content (= coach_analysis for n8n rows) |
+| lesson_date | date                       | (= session_date for n8n rows) |
 | created_at / updated_at | timestamptz    | |
+| *(Fase-E AI analysis, migration 009 — all NULLABLE)* | | n8n "Análise de Treino" upsert |
+| source            | text NOT NULL default 'coach' | 'coach' (FeedbackComposer) or 'video_analysis' (n8n) |
+| notion_id         | text                  | Notion page id; **partial UNIQUE** (where not null) = upsert dedup key |
+| duration_minutes  | int                   | duracao |
+| rally_avg         | numeric               | rally_medio |
+| quality           | text                  | qualidade_tecnica (human label) |
+| effort            | text                  | esforco_intensidade |
+| game_application  | text                  | aplicacao_em_jogo |
+| progress_level    | text                  | progresso_geral |
+| rating_technique / rating_intensity / rating_position / rating_progress | smallint | 0–10 (clamped upstream in n8n) |
+| focus_areas       | text[]                | foco_principal[] |
+| focus_next        | text                  | foco_proxima_aula |
+| next_session_goals| jsonb                 | objetivos_proxima_aula — array of `{ titulo, descricao }` |
+| card_visual_url   | text                  | public URL of the ETAPA-3 visual card |
 
 - Rel: *→1 students; *↔* videos via feedback_video_links.
-- **RLS:** student SELECT own; coach full CRUD. Students read-only.
+- **RLS:** student SELECT own; coach full CRUD. Students read-only. The Fase-E columns
+  are covered by the existing row policies (no column-level grants). The n8n upsert runs
+  with the **service key** (bypasses RLS) and **must populate `user_id`** (resolved from the
+  student) so the student's SELECT sees the row.
+- **Fase-E (migration 009):** the existing coach-handwritten path (FeedbackComposer →
+  title/body/lesson_date) is unchanged — its rows leave every AI column NULL and
+  `source='coach'`. The student Feedback tab (`Feedbacks.jsx`) renders the AI fields only
+  when present, so both shapes coexist. ETAPA 4 (Notion→Supabase sync) upserts on `notion_id`.
 
 ### student_gallery  (per-student PRIVATE lesson footage; subject = student)
 | column           | type                    | notes |

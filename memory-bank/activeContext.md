@@ -4,6 +4,33 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase-E ETAPA 4 PRÉ-REQUISITOS RESOLVIDOS — `feedbacks` estendida (migration 009 APLICADA LIVE) +
+aba Feedback rica construída (2026-06-23).** Desbloqueei a ETAPA 4 (sync Notion→Supabase): a tabela
+`feedbacks` era minimalista (`title`/`body`/`lesson_date`) e não tinha onde receber o payload da Fase-E.
+- **Migration `009_feedbacks_fase_e.sql` (APLICADA ao vivo via `supabase db push --linked`, projeto
+  `vdyvlylacsghnvtllrzj`; verificada por `information_schema`).** 16 colunas NULLABLE aditivas — nada
+  removido/renomeado, caminho coach-escrito (FeedbackComposer) intacto: `source` (default `'coach'`;
+  n8n usará `'video_analysis'`), `notion_id` (**índice UNIQUE parcial** `where notion_id is not null` =
+  chave de upsert/dedup da ETAPA 4), `duration_minutes`, `rally_avg` (numeric), `quality`/`effort`/
+  `game_application`/`progress_level` (selects qualitativos, texto), `rating_technique/intensity/position/
+  progress` (smallint 0–10), `focus_areas` (text[]), `focus_next`, `next_session_goals` (**jsonb**, array
+  de `{titulo,descricao}`), `card_visual_url`. Reusa `lesson_date`=session_date, `body`=coach_analysis,
+  `title`=nome da sessão. **RLS inalterada** — as colunas novas caem nas policies de linha existentes;
+  o upsert do n8n roda com a **service key** (bypassa RLS) e **TEM que setar `user_id`** (resolvido do
+  student) pro aluno enxergar via SELECT own.
+- **Aba Feedback rica (Fase D) — `src/screens/Feedbacks.jsx` `FeedbackCard` reconstruído.** Renderiza,
+  TODOS condicionais (degrada elegante p/ feedback coach-escrito → idêntico ao de antes): meta row
+  (duração·rally), **barras de rating 0–10** (forest fill em track forest/10, valor em Bebas), chips
+  qualitativos (quality/effort/in-game/progress), corpo (análise), pills de focus_areas, seção "Next
+  session" (focus_next + lista numerada de objetivos `{titulo,descricao}`), botão "View shareable card ↗"
+  (card_visual_url). `db.js` NÃO mudou — `listFeedbacksForStudent` já usa `select('*')`. Lint+build limpos.
+- **NÃO deployado** — a migration JÁ está viva no Supabase, mas o `Feedbacks.jsx` é só código (prod serve
+  o card antigo até um `deploy-prod`). **Caveat herdado da ETAPA 2 p/ a ETAPA 4:** `objetivos_proxima_aula`
+  vive no Notion como TEXTO (`N. titulo: descricao`) — a ETAPA 4 vai parsear essas linhas em `[{titulo,
+  descricao}]` pra gravar no jsonb `next_session_goals`. **Next:** construir a ETAPA 4 (workflow novo
+  `55TC - Publicar Feedback`: poll Notion Status=Publicado → upsert em `feedbacks` on conflict `notion_id`,
+  setando `user_id` via lookup do student → email Resend); pode reusar a cred `Supabase Service` da ETAPA 3.
+
 **Fase-E ETAPA 3 — teste sintético do trecho final RODADO COM SUCESSO + 2 bugfixes aplicados (2026-06-23,
 external — workflow `T7kobxM1FZM99O8l`).** Fechei a pendência da sessão anterior: validei ao vivo o tail
 (card visual + notificação) gerando **side-effects reais** (rascunho real no Notion + WhatsApp real recebido

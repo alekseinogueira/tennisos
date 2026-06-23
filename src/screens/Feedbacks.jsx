@@ -114,8 +114,47 @@ export default function Feedbacks() {
   )
 }
 
+// The four 0–10 ratings produced by the video analysis. Coach-written notes leave
+// these null, so the block is skipped entirely (graceful degradation).
+const RATING_FIELDS = [
+  ['Technique', 'rating_technique'],
+  ['Intensity', 'rating_intensity'],
+  ['Position', 'rating_position'],
+  ['Progress', 'rating_progress'],
+]
+
+// The qualitative selects from the analysis (stored as their human label).
+const QUAL_FIELDS = [
+  ['Quality', 'quality'],
+  ['Effort', 'effort'],
+  ['In-game', 'game_application'],
+  ['Progress', 'progress_level'],
+]
+
 function FeedbackCard({ feedback }) {
-  const { library = [], gallery = [], title, body, lesson_date } = feedback
+  const {
+    library = [],
+    gallery = [],
+    title,
+    body,
+    lesson_date,
+    duration_minutes,
+    rally_avg,
+    focus_areas,
+    focus_next,
+    next_session_goals,
+    card_visual_url,
+  } = feedback
+
+  const ratings = RATING_FIELDS
+    .map(([label, key]) => [label, feedback[key]])
+    .filter(([, v]) => v != null)
+  const quals = QUAL_FIELDS
+    .map(([label, key]) => [label, feedback[key]])
+    .filter(([, v]) => v)
+  const focus = Array.isArray(focus_areas) ? focus_areas.filter(Boolean) : []
+  const goals = Array.isArray(next_session_goals) ? next_session_goals : []
+  const hasMeta = duration_minutes != null || rally_avg != null
 
   return (
     <article className="rounded-3xl border border-forest/12 bg-white/60 p-7 sm:p-8">
@@ -128,7 +167,94 @@ function FeedbackCard({ feedback }) {
         {title || 'Lesson Note'}
       </h2>
 
-      <p className="mt-4 whitespace-pre-wrap leading-relaxed text-ink/80">{body}</p>
+      {hasMeta && (
+        <p className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-ink/45">
+          {duration_minutes != null && `${duration_minutes} min`}
+          {duration_minutes != null && rally_avg != null && ' · '}
+          {rally_avg != null && `Rally avg ${rally_avg}`}
+        </p>
+      )}
+
+      {ratings.length > 0 && (
+        <Section label="The numbers">
+          <div className="space-y-2.5">
+            {ratings.map(([label, value]) => (
+              <RatingBar key={label} label={label} value={value} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {quals.length > 0 && (
+        <div className="mt-5 flex flex-wrap gap-2">
+          {quals.map(([label, value]) => (
+            <span
+              key={label}
+              className="rounded-md bg-forest/8 px-3 py-1.5 text-xs text-ink/75"
+            >
+              <span className="font-semibold uppercase tracking-[0.15em] text-ink/45">
+                {label}{' '}
+              </span>
+              {value}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {body && (
+        <p className="mt-5 whitespace-pre-wrap leading-relaxed text-ink/80">{body}</p>
+      )}
+
+      {focus.length > 0 && (
+        <Section label="What we worked on">
+          <div className="flex flex-wrap gap-2">
+            {focus.map((area) => (
+              <span
+                key={area}
+                className="rounded-full border border-forest/25 px-3 py-1 text-xs text-forest"
+              >
+                {area}
+              </span>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {(focus_next || goals.length > 0) && (
+        <Section label="Next session">
+          {focus_next && (
+            <p className="mb-3 leading-relaxed text-ink/80">{focus_next}</p>
+          )}
+          {goals.length > 0 && (
+            <ol className="space-y-3">
+              {goals.map((g, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="font-display text-xl leading-none text-forest/40">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="font-medium text-ink/85">{g.titulo}</p>
+                    {g.descricao && (
+                      <p className="text-sm text-ink/60">{g.descricao}</p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Section>
+      )}
+
+      {card_visual_url && (
+        <a
+          href={card_visual_url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-6 inline-block rounded bg-forest px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-sand transition hover:bg-forest/90"
+        >
+          View shareable card ↗
+        </a>
+      )}
 
       {gallery.length > 0 && (
         <VideoGroup label="Your clips" videos={gallery} />
@@ -137,6 +263,36 @@ function FeedbackCard({ feedback }) {
         <VideoGroup label="From the crew library" videos={library} />
       )}
     </article>
+  )
+}
+
+/** Labeled section divider used inside a feedback card. */
+function Section({ label, children }) {
+  return (
+    <div className="mt-6">
+      <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-ink/45">
+        {label}
+      </p>
+      {children}
+    </div>
+  )
+}
+
+/** A single 0–10 rating as a forest progress bar with the value in Bebas Neue. */
+function RatingBar({ label, value }) {
+  const pct = Math.max(0, Math.min(10, value)) * 10
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-24 shrink-0 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-ink/55">
+        {label}
+      </span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-forest/10">
+        <div className="h-full rounded-full bg-forest" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-8 shrink-0 text-right font-display text-lg leading-none text-forest">
+        {value}
+      </span>
+    </div>
   )
 }
 
