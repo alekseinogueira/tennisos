@@ -4,6 +4,39 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase-E ETAPA 5 CONCLUÍDA — hardening de credenciais do workflow `55TC - Análise de Treino`
+(`T7kobxM1FZM99O8l`): ZERO tokens hardcoded restantes, tudo por credencial n8n (2026-06-23, external).**
+Fechei a última pendência da Fase-E ("Problema 4 — Credenciais hardcodadas" / a "Etapa 5" referida em
+ETAPA 1–4). Os 4 nós LEGADOS que ainda guardavam segredo em texto puro foram migrados p/ credenciais
+armazenadas (encriptadas) do n8n, **by ID**, exatamente como os nós novos da ETAPA 3/4:
+- **3 nós Gemini** (`Analisar com Gemini`, `Upload para Gemini File API`, `Verificar Estado do Arquivo`) —
+  passavam a chave como **query param `?key=AIza…`** (não header). Criei UMA credencial nova
+  **`httpQueryAuth` "Gemini API" (`QzDFsG1HIbE8SYLa`)** (injeta `key=<valor>`), anexei aos 3, e **removi o
+  param `key` hardcoded** de cada um (os 3 usavam a MESMA chave — confirmado por hash; 39 chars `AIza…`).
+  `Upload` mantém o param `uploadType=media`; os outros 2 ficam com `queryParameters` vazio (a cred injeta a key).
+- **1 nó Notion** (`Criar Entrada no Notion`) — passava `Authorization: Bearer ntn_…` em header. **Reusei a
+  credencial existente `Notion HTTP` (`CC31lqcuz7ynyYed`, httpHeaderAuth)** (a mesma que `Salvar URL no Notion`
+  já usa) e **removi o header `Authorization`** (mantidos `Notion-Version` + `Content-Type`).
+- **Credencial Gemini criada via CLI `import:credentials`** (mesmo método da ETAPA 3): JSON
+  `{name:"Gemini API", type:"httpQueryAuth", id:<16char>, data:{name:"key", value:<chave>}}` →
+  `--projectId=0bSOozEStbKMfPi6` (projeto pessoal). Verificado no SQLite: `data` **encriptado** (não plaintext),
+  owner do projeto. **Valor da chave NÃO registrado** (igual ETAPA 3) — só nome/ID.
+- **HOW/verify (idêntico ETAPA 1–4):** `n8n export:workflow` → transform Node determinístico (cada strip
+  assertado: exatamente 1 `key`/`Authorization` casando o padrão do segredo, senão throw) → `import:workflow`
+  (desativa) → `update:workflow --active=true` → `pm2 restart n8n`. **Re-export pós-restart confirma:** active,
+  16 nós, **connections idênticas**, **0 segredos hardcoded** (regex `AIza…`/`ntn_|secret_` → nenhum), e os
+  **9 nós com auth agora 100% por credencial** (Gemini API×3, Google Drive, Notion HTTP×2, Anthropic, Supabase
+  Service, Twilio). Log do n8n: `Activated workflow … T7kobxM1FZM99O8l` (+ `… Publicar Feedback` segue ativo).
+- **Sem deploy** (nada de app/migration — puramente n8n). **Restore artifact (FORA do repo, root-only 600, COM
+  os tokens antigos):** `/root/etapa5-work/wf-pre-etapa5-restore.json`; transformado sem segredos:
+  `wf-etapa5.json`. O arquivo standalone com a chave plaintext (`cred-gemini.json`) foi **`shred`-apagado**.
+- **Caveat:** o `wf-pre-etapa5-restore.json` ainda contém os tokens antigos em texto puro (é o ponto do restore;
+  mesma convenção dos restores da ETAPA 1–3). Se quiser zerar de vez, **revogue/rotacione** a chave Gemini e o
+  token Notion antigos no console do Google/Notion — eles continuam válidos até serem revogados.
+- **Next (resíduos não-bloqueantes):** e2e real com vídeo (coach dispara o POST); opcional content-type
+  `text/html` no card do Storage (Known Issue ETAPA 3); deletar a cred órfã `Supabase Storage`
+  (`NdKxgh5ULJUP8hmy`). **A Fase-E está funcionalmente COMPLETA** (ETAPA 1–5 + workflow 2 ativos).
+
 **Fase-E ETAPA 4 CONCLUÍDA — workflow `55TC - Publicar Feedback` ATIVO + migration 010 aplicada +
 Edge Function de email deployada (2026-06-23, external + infra).** Retomei a ETAPA 4 da sessão que
 travou. Diagnóstico: a sessão anterior já tinha construído quase tudo, mas deixou pontas soltas (nada

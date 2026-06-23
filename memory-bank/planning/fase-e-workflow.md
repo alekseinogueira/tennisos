@@ -338,7 +338,10 @@ ORDEM DE EXECUÇÃO
 ✅ Fase D — Portal aba Feedback (pode rodar em paralelo com Etapas 1-2)
 ✅ Etapa 3 — Card visual automático
 ✅ Etapa 4 — Sync Notion → Supabase + email publicação
-🔜 Credenciais — mover Gemini key e Notion token para n8n Credentials
+✅ Etapa 5 / Credenciais — Gemini key + Notion token movidos p/ n8n Credentials (2026-06-23):
+   cred nova httpQueryAuth "Gemini API" (QzDFsG1HIbE8SYLa) nos 3 nós Gemini + reuso de "Notion HTTP"
+   (CC31lqcuz7ynyYed) no "Criar Entrada no Notion". 0 tokens hardcoded restantes em T7kobxM1FZM99O8l.
+   Pendente opcional: revogar/rotacionar a chave/token ANTIGOS no Google/Notion (continuam válidos).
 🔜 Twilio WhatsApp (via ~/agente_cortes pattern)
 - Use the n8n → HTTP node → Twilio API pattern already built and tested in agente_cortes
 - Replicate whatsapp_client.py send_message/send_media pattern as n8n HTTP calls
