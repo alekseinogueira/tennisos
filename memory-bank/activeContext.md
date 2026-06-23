@@ -4,6 +4,33 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase E2 ETAPA 1 APLICADA ao vivo no n8n (2026-06-23, external — workflow `T7kobxM1FZM99O8l`).**
+Início da **Fase E2 — Análise Multi-Aluno + Prompt Técnico Aprofundado** (plano em
+`memory-bank/planning/fase-e2-multialuno-prompt-tecnico.md`). Etapa 1 = mudança ESTRUTURAL do contrato do
+payload do webhook para suportar aulas em grupo, SEM ainda tocar no prompt do Gemini (Etapa 2) nem no split
+(Etapa 3). Novo contrato: `{ file_id, session_date, students: [{ student_id, name, visual_cue }, ...] }`
+(formato ÚNICO — aula individual = array de 1 item; **decisão do coach: SEM fallback ao flat antigo**).
+- **3 Code nodes editados** (reaponta as leituras por-aluno de `body.student_name`/`body.student_id` para
+  `body.students[0]`, preservando 100% o comportamento single-student): **Preparar Análise** (`studentName`
+  ← `students[0].name`), **Parsear Resposta Gemini** (`student_id` do notionBody ← `firstStudent.student_id`;
+  add `const students`/`firstStudent`), **Extrair HTML** (`student_name` ← `students[0].name`). `visual_cue`
+  entra no payload mas ainda NÃO é consumido (é insumo do prompt do Gemini — Etapa 2).
+- **NÃO mudou:** grafo (16 nós, connections idênticas), credenciais (Drive OAuth, Notion httpHeaderAuth,
+  Twilio httpBasicAuth, Gemini httpQueryAuth — todas intactas), schema Notion, notionBody, tail card/Twilio,
+  Etapa 4. **NENHUM split ainda** — o split é Etapa 3, DEPOIS do parsing (o vídeo é o mesmo p/ todos → a
+  chamada ao Gemini é ÚNICA; só a resposta é dividida em N).
+- **HOW/verify (método provado da Fase E):** CLI `export:workflow` → transform Node determinístico
+  (`/root/etapa6-work/transform-e2-etapa1.js`, cada swap assertado unique-or-throw, 5 ops) → `import:workflow`
+  (desativa) → `update:workflow --active=true` → `pm2 restart n8n`. Re-export pós-restart confirma: active,
+  16 nós, connections idênticas, creds intactas, 3 edits live, **0 leituras flat antigas**; `vm.Script`
+  (wrapped) OK nos 3 nodes. Log: `Activated workflow … T7kobxM1FZM99O8l`. **Sem deploy** (puro n8n).
+- **Restore (fora do repo, 600):** `/root/etapa6-work/wf-pre-e2-etapa1-restore.json` (sem segredos — ETAPA 5
+  hardening segura); transformado: `wf-e2-etapa1.json`. **NÃO rodado e2e real** — POST sintético precisa de
+  `file_id` real do Drive (senão morre no Download); o e2e com vídeo de aula em grupo fica junto da Etapa 2/3
+  (plano, passo 4) ou com o coach, igual às etapas da Fase E. **Next: Etapa 2** (reescrever o prompt do Gemini
+  p/ multi-aluno + profundidade técnica com foco externo; o parsing passa a esperar array de N objetos) —
+  exige aprovação do plano antes de aplicar.
+
 **Rotação REAL das credenciais Gemini + Notion CONCLUÍDA (2026-06-23, external — n8n).** Fecha o último
 resíduo de segurança da Fase-E: a ETAPA 5 tinha feito o *hardening* (mover segredos hardcoded → creds n8n
 encriptadas), mas as chaves ANTIGAS seguiam válidas no provedor e havia ~18 cópias plaintext espalhadas.

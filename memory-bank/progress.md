@@ -174,6 +174,19 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
+- **Fase E2 ETAPA 1 DONE (2026-06-23, applied live in n8n, external):** começou a **Fase E2 — Análise
+  Multi-Aluno + Prompt Técnico** (plano em `planning/fase-e2-multialuno-prompt-tecnico.md`). Etapa 1 =
+  contrato novo do payload do webhook do `T7kobxM1FZM99O8l`: `{ file_id, session_date, students:[{ student_id,
+  name, visual_cue }] }` (formato único; aula individual = array de 1; sem fallback ao flat antigo, por decisão
+  do coach). **3 Code nodes** reapontados das leituras por-aluno (`body.student_name`/`body.student_id`) p/
+  `body.students[0]` — Preparar Análise, Parsear Resposta Gemini, Extrair HTML — preservando o comportamento
+  single-student. **NENHUM split / nó novo / mudança de grafo** (split é Etapa 3, depois do parsing; Gemini é
+  1 chamada única p/ o vídeo compartilhado). Aplicado via CLI export→transform(assert unique-or-throw)→import→
+  reactivate→pm2 restart; re-export confirma active/16 nós/connections idênticas/creds intactas/0 leituras flat.
+  `visual_cue` aceito mas ainda não consumido (insumo do prompt — Etapa 2). Restore (sem segredos, 600):
+  `/root/etapa6-work/wf-pre-e2-etapa1-restore.json`. **Não rodado e2e real** (precisa de `file_id` Drive real;
+  fica junto da Etapa 2/3 ou do coach). Next: **Etapa 2** (novo prompt Gemini multi-aluno + foco externo;
+  parsing → array de N) — precisa de aprovação do plano.
 - **Fase-E ETAPA 4 DONE (2026-06-23, applied live, external):** the crashed session had already built the
   n8n workflow `55TC - Publicar Feedback` (`yk7iENBUAGMj3M6a`, creds attached) + migration 010 + the
   `send-feedback-email` function, but left them all non-live. This session finished it: **applied migration
