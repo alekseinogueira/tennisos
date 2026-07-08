@@ -4,6 +4,49 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase D — Portal aba Feedbacks redesenhada: Etapas 1–2 + Ajustes A/B APLICADOS localmente (2026-07-08). SEM deploy.**
+Plano em `memory-bank/planning/fase-d-portal-feedbacks.md` (protocolo: auto mode OFF, diff antes de aplicar,
+aprovação por etapa). **Decisão de paleta:** só tokens 55TC (forest/sand/ink) — o coach rejeitou o dourado
+`#C8A96E`/verde `#1B3A2D` do doc por causa da Hard Rule "no off-brand colors" do CLAUDE.md. **Textos de UI todos
+em inglês** (o conteúdo do feedback fica em PT — é dado real do coach/Gemini). Caveat do doc (confirmado): a seção
+CONTEXTO dele é stale — `Feedbacks.jsx` já renderizava card rico; a Etapa 1 real foi transformá-lo em capa clicável.
+- **Etapa 1 — `Feedbacks.jsx` reescrito** (343→~230 linhas): galeria de **capas clicáveis** (`role=button`,
+  Enter/Space, foco acessível) → `navigate('/feedback/:id')`. Cada capa: data · título · **4 mini-ratings** (Tech/Int/
+  Pos/Prog, barra compacta) · excerpt 2 linhas · focus tags. Botão "Compare sessions" no header (disabled, Etapa 3).
+  **Vídeos/objetivos/análise/chips saíram da galeria** → migraram p/ o detalhe. Removido o fetch de vídeos por-feedback
+  do loop da lista (ganho perf). `MiniRating` novo; `youtubeId`/`VideoGroup`/`VideoTile`/`Section`/`RatingBar` removidos daqui.
+- **Etapa 2 — `src/screens/SessionDetail.jsx` NOVO** (rota `/feedback/:id` em `main.jsx`; nomeado **SessionDetail**
+  pra NÃO colidir com o `admin/FeedbackDetail` já existente). Dashboard mobile-first, 7 seções: header (nome do aluno via
+  `getProfile`, coach, data, duração) · 4 pills forest · indicadores qualitativos (dot-on-track heurístico — texto é a
+  verdade, valores são texto livre no DB) · focos+rally (2 col) · ratings 0–10 segmentados (10 blocos) · objetivos
+  c/ **court SVG inline** (placeholder v1, igual p/ todos) + `FocusIcon` SVG inline por categoria · **análise do coach**
+  (card forest, texto sand, foto circular) · footer c/ link "Compare with another session →". `getFeedback(id)` usa
+  `.single()` → catch = not-found state. Vídeos anexados (gallery/library) renderizam aqui agora. lint+build limpos.
+- **Ajuste A — foto do coach:** upload de `~/tennisos/public/coach-aleksei.jpg` (1491×1825 JPEG) p/ bucket **`assets`
+  path `coach/aleksei.jpg`** via `supabase storage cp --experimental --linked --content-type image/jpeg` (usei o CLI +
+  access-token linkado em vez de curl+service-role — a service key NÃO está em env; resultado idêntico). URL pública
+  200/image-jpeg/562700B. `COACH_PHOTO_URL` no `SessionDetail.jsx` setado p/
+  `https://vdyvlylacsghnvtllrzj.supabase.co/storage/v1/object/public/assets/coach/aleksei.jpg` (fallback círculo+inicial mantido).
+- **Ajuste B — link do "Vídeo da Aula" (Notion) → portal.** (B.1) migration **`011_feedbacks_video_url.sql`** APLICADA
+  live (`db push`): `feedbacks.video_url text` nullable, aditivo/idempotente, RLS inalterada. (B.2) workflow n8n
+  **`55TC - Publicar Feedback` (`yk7iENBUAGMj3M6a`)**: nó **Mapear Páginas** lê `props['Vídeo da Aula'].url` → `video_url`;
+  nó **Montar Payload** adiciona `video_url: fb.video_url||null`; **Upsert inalterado** (manda `payload` inteiro).
+  Aplicado via CLI export→transform determinístico (unique-or-throw + idempotência + `vm.Script` wrapped)→import→
+  `update:workflow --active=true`→`pm2 restart n8n`; re-export confirma active/9 nós/2 edits/5 creds intactas. (B.3)
+  `SessionDetail.jsx` seção **"SESSION VIDEOS"**: se `video_url` → botão "▶ Watch on Drive" (forest/sand/ring areia,
+  radius 4px); senão placeholder "Session videos coming soon".
+- **Descompasso ainda aberto (era o motivo da checagem do coach):** o Notion tinha "Vídeo da Aula" (url) mas o Supabase
+  não tinha onde recebê-lo — a B.2 fechou isso do publish em diante. Feedbacks JÁ existentes (incl. o simulado
+  `SIM-TEST-20260705`) têm `video_url=NULL` → mostram o placeholder até um novo publish popular o campo.
+- **Como ver (SEM login, SEM deploy):** dev server subido nesta sessão em **localhost:5174** (`npm run dev -- --port 5174`;
+  deixei o outro projeto do coach na 5173 intacto). Preview estático fiel em **http://localhost:5174/preview-feedback.html**
+  (dados reais do row simulado + foto do coach + seção Session videos placeholder) — criado porque **o login do dev server
+  não responde** (não investigado a pedido do coach; **vale resolver antes do deploy da Etapa 4**). O preview + a foto-fonte
+  estão **gitignored** (`public/coach-aleksei.jpg`, `public/preview-feedback.html`) — não vão pro repo/prod.
+- **NEXT:** Etapa 3 (`/feedback/compare?a=&b=` — `FeedbackCompare.jsx`, barras lado a lado + delta + labels de evolução;
+  liga o botão "Compare sessions") → depois Etapa 4 (deploy via `deploy-prod`; **branch é `master`**, o doc diz `main`
+  erradamente; **remover o `public/preview-feedback.html` antes**; resolver login). Cleanup do row simulado segue pendente.
+
 **Teste simulado de feedback Fase E montado p/ validação de layout LOCAL (`npm run dev`) — 2026-07-08.**
 Objetivo da sessão: validar o layout/design da aba Feedbacks ponta a ponta **sem vídeo real**. Primeiro um
 **diagnóstico read-only dos 5 pilares** (todos 🟢): workflow `T7kobxM1FZM99O8l` **ativo** (SQLite `active=1`, n8n

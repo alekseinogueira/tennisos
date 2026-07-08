@@ -4,6 +4,18 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Fase D Etapas 1–2 + Ajustes A/B — aba Feedbacks redesenhada (2026-07-08, code-level + infra live; NÃO deployado).**
+  Etapa 1: `Feedbacks.jsx` virou galeria de **capas clicáveis** (data·título·4 mini-ratings·focus tags·excerpt) →
+  `/feedback/:id`; botão "Compare sessions" (disabled). Etapa 2: **`SessionDetail.jsx` NOVO** (`/feedback/:id`) —
+  dashboard mobile-first de 7 seções (header, 4 pills forest, indicadores qualitativos dot-on-track, focos+rally,
+  ratings 0–10 segmentados, objetivos c/ court SVG inline + ícones focus SVG, análise do coach card forest c/ foto).
+  Vídeos migraram da galeria p/ o detalhe. Nomeado SessionDetail p/ não colidir c/ `admin/FeedbackDetail`.
+  **Ajuste A:** foto do coach no bucket Storage `assets/coach/aleksei.jpg` (público, 200) + wired no componente.
+  **Ajuste B:** migration `011` (`feedbacks.video_url` text nullable) APLICADA live; workflow n8n `55TC - Publicar
+  Feedback` mapeia Notion "Vídeo da Aula"→`video_url` (Mapear Páginas + Montar Payload; upsert manda payload inteiro),
+  aplicado live via CLI (active/9 nós/creds intactas); seção "SESSION VIDEOS" no detalhe (botão "▶ Watch on Drive"
+  ou placeholder). Paleta **só 55TC** (sem dourado, decisão do coach vs. doc). **UI toda em inglês.** lint+build limpos.
+  **Migration 011 + workflow = LIVE; frontend NÃO deployado** (prod serve a aba antiga até a Etapa 4).
 - **Rotação REAL das credenciais Gemini + Notion COMPLETA (2026-06-23, live, external).** Fecha o resíduo
   de segurança da Fase-E (a ETAPA 5 fez só o hardening). Coach gerou nova chave Gemini (**formato novo
   `AQ.…`**, funciona via `?key=`) + novo token Notion; atualizei os VALORES das 2 creds n8n por ID (`Gemini
@@ -419,6 +431,14 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Login do dev server não responde** (Fase D, 2026-07-08) — na tela de login local (`npm run dev`) o submit do
+  login não autentica. Não investigado (a pedido do coach, que valida o layout via preview estático sem login).
+  Causas prováveis: email-confirm ligado no Supabase Auth, `.env` local desatualizado, ou erro de front. **Resolver
+  antes do deploy da Etapa 4** (senão o teste e2e real fica travado). O preview `public/preview-feedback.html`
+  (gitignored) foi o contorno p/ ver o layout sem login.
+- **`public/preview-feedback.html` deve ser removido antes do deploy da Etapa 4** (Fase D) — é um mock estático
+  dev-only; está gitignored (não vai pro repo), mas existe no disco. A foto-fonte `public/coach-aleksei.jpg` também
+  é gitignored (a versão de prod vive no Supabase Storage `assets/coach/aleksei.jpg`).
 - **`getStudentByUserId` quebra p/ user_id com >1 linha em `students`** (achado 2026-07-08). Usa `.maybeSingle()`
   com `.eq('user_id', …)`; o user_id `0880be5f` (`alekseinogueira.dash@gmail.com`) tem **3 linhas de student** →
   a página `/feedback` (e todo consumidor de `getStudentByUserId`, incl. Home) dispara PGRST116 "multiple rows"

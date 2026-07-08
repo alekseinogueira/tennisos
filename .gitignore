@@ -31,3 +31,11 @@ dist-ssr
 
 # Supabase CLI local state (linked-project ref, cli version cache)
 supabase/.temp
+
+# Fase D local-only assets (NOT for prod): coach source photo lives in Supabase
+# Storage (assets/coach/aleksei.jpg); preview-feedback.html is a throwaway dev mock.
+public/coach-aleksei.jpg
+public/preview-feedback.html
+
+# Claude Code transient temp writes
+.claude/settings.local.json.tmp.*

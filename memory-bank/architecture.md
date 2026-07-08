@@ -45,7 +45,8 @@ tennisos/
 │       ├── ComingSoon.jsx          # placeholder, still serves /coach
 │       ├── StudentDashboard.jsx    # BUILT — / welcome hero + lesson-credit balance + next-session placeholder
 │       ├── Profile.jsx             # BUILT — /profile read-only own row (RLS), no edit
-│       ├── Feedbacks.jsx           # BUILT — /feedback (student): own feedback + inline videos (gallery + library)
+│       ├── Feedbacks.jsx           # BUILT — /feedback (student): gallery of clickable COVERS (date·title·4 mini-ratings·focus) → /feedback/:id
+│       ├── SessionDetail.jsx       # BUILT — /feedback/:id (student): full session dashboard (7 sections, mobile-first) + coach photo + Session videos (video_url)
 │       ├── admin/                  # BUILT — coach/admin panel
 │       │   ├── AdminHome.jsx       # /admin landing (Control Room)
 │       │   ├── Students.jsx        # /admin/students roster table (name links to detail; status/balance + Feedback/Edit actions)

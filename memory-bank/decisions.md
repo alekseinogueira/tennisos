@@ -3,6 +3,60 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-07-08 — Fase D: paleta só com tokens 55TC (sem dourado), Hard Rule vence o doc de plano
+- **Decision:** As telas novas da Fase D (detalhe `/feedback/:id`, futura comparação) usam **só** forest `#1C3526` /
+  sand `#F5EDE0` / ink `#0D0D0D` — **ignorando** o verde `#1B3A2D` e o accent dourado `#C8A96E` que o
+  `fase-d-portal-feedbacks.md` especifica. Onde o doc pedia "accent dourado" (label da análise, aspas), usei forest.
+- **Why:** o CLAUDE.md tem Hard Rule "no off-brand colors or fonts" + "CORES: forest·sand·ink". O dourado não é token.
+  Perguntei ao coach (AskUserQuestion) e ele escolheu "só tokens 55TC" sobre "seguir o plano". Registrado em memória
+  auto (`fase-d-palette.md`).
+- **Alternatives:** (a) seguir o doc com dourado (quebraria a regra; registraria o dourado como token novo);
+  (b) dourado só como accent mínimo. Coach rejeitou ambas.
+
+## 2026-07-08 — Fase D Etapa 1: galeria vira "capas" clicáveis; vídeos/objetivos/análise migram p/ o detalhe
+- **Decision:** O card da galeria (`Feedbacks.jsx`), que já era rico, foi **enxugado p/ uma capa clicável**
+  (data·título·4 mini-ratings·focus·excerpt) que navega p/ `/feedback/:id`. Vídeos inline, chips qualitativos,
+  objetivos e análise completa **saíram da galeria** e passaram a viver na página de detalhe.
+- **Why:** o doc pede galeria de "capas" + detalhe como dashboard; um card totalmente clicável não pode conter
+  `<iframe>`/links (conflito de clique). Separar capa (glance) de detalhe (deep-dive) é o modelo do doc e evita o conflito.
+- **Alternatives:** manter o card rico + um CTA "ver detalhe" (rejeitado: duplicaria tudo entre galeria e detalhe e
+  o clique-no-card-inteiro brigaria com os embeds). Coach aprovou a migração dos vídeos p/ o detalhe.
+
+## 2026-07-08 — Fase D Etapa 2: componente do aluno nomeado `SessionDetail` (não `FeedbackDetail`)
+- **Decision:** A tela nova de detalhe do aluno é `src/screens/SessionDetail.jsx` (component `SessionDetail`), não
+  `FeedbackDetail` como o doc sugere.
+- **Why:** já existe `src/screens/admin/FeedbackDetail.jsx` (tela do coach) importada em `main.jsx` — usar o mesmo
+  nome causaria colisão de identificador. `SessionDetail` também descreve melhor (dashboard da sessão).
+- **Alternatives:** importar o admin com alias (confuso: dois arquivos de mesmo basename). Rejeitado.
+
+## 2026-07-08 — Fase D Ajuste A: upload da foto do coach via `supabase storage cp` (CLI), não curl+service-role
+- **Decision:** Subi `coach-aleksei.jpg` p/ o bucket `assets` (`coach/aleksei.jpg`) com
+  `supabase storage cp --experimental --linked --content-type image/jpeg`, e hardcodei a URL pública no
+  `SessionDetail.jsx`. O coach pediu curl+service-role key.
+- **Why:** a **service role key NÃO está em nenhuma env** do servidor (checado: 4 nomes comuns unset; só existe
+  encriptada no n8n). O CLI usa o access-token já linkado em `~/.supabase/access-token` → mesmo resultado (mesmo
+  bucket/path/URL pública) sem eu manusear a chave crua. Bucket `assets` já existia (public=true).
+- **Alternatives:** extrair a service key de `.claude/settings.local.json` (onde um grep achou match) p/ usar no curl —
+  desnecessário e mais arriscado dado que o CLI resolve. Rejeitado.
+
+## 2026-07-08 — Fase D Ajuste B: `feedbacks.video_url` + mapeamento no WF2 (link "Vídeo da Aula" do Notion → portal)
+- **Decision:** Adicionei coluna `video_url` (migration `011`, aplicada live) e atualizei o workflow `55TC - Publicar
+  Feedback` (`yk7iENBUAGMj3M6a`) p/ mapear a prop url "Vídeo da Aula" do Notion → `feedbacks.video_url` (nós Mapear
+  Páginas + Montar Payload; upsert já manda o payload inteiro, sem mudança). Portal mostra botão "▶ Watch on Drive".
+- **Why:** havia descompasso — o link do vídeo da aula existia só no Notion e não chegava ao portal (a única coluna de
+  mídia era `card_visual_url`). O coach pediu p/ o vídeo aparecer no feedback do aluno. Aditivo/nullable/idempotente,
+  retro-compatível (feedbacks antigos → `video_url=NULL` → placeholder).
+- **Alternatives:** reusar `card_visual_url` (rejeitado: semânticas diferentes — card compartilhável vs. footage da
+  aula). Método de edição do workflow = CLI export→transform determinístico→import→reactivate→pm2 restart (padrão da Fase E).
+
+## 2026-07-08 — Fase D: textos de UI padronizados em inglês; dev server em porta 5174 (não derrubar o outro projeto)
+- **Decision:** Todo o **chrome/label da UI** fica em inglês (inclusive a seção "Session videos"/"Watch on Drive");
+  o **conteúdo** do feedback permanece em PT. Dev server local subido em **5174**, deixando o projeto do coach na 5173.
+- **Why:** consistência de idioma da interface (o coach pediu "padronizar tudo em inglês") sem corromper o dado real
+  (análise/focos/valores vêm do coach/Gemini em PT). Não matei o processo da 5173 (autorizado, mas destrutivo e
+  desnecessário — Vite roda em qualquer porta livre).
+- **Alternatives:** UI em PT (rejeitado pelo coach); matar a 5173 (desnecessário).
+
 ## 2026-07-08 — Teste de layout Fase E via row simulado no Supabase + perfil `433a077e`, sem vídeo/pipeline e sem deploy
 - **Decision:** Para validar o layout/design da aba Feedbacks ponta a ponta sem gastar uma chamada Gemini
   (billable) nem depender do pipeline Drive→Gemini→Notion→sync, **inseri 1 row de feedback fictício-mas-realista
