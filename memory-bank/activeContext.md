@@ -4,6 +4,24 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**3 feedbacks simulados NOVOS inseridos no Supabase de produção p/ testar o portal (2026-07-08, external — auto mode OFF).**
+Pedido do coach: criar 3 feedbacks simulados seguindo **exatamente** o padrão do `SIM-TEST-20260705` (já deletado),
+variando dados p/ parecer uma progressão real de treinos. Mostrei os 3 rows p/ aprovação ANTES de inserir; coach aprovou.
+- **Conta alvo confirmada por query ao vivo** (não só memória): `aleksei.nogueirasousa@gmail.com` → user_id
+  `433a077e-1400-4725-a820-0c6b5e0e2cb9`, student_id `b80a7db6-b7d4-49f5-b9d5-0a3ee5cdec9d`, **1 linha em students**
+  (limpo — `/feedback` não estoura o PGRST116 multi-row).
+- **3 rows (`source='video_analysis'`, `notion_id='SIM-TEST-<data>'` = marcador de cleanup), progressão jun→jul 2026:**
+  (1) `SIM-TEST-20260612` 2026-06-12 "Fundo de quadra e consistência" ratings 5/6/4/5, 60′, rally 3.8;
+  (2) `SIM-TEST-20260626` 2026-06-26 "Transição defesa-ataque" 6/7/6/7, 75′, 4.9;
+  (3) `SIM-TEST-20260706` 2026-07-06 "Saque +1 e tomada de quadra" 8/8/7/8, 90′, 5.6. Cada um: quality/effort/
+  game_application/progress_level (labels PT das escalas do `SessionDetail`), 3 focus_areas, focus_next, 2
+  next_session_goals `{titulo,descricao}`, body voz-coach (foco externo), `video_url`/`card_visual_url`/`coach_id` NULL.
+- **Método:** `supabase db query --linked` (projeto `vdyvlylacsghnvtllrzj`), 1 transação **idempotente** (delete dos 3
+  notion_ids antes do insert → re-run seguro). Verificado por SELECT: 3 rows, campos corretos, IDs certos. **Ratings
+  sobem consistentemente** → também dá material real p/ o botão **Compare sessions** (≥2 feedbacks).
+- **NENHUM código do repo tocado** (mudança 100% no Supabase). Sem deploy. **Cleanup contratado:**
+  `delete from feedbacks where notion_id like 'SIM-TEST-%';` quando o teste terminar.
+
 **Fase D — ETAPA 3 (Comparação de treinos) COMMITADA (`80c6c48`) + DEPLOYADA em produção (2026-07-08).**
 Aprovada pelo coach via preview e no ar em `portal.55tenniscrew.com`. Deploy verificado via API Vercel:
 `dpl_FWHCbTXn2xrazmzbh2C5Nge69rDG` READY/production, commit `80c6c48`. **Fase D COMPLETA (Etapas 1–3).**

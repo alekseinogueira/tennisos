@@ -3,6 +3,24 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-07-08 — 3 feedbacks simulados NOVOS no Supabase p/ teste do portal (aprovação-antes-de-inserir, auto mode OFF)
+- **Decision:** Inseri **3** rows fictícios-mas-realistas em `feedbacks` (Supabase prod `vdyvlylacsghnvtllrzj`) atados a
+  `aleksei.nogueirasousa@gmail.com`, seguindo **exatamente** o padrão do `SIM-TEST-20260705` (mesmos campos/estrutura/
+  fluxo, `source='video_analysis'`, marcador `notion_id='SIM-TEST-<data>'`), variando dados p/ simular uma progressão
+  real de treinos (jun→jul 2026, ratings crescentes 5/6/4/5 → 6/7/6/7 → 8/8/7/8, focos e análises distintos).
+  **Mostrei os 3 rows ao coach p/ aprovação ANTES de inserir** (auto mode OFF) — ele aprovou; só então rodei o insert.
+- **Why:** o coach pediu material de teste para o portal redesenhado (galeria + detalhe + Compare sessions); 3 sessões
+  com progressão exercitam a galeria (múltiplas capas), o detalhe (todos os campos ricos) e o A/B do Compare (≥2
+  feedbacks, deltas positivos). Reusei o caminho já provado (insert direto no ponto de leitura da UI) em vez de rodar o
+  pipeline Drive→Gemini (billable) ou publicar no Notion (polui prod, mais lento).
+- **Why esses IDs/esse perfil:** confirmei user_id/student_id por **query ao vivo** (não só memória) — `433a077e` tem
+  **1 linha** em students (limpo p/ `.maybeSingle()`); o outro Aleksei (`0880be5f`, 3 linhas) estouraria PGRST116.
+- **Why idempotente:** a transação faz `delete` dos 3 `notion_id` antes do insert → re-run seguro, sem duplicar.
+- **Alternatives:** (a) reusar o marcador `SIM-TEST-20260705` (rejeitado: convenção é 1 notion_id por data de lição —
+  usei `SIM-TEST-<lesson_date>`); (b) setar `video_url`/`coach_id` (rejeitado: fiel ao original = NULL → placeholder
+  "Session videos coming soon"). Cleanup contratado: `delete from feedbacks where notion_id like 'SIM-TEST-%';`.
+  Nenhum código do repo mudou (mudança 100% externa ao Supabase).
+
 ## 2026-07-08 — Fase D Etapa 3: comparação é TELA SEPARADA (não inline na galeria)
 - **Decision:** A comparação de treinos vive numa tela própria (`/feedback/compare`), acessada pelo botão "Compare
   sessions" na aba Feedback — NÃO embutida na galeria de cards.

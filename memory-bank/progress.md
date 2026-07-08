@@ -194,6 +194,15 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
+- **3 feedbacks simulados NOVOS no Supabase de produção p/ teste do portal (2026-07-08, external — sem repo change).**
+  Atados a `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, student `b80a7db6`, **1 student row** — confirmado
+  por query), `source='video_analysis'`, marcador `notion_id='SIM-TEST-<data>'`. Progressão jun→jul 2026:
+  `SIM-TEST-20260612` (5/6/4/5), `SIM-TEST-20260626` (6/7/6/7), `SIM-TEST-20260706` (8/8/7/8) — cada um com
+  duration/rally, quality/effort/game/progress (labels PT), 3 focus_areas, focus_next, 2 next_session_goals,
+  body voz-coach; `video_url`/`card_visual_url`/`coach_id` NULL. Mesma estrutura do `SIM-TEST-20260705` (deletado).
+  Inserido via `supabase db query --linked` em 1 transação idempotente (delete-then-insert), verificado por SELECT.
+  Ratings sobem → alimenta o **Compare sessions**. Ver via portal → login → aba Feedback. **Sem deploy.**
+  **Cleanup pendente:** `delete from feedbacks where notion_id like 'SIM-TEST-%';`.
 - ~~**Fase D ETAPA 3 (Comparação de treinos) APLICADA local, NÃO commitada**~~ **CONCLUÍDA (2026-07-08, `80c6c48`,
   deployada)** — ver "What Works". Commitada, deployada e aprovada pelo coach; feedbacks simulados `SIM-TEST-*`
   deletados de produção. O bloqueio "login do dev server" era só o túnel SSH do coach caído (não bug); contornado
