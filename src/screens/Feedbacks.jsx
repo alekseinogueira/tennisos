@@ -62,14 +62,15 @@ export default function Feedbacks() {
             Notes from your coach and the clips to study. Less Theory. More Game.
           </p>
         </div>
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="cursor-not-allowed rounded border border-forest/25 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-forest/40"
-        >
-          Compare sessions
-        </button>
+        {feedbacks.length >= 2 && (
+          <button
+            type="button"
+            onClick={() => navigate('/feedback/compare')}
+            className="rounded border border-forest/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-forest transition hover:bg-forest hover:text-sand"
+          >
+            Compare sessions
+          </button>
+        )}
       </header>
 
       {loading && <p className="text-sm text-ink/50">Loading your feedback…</p>}

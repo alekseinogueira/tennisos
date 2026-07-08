@@ -17,6 +17,7 @@ import StudentDashboard from './screens/StudentDashboard'
 import Profile from './screens/Profile'
 import Feedbacks from './screens/Feedbacks'
 import SessionDetail from './screens/SessionDetail'
+import FeedbackCompare from './screens/FeedbackCompare'
 import Library from './screens/Library'
 import Gallery from './screens/Gallery'
 import AdminHome from './screens/admin/AdminHome'
@@ -43,6 +44,7 @@ createRoot(document.getElementById('root')).render(
             <Route element={<Layout />}>
               <Route path="/" element={<StudentDashboard />} />
               <Route path="/feedback" element={<Feedbacks />} />
+              <Route path="/feedback/compare" element={<FeedbackCompare />} />
               <Route path="/feedback/:id" element={<SessionDetail />} />
               <Route path="/library" element={<Library />} />
               <Route path="/gallery" element={<Gallery />} />
