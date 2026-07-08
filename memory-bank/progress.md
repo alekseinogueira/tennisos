@@ -4,7 +4,15 @@
 > Read this first at the start of every task.
 
 ## What Works
-- **Fase D Etapas 1–2 + Ajustes A/B — aba Feedbacks redesenhada (2026-07-08, code-level + infra live; NÃO deployado).**
+- **Fase D COMPLETA (Etapas 1–3) — aba Feedbacks redesenhada + comparação, DEPLOYADA em produção (2026-07-08,
+  `80c6c48`).** Etapa 3: `FeedbackCompare.jsx` (`/feedback/compare?a=&b=`) — tela dedicada, entrada pelo botão
+  "Compare sessions" da aba Feedback (só com ≥2 feedbacks). Seletores A/B gravam na URL; A/B resolvidos da lista
+  do próprio aluno (RLS-safe). Ratings 0–10 em barras pareadas + delta, rally avg, evolução qualitativa (setas pelas
+  escalas do `SessionDetail`), focus areas lado a lado. Paleta só forest/ink (sobe=forest sólido, igual=ink,
+  desce=forest vazado). **Coach aprovou via preview e escolheu tela separada (não inline).** Deploy verificado via
+  API Vercel (`dpl_FWHCbTXn...` READY/production, commit `80c6c48`); no ar em `portal.55tenniscrew.com`. Os 2 feedbacks
+  simulados (`SIM-TEST-*`) foram deletados do Supabase de produção após a validação. lint+build limpos.
+- **Fase D Etapas 1–2 + Ajustes A/B — aba Feedbacks redesenhada (2026-07-08, DEPLOYADO em `80c6c48` junto da Etapa 3).**
   Etapa 1: `Feedbacks.jsx` virou galeria de **capas clicáveis** (data·título·4 mini-ratings·focus tags·excerpt) →
   `/feedback/:id`; botão "Compare sessions" (disabled). Etapa 2: **`SessionDetail.jsx` NOVO** (`/feedback/:id`) —
   dashboard mobile-first de 7 seções (header, 4 pills forest, indicadores qualitativos dot-on-track, focos+rally,
@@ -186,6 +194,10 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
+- ~~**Fase D ETAPA 3 (Comparação de treinos) APLICADA local, NÃO commitada**~~ **CONCLUÍDA (2026-07-08, `80c6c48`,
+  deployada)** — ver "What Works". Commitada, deployada e aprovada pelo coach; feedbacks simulados `SIM-TEST-*`
+  deletados de produção. O bloqueio "login do dev server" era só o túnel SSH do coach caído (não bug); contornado
+  com túnel Cloudflare + preview HTML estático, tudo revertido antes do commit.
 - **Teste simulado de feedback Fase E p/ validação de layout LOCAL (2026-07-08, external — Supabase):** diagnóstico
   read-only dos 5 pilares (todos 🟢: ambos workflows n8n ativos, portal HTTP 200, campos Fase E live em `feedbacks`,
   `Feedbacks.jsx` renderiza card rico) + **1 row de feedback simulado inserido** (`id ffb8e2d7-…`,
@@ -431,14 +443,18 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
-- **Login do dev server não responde** (Fase D, 2026-07-08) — na tela de login local (`npm run dev`) o submit do
-  login não autentica. Não investigado (a pedido do coach, que valida o layout via preview estático sem login).
-  Causas prováveis: email-confirm ligado no Supabase Auth, `.env` local desatualizado, ou erro de front. **Resolver
-  antes do deploy da Etapa 4** (senão o teste e2e real fica travado). O preview `public/preview-feedback.html`
-  (gitignored) foi o contorno p/ ver o layout sem login.
-- **`public/preview-feedback.html` deve ser removido antes do deploy da Etapa 4** (Fase D) — é um mock estático
-  dev-only; está gitignored (não vai pro repo), mas existe no disco. A foto-fonte `public/coach-aleksei.jpg` também
-  é gitignored (a versão de prod vive no Supabase Storage `assets/coach/aleksei.jpg`).
+- **Acesso ao dev server = túnel SSH do coach (não é bug de código)** (esclarecido 2026-07-08). O que parecia
+  "login do dev server não responde"/"tela branca"/"connection refused" era o **túnel SSH do coach caído** — o dev
+  server roda num droplet remoto (`67.205.171.204`), e o coach acessa por `ssh -N -L 5174:localhost:5174 -L
+  5175:localhost:5175 root@67.205.171.204` (cai quando a sessão SSH fecha). O backend de auth do Supabase está 100%
+  OK (health 200, `.env` válido). **IP público bloqueado pelo firewall de nuvem da DigitalOcean** (não editável da
+  box; ufw/iptables locais estão abertos). **Contorno provado p/ previews sem depender do túnel:** `cloudflared
+  tunnel --url http://localhost:<porta>` (quick tunnel, sem conta) → exige liberar o host em `server.allowedHosts`
+  do Vite; ou HTML estático em `public/*.html`. Binário: `cloudflared` foi baixado no scratchpad da sessão.
+- ~~**`public/preview-feedback.html` deve ser removido antes do deploy**~~ **RESOLVIDO (2026-07-08)** — os previews
+  dev-only (`preview-feedback.html`, `preview-compare.html`) são gitignored (nunca foram pro repo/prod) e foram
+  apagados do disco no deploy da Etapa 3. A foto-fonte `public/coach-aleksei.jpg` segue gitignored (prod usa o
+  Supabase Storage `assets/coach/aleksei.jpg`).
 - **`getStudentByUserId` quebra p/ user_id com >1 linha em `students`** (achado 2026-07-08). Usa `.maybeSingle()`
   com `.eq('user_id', …)`; o user_id `0880be5f` (`alekseinogueira.dash@gmail.com`) tem **3 linhas de student** →
   a página `/feedback` (e todo consumidor de `getStudentByUserId`, incl. Home) dispara PGRST116 "multiple rows"

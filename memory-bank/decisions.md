@@ -3,6 +3,28 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-07-08 — Fase D Etapa 3: comparação é TELA SEPARADA (não inline na galeria)
+- **Decision:** A comparação de treinos vive numa tela própria (`/feedback/compare`), acessada pelo botão "Compare
+  sessions" na aba Feedback — NÃO embutida na galeria de cards.
+- **Why:** o coach questionou ("deveria ser na mesma tela dos cards"); apresentei as 2 opções (AskUserQuestion, com
+  mockups) e ele escolheu **tela separada** — que já era o formato do plano aprovado (Etapa 1 = galeria com botão →
+  Etapa 3 = tela dedicada). Nenhuma refatoração necessária.
+- **Alternatives:** comparação inline na `Feedbacks.jsx` (seletores A/B + comparação acima dos cards). Rejeitada pelo coach.
+
+## 2026-07-08 — Revisão de preview do dev server: túnel Cloudflare + HTML estático (não SSH/localhost)
+- **Decision:** Para o coach revisar a Etapa 3 sem depender do túnel SSH (que estava caído), usei **`cloudflared`
+  quick tunnel** (`--url http://localhost:5175`, sem conta) dando um link `https://…trycloudflare.com` público, +
+  um **HTML estático** (`public/preview-compare.html`) com o render real do componente (CSS compilado inline + fontes
+  Google). Diagnostiquei que a tela branca NÃO era código: confirmei render 100% OK via **chromium headless**
+  (playwright). Tudo dev-only foi **revertido antes do commit**.
+- **Why:** o dev server roda num droplet remoto; localhost só chega via túnel SSH do coach (caiu → "connection
+  refused"), e o IP público é bloqueado pelo firewall de nuvem da DO (não editável da box). O túnel Cloudflare
+  contorna ambos e independe do setup do coach. HTML estático replica o mecanismo dos previews que sempre
+  funcionaram (`preview-feedback.html`).
+- **Alternatives:** (a) consertar/reabrir o túnel SSH do coach (fora do meu controle, já tinha falhado 2×);
+  (b) abrir a porta no firewall da DO (só o coach, no painel); (c) bypass de auth na rota React (não daria dados —
+  RLS depende de sessão). Rejeitadas em favor do túnel público + estático.
+
 ## 2026-07-08 — Fase D: paleta só com tokens 55TC (sem dourado), Hard Rule vence o doc de plano
 - **Decision:** As telas novas da Fase D (detalhe `/feedback/:id`, futura comparação) usam **só** forest `#1C3526` /
   sand `#F5EDE0` / ink `#0D0D0D` — **ignorando** o verde `#1B3A2D` e o accent dourado `#C8A96E` que o

@@ -4,7 +4,35 @@
 > Read this first at the start of every task.
 
 ## Current Focus
-**Fase D — Portal aba Feedbacks redesenhada: Etapas 1–2 + Ajustes A/B APLICADOS localmente (2026-07-08). SEM deploy.**
+**Fase D — ETAPA 3 (Comparação de treinos) COMMITADA (`80c6c48`) + DEPLOYADA em produção (2026-07-08).**
+Aprovada pelo coach via preview e no ar em `portal.55tenniscrew.com`. Deploy verificado via API Vercel:
+`dpl_FWHCbTXn2xrazmzbh2C5Nge69rDG` READY/production, commit `80c6c48`. **Fase D COMPLETA (Etapas 1–3).**
+Paleta só tokens 55TC (forest/ink nos indicadores, sem dourado/vermelho). UI toda em inglês.
+- **`src/screens/FeedbackCompare.jsx` NOVO** — rota `/feedback/compare?a={id}&b={id}` (registrada em `main.jsx`
+  ANTES de `/feedback/:id`). Carrega a lista de feedbacks do aluno (`getStudentByUserId`+`listFeedbacksForStudent`)
+  e resolve A/B a partir DELA → **RLS-safe por construção**. Seletores A/B (dropdowns) gravam na URL
+  (`setSearchParams replace`). Seções: header A vs B · ratings 0–10 (barras A sobre B + chip de delta B−A) · rally
+  (2 números + delta) · qualitativos (`A → B` com seta via as MESMAS escalas ordenadas do `SessionDetail`) · focus_areas
+  lado a lado. Estados: loading, erro, "<2 sessões". Indicador de evolução (só forest/ink): subiu=chip forest sólido,
+  igual=chip ink, desceu=chip forest **vazado/outline**.
+- **`Feedbacks.jsx`**: botão "Compare sessions" → `navigate('/feedback/compare')`, só com **≥2 feedbacks**.
+- **Decisão de UX confirmada pelo coach:** comparação é **tela separada** (entrada pelo botão na aba Feedback), NÃO
+  inline na galeria. O coach questionou, apresentei as 2 opções (AskUserQuestion) e ele escolheu "tela separada".
+- **Como a Etapa 3 foi revisada (o dev server local NÃO era acessível):** o coach acessa o dev server (droplet remoto,
+  IP `67.205.171.204`) por **túnel SSH** — que estava caído (por isso "connection refused"/tela branca em localhost;
+  não era bug de código — confirmei render 100% OK via chromium headless). IP público bloqueado pelo **firewall de
+  nuvem da DO** (ufw/iptables da box abertos, mas o firewall externo não é editável da box). Solução que funcionou:
+  **túnel público Cloudflare** (`cloudflared tunnel --url http://localhost:5175`, sem conta) + **HTML estático** em
+  `public/preview-compare.html` (render real do componente c/ CSS compilado inline + fontes Google) → link `https://…
+  trycloudflare.com/preview-compare.html`. Também uma rota dev-only `/preview/compare` (`import.meta.env.DEV`).
+  **TUDO isso foi revertido antes do commit** (prop `previewData`, tela/rota de preview, `server.allowedHosts` do Vite,
+  `.gitignore`, `public/preview-*.html`, túnel, dev servers) — o commit tem só a feature (3 arquivos).
+- **Cleanup FEITO:** os 2 feedbacks simulados (`SIM-TEST-20260705`/`SIM-TEST-20260628`) foram **DELETADOS** do Supabase
+  de produção (0 restantes) — não poluem mais a conta de teste em prod.
+- **NEXT:** Fase D encerrada. Próximo trabalho não decidido (candidatos: e2e real Fase E com vídeo; Phase 8G Gallery
+  por sessão; loops de automação). Aguardar direção do coach.
+
+**Fase D — Etapas 1–2 + Ajustes A/B APLICADOS + COMMITADOS (`188f4c6`) localmente (2026-07-08). SEM deploy.**
 Plano em `memory-bank/planning/fase-d-portal-feedbacks.md` (protocolo: auto mode OFF, diff antes de aplicar,
 aprovação por etapa). **Decisão de paleta:** só tokens 55TC (forest/sand/ink) — o coach rejeitou o dourado
 `#C8A96E`/verde `#1B3A2D` do doc por causa da Hard Rule "no off-brand colors" do CLAUDE.md. **Textos de UI todos
