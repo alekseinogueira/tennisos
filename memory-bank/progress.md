@@ -174,6 +174,14 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
+- **Teste simulado de feedback Fase E p/ validação de layout LOCAL (2026-07-08, external — Supabase):** diagnóstico
+  read-only dos 5 pilares (todos 🟢: ambos workflows n8n ativos, portal HTTP 200, campos Fase E live em `feedbacks`,
+  `Feedbacks.jsx` renderiza card rico) + **1 row de feedback simulado inserido** (`id ffb8e2d7-…`,
+  `notion_id='SIM-TEST-20260705'`) atado a `aleksei.nogueirasousa@gmail.com` (student `b80a7db6`, user_id `433a077e`)
+  com todos os campos Fase E (ratings 7/8/6/8, quality/effort/game/progress, 3 focus_areas, 2 next_session_goals,
+  body voz-coach, `source=video_analysis`). Visualizar via `npm run dev` (localhost:5173) → login → aba Feedback.
+  **Sem deploy.** **Cleanup pendente:** `delete from feedbacks where notion_id='SIM-TEST-20260705'` quando validado.
+  Doc de planejamento novo (colado pelo coach, contexto stale) em `planning/fase-d-portal-feedbacks.md`.
 - **Fase E2 ETAPA 3 DONE (2026-06-23, applied live in n8n, external):** fan-out multi-aluno no `T7kobxM1FZM99O8l`
   (agora **17 nós**) — uma aula em grupo gera **N páginas no Notion + N cards**. **Sem nó Split dedicado:**
   `Parsear Resposta Gemini` passou a **emitir N itens** (`perStudent.map`, `pairedItem:{item:0}`, cada item com seu
@@ -411,6 +419,14 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **`getStudentByUserId` quebra p/ user_id com >1 linha em `students`** (achado 2026-07-08). Usa `.maybeSingle()`
+  com `.eq('user_id', …)`; o user_id `0880be5f` (`alekseinogueira.dash@gmail.com`) tem **3 linhas de student** →
+  a página `/feedback` (e todo consumidor de `getStudentByUserId`, incl. Home) dispara PGRST116 "multiple rows"
+  p/ esse account. O perfil de teste seguro é `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, 1 linha).
+  Fix futuro: dedup das linhas de student desse user_id, ou trocar `.maybeSingle()`→`.limit(1)`/ordem determinística.
+- **Tabela `feedbacks` (Supabase) não tem `status`/`synced_to_portal`** (esclarecido 2026-07-08). Esses 2 campos
+  são **só do Notion** (gate do workflow "Publicar Feedback" `yk7iENBUAGMj3M6a`). No portal, visibilidade ao aluno =
+  linha existir com `user_id` correto (RLS own-row) — não há flag "publicado" na feedbacks. Não é bug; é design.
 - **Fase E2 fan-out depende do paired-item (`.item`) do n8n — e2e de grupo não validado** (ETAPA 3, 2026-06-23).
   Sob fan-out (N alunos), `Gerar HTML`/`Extrair HTML`/`Salvar URL` usam `$('...').item` p/ pegar o aluno corrente;
   se o pairing resolver errado, cards/páginas saem com dados trocados (mismatch silencioso). A camada de dados foi

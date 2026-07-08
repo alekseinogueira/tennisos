@@ -4,6 +4,37 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Teste simulado de feedback Fase E montado p/ validação de layout LOCAL (`npm run dev`) — 2026-07-08.**
+Objetivo da sessão: validar o layout/design da aba Feedbacks ponta a ponta **sem vídeo real**. Primeiro um
+**diagnóstico read-only dos 5 pilares** (todos 🟢): workflow `T7kobxM1FZM99O8l` **ativo** (SQLite `active=1`, n8n
+online via pm2), workflow `yk7iENBUAGMj3M6a` **ativo**, portal `portal.55tenniscrew.com` **HTTP 200**, tabela
+`feedbacks` com **campos Fase E aplicados live** (query direta ao projeto linkado `vdyvlylacsghnvtllrzj` confirma
+`notion_id`/`rating_technique`/`focus_areas`/`next_session_goals`/`source`/`card_visual_url`), e `Feedbacks.jsx`
+**existe e já renderiza o card rico** (barras 0–10, chips qualitativos, focus_areas, objetivos numerados,
+`card_visual_url`). Depois **inserida 1 linha de feedback simulado** direto no Supabase (via `supabase db query
+--linked`), atada ao perfil de teste **`aleksei.nogueirasousa@gmail.com`** (user_id `433a077e-1400-4725-a820-
+0c6b5e0e2cb9`, student `b80a7db6-b7d4-49f5-b9d5-0a3ee5cdec9d`), com **`notion_id='SIM-TEST-20260705'`** (marcador
+p/ reverter/reexecutar). Campos: ratings 7/8/6/8, quality/effort/game/progress (Em Desenvolvimento/Alto/
+Consistente/Assimilação técnica), duration 75 / rally 5.4, 3 focus_areas, 2 next_session_goals (titulo+descricao),
+body de 4 linhas voz-coach, `source='video_analysis'`. **Row id `ffb8e2d7-d4fd-4248-9157-db476cf5ed18`.**
+- **⚠️ 2 achados de schema/dados desta sessão** (importantes p/ futuro): (1) **`getStudentByUserId` usa
+  `.maybeSingle()`** — o user_id `0880be5f` (`alekseinogueira.dash@gmail.com`) tem **3 linhas em `students`** →
+  esse account **quebraria `/feedback`** (PGRST116 multi-row). Por isso o teste usa `433a077e` (1 linha limpa).
+  (2) **A tabela `feedbacks` do Supabase NÃO tem `status` nem `synced_to_portal`** — esses 2 campos vivem só no
+  **Notion** (gate do workflow "Publicar Feedback"). No portal, "publicado p/ o aluno" = a linha existir com
+  `user_id` correto (RLS own-row). O pedido do coach por `Status=Publicado`/`synced_to_portal=true` foi honrado
+  no plano-conceito mas não há coluna Supabase p/ eles.
+- **Como visualizar:** `npm run dev` (Vite → http://localhost:5173), login como `aleksei.nogueirasousa@gmail.com`,
+  aba **Feedback**. Precisa de `.env` local apontando p/ `vdyvlylacsghnvtllrzj` + `Feedbacks.jsx` rico presente
+  no Mac (repo atual já tem). **SEM deploy** (a pedido). Prod pode ainda servir o card antigo (frontend Fase E não
+  deployado) — por isso o teste é local. **Cleanup pendente:** remover o row de teste quando validado
+  (`delete from feedbacks where notion_id='SIM-TEST-20260705'`).
+- **Doc de planejamento novo (externo, colado pelo coach 2026-07-08):** `memory-bank/planning/
+  fase-d-portal-feedbacks.md` — plano p/ redesenhar a aba Feedbacks ao nível do card de referência. **Caveat: a
+  seção CONTEXTO dele está desatualizada** — afirma que `Feedbacks.jsx` mostra só data/título/texto, mas o código
+  atual JÁ renderiza as métricas ricas (ratings/chips/focos/objetivos). Tratar o doc como aspiração de redesign
+  visual (nível do PNG Kathely), não como estado atual do código.
+
 **Fase E2 ETAPA 3 APLICADA ao vivo no n8n (2026-06-23, external — workflow `T7kobxM1FZM99O8l`, agora 17 nós).**
 Fan-out multi-aluno: o `T7kobxM1FZM99O8l` agora cria **N páginas no Notion + N cards (1/aluno)** numa aula em
 grupo, reusando a cauda existente — **sem nó Split dedicado** (a sessão anterior tinha caído logo no início desta

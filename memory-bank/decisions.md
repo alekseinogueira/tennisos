@@ -3,6 +3,28 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-07-08 — Teste de layout Fase E via row simulado no Supabase + perfil `433a077e`, sem vídeo/pipeline e sem deploy
+- **Decision:** Para validar o layout/design da aba Feedbacks ponta a ponta sem gastar uma chamada Gemini
+  (billable) nem depender do pipeline Drive→Gemini→Notion→sync, **inseri 1 row de feedback fictício-mas-realista
+  direto na tabela `feedbacks` do Supabase** (via `supabase db query --linked`), com todos os campos Fase E
+  preenchidos e `notion_id='SIM-TEST-20260705'` como marcador de limpeza. Visualização **local** (`npm run dev`),
+  **sem deploy** (a pedido do coach). Row `id ffb8e2d7-…`.
+- **Why esse caminho:** a UI (`Feedbacks.jsx`) lê a tabela `feedbacks` direto; o único insumo que ela precisa é
+  uma linha com os campos ricos + `user_id`/`student_id` corretos. Injetar o dado no ponto de leitura isola o teste
+  de UI de todo o resto do pipeline (que já foi validado sinteticamente na Fase E). Alternativas rejeitadas:
+  (a) rodar o pipeline real com vídeo → billable + precisa de `file_id` Drive; (b) publicar um feedback no Notion e
+  esperar o workflow sincronizar → mais lento, mexercita infra já testada, e polui o Notion de produção.
+- **Why o perfil `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, student `b80a7db6`):** é o único Aleksei
+  com **exatamente 1 linha** em `students` p/ o seu user_id. `getStudentByUserId` usa `.maybeSingle()`, então o
+  outro Aleksei (`alekseinogueira.dash@gmail.com`, user_id `0880be5f`, **3 linhas**) faria a página `/feedback`
+  estourar PGRST116. Coach confirmou esse perfil de teste na mesma sessão. Registrado como Known Issue.
+- **Why sem `status`/`synced_to_portal` no insert:** essas 2 colunas **não existem** em `feedbacks` (Supabase) —
+  são propriedades do **Notion** (gate do WF2 `yk7iENBUAGMj3M6a`). No portal, "publicado ao aluno" = a linha existir
+  com `user_id` (RLS own-row). O pedido do coach por esses campos foi honrado no conceito, não como coluna.
+- **Cleanup contratado:** o row é descartável — remover com `delete from feedbacks where
+  notion_id='SIM-TEST-20260705'` quando o layout estiver validado (ou reexecutar o insert, que faz `delete` do
+  mesmo marcador antes). Nenhum código do repo mudou nesta sessão (mudança 100% externa ao repo, no Supabase).
+
 ## 2026-06-23 — Fase E2 ETAPA 3: fan-out N alunos via `Parsear` emitindo N itens (sem nó Split), `Resumir Aula` reconverge N→1, Twilio = 1 resumo/aula
 - **Decision:** No `55TC - Análise de Treino` (`T7kobxM1FZM99O8l`, agora 17 nós), `Parsear Resposta Gemini` passou
   a **emitir N itens** (1/aluno, `pairedItem:{item:0}`, cada um com seu `notionBodyJson`) em vez de 1 item +
