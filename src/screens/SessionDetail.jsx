@@ -21,7 +21,7 @@ const RATING_ROWS = [
   ['Technique', 'rating_technique'],
   ['Intensity', 'rating_intensity'],
   ['Position', 'rating_position'],
-  ['Progress', 'rating_progress'],
+  ['Overall progress', 'rating_progress'],
 ]
 
 // Section 3 qualitative "dot on a track". The text label is authoritative; the
