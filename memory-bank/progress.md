@@ -4,6 +4,11 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **i18n `SessionDetail.jsx` — labels estáticos 100% em inglês (2026-07-09, `27e303e`, NÃO deployado).** Auditoria dos
+  labels estáticos do detalhe de feedback do aluno: já estavam todos em inglês; único ajuste real foi renomear a linha de
+  rating `rating_progress` de `Progress`→`Overall progress` (desambigua do indicador qualitativo `Progress`). Strings PT
+  que sobram (`QUAL_INDICATORS` escalas + `FocusIcon` regex) são chaves de lookup contra dados do DB, deixadas de propósito.
+  lint limpo. Prod serve o label antigo até o próximo `deploy-prod`.
 - **Fase D COMPLETA (Etapas 1–3) — aba Feedbacks redesenhada + comparação, DEPLOYADA em produção (2026-07-08,
   `80c6c48`).** Etapa 3: `FeedbackCompare.jsx` (`/feedback/compare?a=&b=`) — tela dedicada, entrada pelo botão
   "Compare sessions" da aba Feedback (só com ≥2 feedbacks). Seletores A/B gravam na URL; A/B resolvidos da lista

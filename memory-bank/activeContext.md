@@ -4,6 +4,18 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Ajuste i18n em `SessionDetail.jsx` — label da linha de rating renomeada (2026-07-09, `27e303e`, auto mode OFF, NÃO deployado).**
+Pedido do coach: garantir que TODOS os labels estáticos de seção/campo do detalhe de feedback do aluno estejam em inglês
+(o conteúdo dinâmico vindo do banco fica como está, em qualquer idioma). Auditoria mostrou que o componente correto é
+**`src/screens/SessionDetail.jsx`** (não `admin/FeedbackDetail.jsx`, que é a tela coach de anexar vídeos e não tem esses labels).
+- **Achado:** TODOS os labels estáticos já estavam em inglês (Where it stands, Effort, In-game, Ratings, Technique, Intensity,
+  Position, Goals — next session, Coach's analysis, etc.). Único ajuste real: a linha de rating 0–10 `rating_progress` estava
+  rotulada `Progress` (linha 24) — renomeada p/ **`Overall progress`** p/ desambiguar do indicador qualitativo `Progress` (linha 33).
+- **DELIBERADAMENTE deixados em PT (não são labels, são chaves de lookup contra dados dinâmicos do DB):** as escalas de
+  `QUAL_INDICATORS` (`baixo`/`moderado`/`assimilação técnica`… linhas 31–33, usadas p/ posicionar o dot) e o regex de
+  `FocusIcon` (`saque`/`vole`/`rede`/`cabeça`… linhas 414–417, categoriza focus_areas). Traduzi-los quebraria o matching.
+- lint limpo. Commit `27e303e`. **Sem deploy** (prod só atualiza no próximo `deploy-prod`).
+
 **3 feedbacks simulados NOVOS inseridos no Supabase de produção p/ testar o portal (2026-07-08, external — auto mode OFF).**
 Pedido do coach: criar 3 feedbacks simulados seguindo **exatamente** o padrão do `SIM-TEST-20260705` (já deletado),
 variando dados p/ parecer uma progressão real de treinos. Mostrei os 3 rows p/ aprovação ANTES de inserir; coach aprovou.
