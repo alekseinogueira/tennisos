@@ -1,15 +1,44 @@
 // supabase/functions/send-session-reminder/index.ts
 //
-// Sends the 55TC session-reminder email via Resend.
-// POST body: { student_name, student_email, scheduled_at, duration_minutes, location }
+// Sends the 55TC session notification email via Resend.
+// POST body: { student_name, student_email, scheduled_at, duration_minutes, location, kind? }
 //   - scheduled_at is a UTC ISO string; formatted for display in America/Vancouver.
+//   - kind: 'scheduled' (default) | 'rescheduled' | 'cancelled' — picks the copy;
+//     unknown/absent values fall back to the original confirmation email.
 // Secret: RESEND_API_KEY (Supabase Edge Function secret — never hardcoded, never a VITE_ var)
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const FROM = "Aleksei Nogueira <55tc@55tenniscrew.com>";
-const SUBJECT = "See you on the court.";
 const PORTAL_URL = "https://portal.55tenniscrew.com";
 const TZ = "America/Vancouver";
+
+type EmailKind = "scheduled" | "rescheduled" | "cancelled";
+
+const COPY: Record<
+  EmailKind,
+  { subject: string; headline: string; intro: string; signoff: string }
+> = {
+  scheduled: {
+    subject: "See you on the court.",
+    headline: "SEE YOU<br>ON THE<br>COURT.",
+    intro: "Just confirmed — you have a session coming up. Here are the details:",
+    signoff: "See you there. Less Theory. More Game.",
+  },
+  rescheduled: {
+    subject: "Your session has a new time.",
+    headline: "NEW TIME.<br>SAME<br>GAME.",
+    intro:
+      "Heads up — your session was rescheduled. Here are the updated details:",
+    signoff: "See you there. Less Theory. More Game.",
+  },
+  cancelled: {
+    subject: "Your session was cancelled.",
+    headline: "CHANGE<br>OF<br>PLANS.",
+    intro:
+      "The session below was cancelled. If anything looks off, just reply to this email.",
+    signoff: "We’ll get you back on court soon. Less Theory. More Game.",
+  },
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,6 +79,7 @@ function buildEmailHtml(
   scheduledAt: string,
   durationMinutes: number,
   location: string | null,
+  copy: (typeof COPY)[EmailKind],
 ): string {
   const dateStr = formatDate(scheduledAt);
   const timeStr = formatTime(scheduledAt);
@@ -69,7 +99,7 @@ function buildEmailHtml(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>55TC — See you on the court.</title>
+<title>55TC — ${copy.subject}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -103,12 +133,12 @@ function buildEmailHtml(
     <div class="logo-wrap">
       <img src="https://vdyvlylacsghnvtllrzj.supabase.co/storage/v1/object/public/assets/55tcos-email-logo.png" alt="55TC OS" height="24" style="display:block;height:24px;width:auto;" />
     </div>
-    <div class="header-headline">SEE YOU<br>ON THE<br>COURT.</div>
+    <div class="header-headline">${copy.headline}</div>
     <div class="header-sub">55TC · Vancouver</div>
   </div>
   <div class="body">
     <p>Hey <span class="name-highlight">${studentName}</span>,</p>
-    <p>Just confirmed — you have a session coming up. Here are the details:</p>
+    <p>${copy.intro}</p>
   </div>
   <div class="info-block">
     <div class="info-card">
@@ -121,7 +151,7 @@ function buildEmailHtml(
     </div>
   </div>
   <div class="signoff">
-    <p>See you there. Less Theory. More Game.</p>
+    <p>${copy.signoff}</p>
     <p style="margin-top: 20px; font-weight: 500;">— Aleksei</p>
   </div>
   <div class="cta-block">
@@ -167,6 +197,7 @@ Deno.serve(async (req) => {
     scheduled_at?: string;
     duration_minutes?: number;
     location?: string | null;
+    kind?: string;
   };
   try {
     payload = await req.json();
@@ -176,6 +207,8 @@ Deno.serve(async (req) => {
 
   const { student_name, student_email, scheduled_at, duration_minutes, location } =
     payload;
+  const copy =
+    COPY[(payload.kind ?? "scheduled") as EmailKind] ?? COPY.scheduled;
   if (!student_name || !student_email || !scheduled_at || !duration_minutes) {
     return json(
       {
@@ -195,12 +228,13 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       from: FROM,
       to: [student_email],
-      subject: SUBJECT,
+      subject: copy.subject,
       html: buildEmailHtml(
         student_name,
         scheduled_at,
         duration_minutes,
         location ?? null,
+        copy,
       ),
     }),
   });

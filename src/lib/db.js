@@ -228,6 +228,19 @@ export async function createSessionsGroup(rows) {
   return unwrap(await supabase.from('sessions').insert(rows).select())
 }
 
+/** Coach-only (RLS): apply the same patch to every session row of a training
+ *  (by id list) — reschedule/edit hits the whole group at once. */
+export async function updateSessions(ids, patch) {
+  return unwrap(
+    await supabase.from('sessions').update(patch).in('id', ids).select(),
+  )
+}
+
+/** Coach-only (RLS): cancel a whole training (soft — sets status on all rows). */
+export async function cancelSessions(ids) {
+  return updateSessions(ids, { status: 'cancelled' })
+}
+
 /** The single next upcoming scheduled session for a student (status 'scheduled',
  *  in the future), soonest first, or null. RLS: a student sees only their own. */
 export async function getNextSession(studentId) {
@@ -331,26 +344,19 @@ export async function listRecentActivity() {
   return items
 }
 
-function startOfWeek(d = new Date()) {
-  const x = new Date(d)
-  const mondayOffset = (x.getDay() + 6) % 7 // 0 = Monday … 6 = Sunday
-  x.setHours(0, 0, 0, 0)
-  x.setDate(x.getDate() - mondayOffset)
-  return x
-}
-
-/** Sessions in the current week (Mon 00:00 → next Mon 00:00, local time), soonest
- *  first. Includes cancelled rows (rendered distinct). Joins the student name. */
-export async function listSessionsThisWeek() {
-  const start = startOfWeek()
-  const end = new Date(start.getTime() + 7 * MS_PER_DAY)
+/** Sessions in the next 14 days (now → +14d), soonest first. Includes cancelled
+ *  rows (rendered distinct). Joins name + email so group actions can re-email
+ *  the roster. Feeds the HQ "Upcoming Trainings" block (Fase F1, Etapa 2). */
+export async function listUpcomingSessions14d() {
+  const now = new Date()
+  const end = new Date(now.getTime() + 14 * MS_PER_DAY)
   return unwrap(
     await supabase
       .from('sessions')
       .select(
-        'id, student_id, scheduled_at, duration_minutes, location, status, student:students(full_name)',
+        'id, student_id, group_id, scheduled_at, duration_minutes, location, status, student:students(full_name, email)',
       )
-      .gte('scheduled_at', start.toISOString())
+      .gte('scheduled_at', now.toISOString())
       .lt('scheduled_at', end.toISOString())
       .order('scheduled_at', { ascending: true }),
   )
