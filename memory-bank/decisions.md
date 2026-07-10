@@ -3,6 +3,29 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-07-10 — Fase F1 Etapa 2: soft-cancel, modal Edit único e substituição do "This Week" (3 decisões do coach)
+- **Decision (1) — Cancelar treino = soft-cancel, não DELETE:** o Cancel do bloco "Upcoming Trainings" marca
+  `status='cancelled'` nas N linhas do grupo (via `cancelSessions`), contrariando a letra do plano da Fase F
+  ("deleta a sessão"). **Why:** todo o app já usa soft-cancel (StudentDetail, Recent Activity, badge riscado);
+  preserva histórico e é reversível no banco. **Alternatives:** DELETE real (rejeitado pelo coach via
+  AskUserQuestion — some do histórico, irreversível).
+- **Decision (2) — "Reagendar" e "Editar" viram 1 modal Edit único:** um só botão/modal com Date/Time/Duration/
+  Location; qualquer save atualiza o grupo inteiro e reenvia email de confirmação (o doc já mandava email sem
+  opção de suprimir). **Why:** os 2 modais do doc seriam quase idênticos; menos UI, mesmo resultado.
+  **Alternatives:** 2 ações separadas fiéis ao doc (rejeitado — duplicação sem ganho).
+- **Decision (3) — O bloco novo SUBSTITUI a seção "This Week" do HQ:** `listSessionsThisWeek`/`startOfWeek`/
+  `SessionBadge` removidos. **Why:** duas listas de sessões quase iguais na mesma tela; o novo cobre 14 dias,
+  agrupa por treino e tem as ações. **Custo aceito:** o link "Add Feedback" por sessão saiu junto (entrada na
+  Home fica pelo Feedback Due; sessões passadas da semana não aparecem mais na Home). **Alternatives:** manter
+  os dois blocos (rejeitado — tela longa e duplicada).
+- **Decisão menor — email por `kind` na MESMA Edge Function:** `send-session-reminder` ganhou campo opcional
+  `kind` ('scheduled' default | 'rescheduled' | 'cancelled') trocando subject/headline/intro/signoff via COPY
+  map — retrocompatível (sem `kind` = email antigo byte-idêntico; Etapa 1/StudentDetail intactos). Redeployada
+  com aprovação. **Why:** o template de confirmação ("Just confirmed — you have a session coming up") estaria
+  errado num cancelamento; 1 função com copy variável evita uma segunda função quase igual. **Alternatives:**
+  (a) nova Edge Function de cancelamento (rejeitada: duplicação); (b) não notificar no cancel (rejeitada: o doc
+  exige notificação).
+
 ## 2026-07-10 — Fase F1: treino em grupo = N linhas em `sessions` + `group_id` compartilhado (migration 012)
 - **Decision:** o bloco "Agendar Treino" do Coach HQ modela um treino em grupo como **N linhas em `sessions`
   (1 por aluno)** que compartilham um **`group_id uuid`** novo (migration `012_sessions_group_id.sql`, aditiva,

@@ -4,6 +4,16 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Fase F1 Etapa 2 — bloco "Upcoming Trainings" na Home do coach (2026-07-10, `1a29a61`, frontend NÃO deployado;
+  Edge Function `send-session-reminder` REDEPLOYADA).** `UpcomingTrainingsCard.jsx` NOVO substitui a seção "This
+  Week" do Coach HQ (decisão do coach): sessões dos próximos 14 dias agrupadas por `group_id` (legada sem grupo =
+  card de 1) — data · hora · duração · local · avatares + nomes. **Edit** (modal único Date/Time/Duration/Location →
+  `updateSessions` nas linhas scheduled do grupo + email `kind='rescheduled'`/aluno) e **Cancel** (confirm →
+  soft-cancel `cancelSessions` + email `kind='cancelled'`/aluno) — `Promise.allSettled`, toast honesto X/N, falha de
+  email não desfaz o banco. `db.js`: `listSessionsThisWeek`→`listUpcomingSessions14d` (+group_id/+email),
+  +`updateSessions`/`cancelSessions`. A função `send-session-reminder` ganhou `kind` (scheduled|rescheduled|
+  cancelled) retrocompatível e foi redeployada; sends reais dos 2 kinds novos ainda não exercitados. Paleta só
+  55TC. lint+build limpos. Deploy do frontend fica p/ a Etapa 4.
 - **Fase F1 Etapa 1 — bloco "Agendar Treino" na Home do coach (2026-07-10, `79361ff`, NÃO deployado; migration 012
   APLICADA live).** `ScheduleTrainingCard.jsx` NOVO no Coach HQ (entre métricas e Feedback Due): picker múltiplo de
   alunos ativos estilo "criar grupo" (tap/checkbox acessível, avatares empilhados forest+inicial, contagem) + Date/
@@ -208,10 +218,12 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
-- **Fase F (Coach Tools + Robozinho) — Etapa 1 do F1 done (`79361ff`); NEXT: F1 Etapa 2** ("Gerenciar Treinos
-  Próximos": lista 14 dias, reagendar/cancelar/editar **por grupo via `group_id`** + reenvio de email), depois
-  Etapa 3 (Feedback Due com prévia/edição inline) e Etapa 4 (deploy via `deploy-prod`). F2 (tela de disparo de
-  análise) e F3 (Robozinho, médio prazo) documentados no plano. Cada etapa exige plano+aprovação (auto mode OFF).
+- **Fase F (Coach Tools + Robozinho) — F1 Etapas 1 (`79361ff`) e 2 (`1a29a61`) done; NEXT: F1 Etapa 3**
+  ("Feedback Due" com prévia completa do feedback + edição inline do body + botão Publicar — ATENÇÃO: o prompt
+  da Etapa 3 pede `Status='Publicado'` no Supabase, mas a tabela `feedbacks` NÃO tem coluna `status` (design
+  registrado 2026-07-08: visibilidade = linha existir com user_id, RLS own-row) → a etapa vai exigir decisão de
+  schema/semântica antes de codar), depois Etapa 4 (deploy via `deploy-prod`). F2 (tela de disparo de análise)
+  e F3 (Robozinho, médio prazo) documentados no plano. Cada etapa exige plano+aprovação (auto mode OFF).
 - **3 feedbacks simulados NOVOS no Supabase de produção p/ teste do portal (2026-07-08, external — sem repo change).**
   Atados a `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, student `b80a7db6`, **1 student row** — confirmado
   por query), `source='video_analysis'`, marcador `notion_id='SIM-TEST-<data>'`. Progressão jun→jul 2026:

@@ -4,6 +4,42 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase F1 ETAPA 2 (bloco "Upcoming Trainings" na Home do coach) COMMITADA (`1a29a61`) + Edge Function `send-session-reminder` REDEPLOYADA (2026-07-10, auto mode OFF, frontend NÃO deployado).**
+Protocolo seguido: li memory-bank + plano da Fase F → plano + 3 decisões via AskUserQuestion → aprovação →
+apliquei → lint+build limpos → `git diff` completo → aprovação → commit + redeploy da função.
+- **Decisões do coach (AskUserQuestion, as 3 recomendações aceitas):** (1) Cancelar = **soft-cancel**
+  (`status='cancelled'` nas N linhas — o doc pedia DELETE; consistência com o resto do app + histórico);
+  (2) Reagendar/Editar = **1 modal Edit único** (Date/Time/Duration/Location; qualquer save reenvia email —
+  o doc listava 2 ações quase idênticas); (3) o bloco novo **SUBSTITUI a seção "This Week"** do HQ (evita 2
+  listas quase iguais; o link "Add Feedback" por sessão saiu junto — entrada de feedback na Home fica pelo
+  Feedback Due; retornável como ajuste pequeno se o coach sentir falta).
+- **`src/components/UpcomingTrainingsCard.jsx` NOVO** (~440 linhas): agrupa as sessões dos próximos 14 dias
+  por `group_id` (linha legada com group_id NULL = grupo de 1) em 1 card/treino: data · hora · duração · local ·
+  avatares empilhados + nomes. **Edit** → modal (mesmas TIMES/chips da Etapa 1, duplicadas de propósito) →
+  `updateSessions(ids, patch)` nas linhas `status='scheduled'` do grupo + 1 email `kind='rescheduled'`/aluno.
+  **Cancel** → `window.confirm` → `cancelSessions(ids)` (soft) + email `kind='cancelled'`/aluno. Emails via
+  `Promise.allSettled`, toast honesto X/N, falha de email nunca desfaz o banco (padrão Etapa 1). Grupo 100%
+  cancelado renderiza riscado/esmaecido sem ações; grupo parcialmente cancelado (ex.: 1 aluno cancelado via
+  StudentDetail) segue editável — as ações operam só nas linhas ainda scheduled. Modal: overlay clicável fecha,
+  Esc fecha, `role=dialog`, mobile-first (sobe de baixo). Se o horário salvo não estiver na tabela TIMES,
+  aparece como opção extra (guarda p/ rows criadas fora do app).
+- **`db.js`:** `listSessionsThisWeek`+`startOfWeek` REMOVIDOS (único consumidor era o HQ) → substituídos por
+  **`listUpcomingSessions14d()`** (now → +14d, inclui `group_id` e `students(full_name, email)` p/ os reenvios);
+  novos **`updateSessions(ids, patch)`** (`.in('id', ids)` — preciso e funciona p/ linhas legadas sem group_id)
+  e **`cancelSessions(ids)`**. `cancelSession` single mantido (StudentDetail usa).
+- **`CoachDashboard.jsx`:** seção This Week removida (+ `SessionBadge`/`SESSION_STATUSES` órfãos); bloco novo
+  renderizado entre o Schedule Training e o Feedback Due; `refreshUpcoming` compartilhado (`onScheduled` da
+  Etapa 1 + `onChanged` do bloco novo).
+- **Edge Function `send-session-reminder`:** ganhou campo opcional **`kind`** ('scheduled' default |
+  'rescheduled' | 'cancelled') que troca subject/headline/intro/signoff (COPY map); sem `kind` o email é
+  idêntico ao anterior — **retrocompatível** (Etapa 1 e StudentDetail intactos). **REDEPLOYADA** com aprovação
+  (`supabase functions deploy`, projeto `vdyvlylacsghnvtllrzj`, 6.675kB). Emails de reagendamento/cancelamento
+  ainda NÃO exercitados por um send real (mesmo padrão de pendência do resto da Fase F).
+- lint+build limpos. **SEM deploy do frontend** (Etapa 4 do F1; prod ainda serve a Home antiga com This Week).
+  **NEXT: F1 Etapa 3** — bloco "Feedback Due" com prévia completa + edição inline do body + Publicar (ver prompt
+  no plano; atenção: a tabela `feedbacks` NÃO tem coluna `status` — ver Known Issues/design 2026-07-08 — o plano
+  da Etapa 3 pede `Status='Publicado'` no Supabase, vai exigir decisão de schema) — exige plano+aprovação.
+
 **Fase F1 ETAPA 1 (bloco "Agendar Treino" na Home do coach) COMMITADA (`79361ff`) + migration 012 APLICADA live (2026-07-10, auto mode OFF, NÃO deployado).**
 Início da **Fase F — Coach Tools + Robozinho** (plano em `memory-bank/planning/fase-f-coach-tools-robozinho.md`,
 colado pelo coach; commitado neste /umb). Protocolo seguido: li os planning docs antes de agir, mostrei plano →
