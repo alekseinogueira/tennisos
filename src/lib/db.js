@@ -211,6 +211,23 @@ export async function cancelSession(id) {
   )
 }
 
+/** Active roster students, A→Z — feeds the schedule-training picker. */
+export async function listActiveStudents() {
+  return unwrap(
+    await supabase
+      .from('students')
+      .select('id, user_id, full_name, email')
+      .eq('status', 'active')
+      .order('full_name'),
+  )
+}
+
+/** Coach-only (RLS): schedule a group training — one row per student, all
+ *  sharing the same group_id so the whole training can be managed as one. */
+export async function createSessionsGroup(rows) {
+  return unwrap(await supabase.from('sessions').insert(rows).select())
+}
+
 /** The single next upcoming scheduled session for a student (status 'scheduled',
  *  in the future), soonest first, or null. RLS: a student sees only their own. */
 export async function getNextSession(studentId) {

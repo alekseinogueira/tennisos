@@ -11,6 +11,7 @@ import {
   listRecentActivity,
   cancelSession,
 } from '../lib/db'
+import ScheduleTrainingCard from '../components/ScheduleTrainingCard'
 
 export default function CoachDashboard() {
   const [metrics, setMetrics] = useState(null)
@@ -45,6 +46,14 @@ export default function CoachDashboard() {
       alive = false
     }
   }, [])
+
+  async function refreshWeek() {
+    try {
+      setWeek(await listSessionsThisWeek())
+    } catch {
+      // keep the stale list — the new training still exists in the DB
+    }
+  }
 
   async function handleCancel(id) {
     if (!window.confirm('Cancel this session?')) return
@@ -86,6 +95,8 @@ export default function CoachDashboard() {
           highlight={due?.length > 0}
         />
       </div>
+
+      <ScheduleTrainingCard onScheduled={refreshWeek} />
 
       <section className="mt-10">
         <h2 className="mb-4 font-display text-3xl tracking-[0.04em] text-forest">
