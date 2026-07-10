@@ -4,6 +4,26 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase F1 ETAPA 4 (deploy) CONCLUÍDA — F1 COMPLETA e NO AR em produção (2026-07-10, auto mode OFF).**
+Protocolo seguido: li memory-bank + plano da Fase F → lint+build limpos verificados → plano de deploy →
+aprovação via AskUserQuestion → skill `deploy-prod` (push → hook → verify).
+- **Deploy verificado via API Vercel:** `git push origin master` (`ca6af56..8153089`, 6 commits) → hook →
+  job `LMHCtupbhyH7KiEc7qNH` → deployment **`dpl_2UwWupV9MKkgwPAhrKSfXmNEvGjA` READY/production, commit
+  `8153089`**. Checagem final no domínio: `portal.55tenniscrew.com` HTTP 200 servindo `index-DbgFPgJS.js`
+  (mesmo hash do build local de `8153089`). **A Home nova do coach inteira está em prod:** Schedule Training
+  (Etapa 1), Upcoming Trainings (Etapa 2, substituiu This Week), Feedback Due + Awaiting Feedback + rota
+  `/admin/feedback/:id/review` (Etapa 3), mais o label i18n `Overall progress` (`27e303e`).
+- **Achado colateral:** o push ao GitHub disparou um build próprio do Vercel (`dpl_CLNc5y6qNQYdsZ9JGnn3tZ4yks8Z`,
+  READY, mesmo commit) segundos ANTES do hook — a **integração git push-to-deploy parece funcionar de novo**
+  (Known Issue antigo dizia unreliable). O hook continua sendo o caminho oficial (`deploy-prod`); o build
+  duplicado é inócuo (mesmo commit).
+- **Validação manual recomendada (fica com o coach):** abrir o Coach HQ em prod → draft
+  `SIM-TEST-DRAFT-20260709` no Feedback Due → Review → editar → Publish → conferir que some do bloco e
+  aparece p/ o aluno de teste (`aleksei.nogueirasousa@gmail.com`) na aba Feedback. Cleanup dos simulados
+  segue contratado: `delete from feedbacks where notion_id like 'SIM-TEST-%';`.
+- **NEXT: Fase F2 — Tela de Disparo** (Etapa 1: caminho manual — form + IA preenche análise + publica
+  direto; F2 também liga email no publish + drafts reais no Supabase). Exige plano+aprovação (auto mode OFF).
+
 **Fase F1 ETAPA 3 (bloco "Feedback Due" com prévia + edição inline + Publicar) COMMITADA (`3a52a98`) + migration 013 APLICADA live + 1 draft simulado inserido (2026-07-10, auto mode OFF, frontend NÃO deployado).**
 Protocolo seguido: li memory-bank + plano da Fase F → plano + 4 decisões via AskUserQuestion → aprovação →
 apliquei → lint+build limpos → diff → aprovação → migration live + draft simulado + commit.

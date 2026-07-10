@@ -4,6 +4,15 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Fase F1 COMPLETA (Etapas 1–4) — Home nova do coach DEPLOYADA em produção (2026-07-10, commit `8153089`).**
+  Etapa 4 = deploy via `deploy-prod` (push `ca6af56..8153089` → hook → verify): deployment
+  `dpl_2UwWupV9MKkgwPAhrKSfXmNEvGjA` READY/production, `portal.55tenniscrew.com` 200 servindo o bundle do
+  commit (`index-DbgFPgJS.js` = hash do build local). Em prod agora: Schedule Training (picker múltiplo +
+  group_id + emails), Upcoming Trainings (edit/cancel por grupo + emails rescheduled/cancelled), Feedback
+  Due (drafts → Review → Publish em `/admin/feedback/:id/review`) + Awaiting Feedback, e o label
+  `Overall progress`. Backend já estava live (migrations 012/013, `send-session-reminder` c/ `kind`).
+  Validação manual pendente c/ o coach: Review→Publish do draft `SIM-TEST-DRAFT-20260709` em prod.
+  Colateral: o push ao GitHub disparou build próprio (mesmo commit, READY) — git integration parece OK de novo.
 - **Fase F1 Etapa 3 — bloco "Feedback Due" com prévia + edição inline + Publicar (2026-07-10, `3a52a98`,
   frontend NÃO deployado; migration 013 APLICADA live).** `feedbacks.status` novo ('draft'|'published', default
   published — linhas existentes intactas) + RLS `feedbacks_select` exige published p/ o aluno (coach vê tudo).
@@ -228,13 +237,12 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
-- **Fase F (Coach Tools + Robozinho) — F1 Etapas 1 (`79361ff`), 2 (`1a29a61`) e 3 (`3a52a98`) done; NEXT: F1
-  Etapa 4 — deploy via `deploy-prod`** (a Home nova do coach inteira — Schedule Training, Upcoming Trainings,
-  Feedback Due/Awaiting Feedback, Review — só existe em prod depois disso). A decisão de schema da Etapa 3 foi
-  resolvida: `feedbacks.status` (migration 013, live). Validação recomendada antes/logo após o deploy: coach
-  abre o draft `SIM-TEST-DRAFT-20260709` no Feedback Due → edita → Publish → confere que some do bloco e
-  aparece p/ o aluno. F2 (tela de disparo de análise — inclui email no publish + drafts reais no Supabase) e
-  F3 (Robozinho, médio prazo) documentados no plano. Cada etapa exige plano+aprovação (auto mode OFF).
+- **Fase F (Coach Tools + Robozinho) — F1 COMPLETA (Etapas 1–4, deployada em `8153089`); NEXT: F2 — Tela de
+  Disparo** (Etapa 1: caminho manual — form + IA preenche análise + publica direto; F2 também liga o email no
+  publish — a Edge Function `send-feedback-email` exige service-role — e cria drafts reais no Supabase; Etapa 2:
+  caminho vídeo; Etapa 3: aprendizado de visual_cue; Etapa 4: deploy). F3 (Robozinho) fica p/ depois de F1+F2
+  validadas. Validação manual da F1 pendente c/ o coach: Review→Publish do draft `SIM-TEST-DRAFT-20260709` em
+  prod (some do Feedback Due → aparece p/ o aluno). Cada etapa exige plano+aprovação (auto mode OFF).
 - **3 feedbacks simulados NOVOS no Supabase de produção p/ teste do portal (2026-07-08, external — sem repo change).**
   Atados a `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, student `b80a7db6`, **1 student row** — confirmado
   por query), `source='video_analysis'`, marcador `notion_id='SIM-TEST-<data>'`. Progressão jun→jul 2026:
@@ -561,7 +569,10 @@
   the user confirmed `006` but not `005`. Confirm `005` is applied before relying on the claim flow.
 - **Vercel git push-to-deploy is unreliable** — git-triggered (and CLI) builds sat in `UNKNOWN`
   / never built for this project. Working path is the **deploy hook + manual deploy**. Repair the
-  git auto-build integration before relying on push-to-deploy.
+  git auto-build integration before relying on push-to-deploy. **Update 2026-07-10:** o push da F1
+  Etapa 4 disparou um build git-triggered que chegou a READY/production (mesmo commit do hook) — a
+  integração pode ter se recuperado, mas o fluxo oficial continua sendo `deploy-prod` (hook) até
+  observarmos isso consistentemente.
 - **Vercel Preview env vars not set** (`VITE_SUPABASE_URL`/`ANON_KEY`) — CLI 54.7.1 bug; Preview
   deploys lack Supabase config until backfilled (upgrade CLI, then `vercel env add … preview`).
 - Migrations written (`supabase/migrations/001..003`) but **not applied** — auth + admin +
