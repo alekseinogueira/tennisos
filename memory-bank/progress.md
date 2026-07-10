@@ -4,6 +4,15 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Fase F1 Etapa 1 — bloco "Agendar Treino" na Home do coach (2026-07-10, `79361ff`, NÃO deployado; migration 012
+  APLICADA live).** `ScheduleTrainingCard.jsx` NOVO no Coach HQ (entre métricas e Feedback Due): picker múltiplo de
+  alunos ativos estilo "criar grupo" (tap/checkbox acessível, avatares empilhados forest+inicial, contagem) + Date/
+  Time (07:00–21:00, 30 min)/Duration 60·90/Location → 1 INSERT batch em `sessions` (1 linha/aluno, `group_id`
+  compartilhado — migration `012_sessions_group_id.sql`, aditiva, aplicada e verificada live) + 1 email de
+  confirmação por aluno via `send-session-reminder` existente (`Promise.allSettled`, toast honesto X/N; falha de
+  email não desfaz sessões). `db.js` +`listActiveStudents`/`createSessionsGroup`; `onScheduled` refaz "This Week".
+  Paleta só tokens 55TC (dourado do doc ignorado, decisão repetida da Fase D). lint+build limpos. Deploy fica p/ a
+  Etapa 4 do F1. Plano da fase em `planning/fase-f-coach-tools-robozinho.md`.
 - **i18n `SessionDetail.jsx` — labels estáticos 100% em inglês (2026-07-09, `27e303e`, NÃO deployado).** Auditoria dos
   labels estáticos do detalhe de feedback do aluno: já estavam todos em inglês; único ajuste real foi renomear a linha de
   rating `rating_progress` de `Progress`→`Overall progress` (desambigua do indicador qualitativo `Progress`). Strings PT
@@ -199,6 +208,10 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
+- **Fase F (Coach Tools + Robozinho) — Etapa 1 do F1 done (`79361ff`); NEXT: F1 Etapa 2** ("Gerenciar Treinos
+  Próximos": lista 14 dias, reagendar/cancelar/editar **por grupo via `group_id`** + reenvio de email), depois
+  Etapa 3 (Feedback Due com prévia/edição inline) e Etapa 4 (deploy via `deploy-prod`). F2 (tela de disparo de
+  análise) e F3 (Robozinho, médio prazo) documentados no plano. Cada etapa exige plano+aprovação (auto mode OFF).
 - **3 feedbacks simulados NOVOS no Supabase de produção p/ teste do portal (2026-07-08, external — sem repo change).**
   Atados a `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, student `b80a7db6`, **1 student row** — confirmado
   por query), `source='video_analysis'`, marcador `notion_id='SIM-TEST-<data>'`. Progressão jun→jul 2026:

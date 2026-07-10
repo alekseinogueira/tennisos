@@ -3,6 +3,24 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-07-10 — Fase F1: treino em grupo = N linhas em `sessions` + `group_id` compartilhado (migration 012)
+- **Decision:** o bloco "Agendar Treino" do Coach HQ modela um treino em grupo como **N linhas em `sessions`
+  (1 por aluno)** que compartilham um **`group_id uuid`** novo (migration `012_sessions_group_id.sql`, aditiva,
+  nullable, índice parcial; aplicada live 2026-07-10). Gerado no cliente via `crypto.randomUUID()`, 1 INSERT batch.
+- **Why:** a tabela `sessions` é 1 aluno por linha (`student_id NOT NULL`, RLS own-row via join em students) —
+  N linhas preserva RLS/telas/widgets existentes sem refactor. O `group_id` dá à F1 Etapa 2 (reagendar/cancelar o
+  treino inteiro) um agrupamento exato em vez de heurística data+hora+local. Escolhido pelo coach via
+  AskUserQuestion (recomendação aceita).
+- **Alternatives:** (a) N linhas SEM migration (rejeitada: Etapa 2 agruparia por heurística, pode agrupar errado);
+  (b) refatorar p/ 1 linha por treino + tabela de participantes (rejeitada implícita: mudança estrutural grande,
+  quebraria RLS/telas atuais p/ ganho nenhum na v1).
+- **Decisões menores da mesma etapa:** paleta = só tokens 55TC (o doc da Fase F pede `#1B3A2D`/`#C8A96E` — mesma
+  rejeição da Fase D, Hard Rule do CLAUDE.md); email de confirmação = reuso do `send-session-reminder` SEM mudança
+  no template (1 fetch/aluno, `Promise.allSettled`, toast honesto X/N — falha de email não desfaz as sessões);
+  avatares do picker = círculo forest + inicial (students não tem foto; avatar vive em profiles e aluno unclaimed
+  não tem user_id); `TIMES`/`DURATIONS` duplicados do `StudentDetail` de propósito (extrair lib compartilhada só
+  quando um 3º consumidor aparecer).
+
 ## 2026-07-08 — 3 feedbacks simulados NOVOS no Supabase p/ teste do portal (aprovação-antes-de-inserir, auto mode OFF)
 - **Decision:** Inseri **3** rows fictícios-mas-realistas em `feedbacks` (Supabase prod `vdyvlylacsghnvtllrzj`) atados a
   `aleksei.nogueirasousa@gmail.com`, seguindo **exatamente** o padrão do `SIM-TEST-20260705` (mesmos campos/estrutura/

@@ -4,6 +4,34 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase F1 ETAPA 1 (bloco "Agendar Treino" na Home do coach) COMMITADA (`79361ff`) + migration 012 APLICADA live (2026-07-10, auto mode OFF, NÃO deployado).**
+Início da **Fase F — Coach Tools + Robozinho** (plano em `memory-bank/planning/fase-f-coach-tools-robozinho.md`,
+colado pelo coach; commitado neste /umb). Protocolo seguido: li os planning docs antes de agir, mostrei plano →
+aprovação → apliquei → mostrei `git diff` → aprovação → migration live + commit.
+- **Migration `012_sessions_group_id.sql` APLICADA** via `supabase db push --linked` (verificada por query:
+  coluna existe; `migration list` local=remote até 012): `sessions.group_id uuid` NULL + índice parcial
+  `sessions_group_idx`. **Decisão do coach (AskUserQuestion):** treino em grupo = **N linhas (1/aluno) + `group_id`
+  compartilhado** — a Etapa 2 (reagendar/cancelar o treino inteiro) agrupa com precisão, sem heurística data+local.
+  Linhas antigas e as do `StudentDetail` ficam com `group_id` NULL (aditivo, RLS/telas intactas).
+- **`src/components/ScheduleTrainingCard.jsx` NOVO** (~330 linhas) — picker múltiplo estilo "criar grupo de
+  WhatsApp": lista alunos ativos (`listActiveStudents`), tap alterna (`role=checkbox`, acessível), avatares
+  empilhados dos selecionados (círculo forest + inicial sand — `students` não tem foto; avatar vive em `profiles`
+  e unclaimed nem tem user_id) + contagem "N players". Campos Date / Time (07:00–21:00, 30 min — mesma tabela
+  `TIMES` do `StudentDetail`, duplicada de propósito) / Duration chips 60·90 / Location livre. Confirmar:
+  `group_id = crypto.randomUUID()` → **1 INSERT batch** (`createSessionsGroup`) → **N emails** via a Edge Function
+  `send-session-reminder` JÁ deployada (mesmo fetch+payload do `StudentDetail`, `Promise.allSettled`) → toast
+  honesto "Training scheduled for N players — emails sent X/N" (falha de email NÃO desfaz as sessões). Estados:
+  roster vazio / erro de load / loading. Mobile-first, UI em inglês, só tokens 55TC.
+- **`db.js`:** +`listActiveStudents()` (status='active', A→Z, só campos do picker) e +`createSessionsGroup(rows)`.
+  **`CoachDashboard.jsx`:** bloco renderizado entre as métricas e o "Feedback Due", com `onScheduled={refreshWeek}`
+  (refaz `listSessionsThisWeek` → o treino novo aparece em "This Week" na hora).
+- **Paleta:** o doc da Fase F pede `#1B3A2D`/`#C8A96E` (dourado) — **ignorado**, mesma decisão da Fase D: só tokens
+  55TC (Hard Rule do CLAUDE.md). **Email:** template do `send-session-reminder` reusado SEM mudança (aluno recebe o
+  mesmo email de sempre; não menciona grupo).
+- lint+build limpos. **SEM deploy** (deploy é a Etapa 4 do F1; prod serve a Home antiga do coach — a migration,
+  aditiva/nullable, não afeta o que está no ar). **NEXT: F1 Etapa 2** — bloco "Gerenciar Treinos Próximos"
+  (próximos 14 dias, reagendar/cancelar/editar por grupo via `group_id` + reenvio de email) — exige plano+aprovação.
+
 **Ajuste i18n em `SessionDetail.jsx` — label da linha de rating renomeada (2026-07-09, `27e303e`, auto mode OFF, NÃO deployado).**
 Pedido do coach: garantir que TODOS os labels estáticos de seção/campo do detalhe de feedback do aluno estejam em inglês
 (o conteúdo dinâmico vindo do banco fica como está, em qualquer idioma). Auditoria mostrou que o componente correto é

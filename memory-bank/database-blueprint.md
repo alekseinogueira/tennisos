@@ -89,7 +89,7 @@
 - Rel: *→1 students, *→0..1 packages.
 - **RLS:** student SELECT own (`user_id = auth.uid()`); coach full CRUD. No student writes.
 
-### sessions  (scheduled lessons; subject = student)  *(migration 006)*
+### sessions  (scheduled lessons; subject = student)  *(migrations 006, 012)*
 | column           | type                       | notes |
 |------------------|----------------------------|-------|
 | id               | uuid PK                    | |
@@ -101,10 +101,13 @@
 | location         | text                       | e.g. "Stanley Park Court 3" |
 | notes            | text                       | optional |
 | status           | session_status default 'scheduled' | enum: scheduled, completed, cancelled |
+| group_id         | uuid NULL                  | *(migration 012, applied live 2026-07-10)* group training marker: the N rows (1/student) created together by the Coach-HQ "Schedule Training" block share one `crypto.randomUUID()`; NULL for single bookings (StudentDetail) and all pre-012 rows. Partial index `sessions_group_idx` (`where group_id is not null`). |
 | created_at / updated_at | timestamptz         | |
 
-- Scheduled from the admin StudentDetail page; fires the `send-session-reminder` Edge Function on
-  create (reminder goes to the roster email regardless of claim status). Cancel is a soft update
+- Scheduled from the admin StudentDetail page (single student) or the Coach-HQ "Schedule Training"
+  block (multi-student → one row per student, shared `group_id`, batch insert via
+  `createSessionsGroup`); both fire the `send-session-reminder` Edge Function per student on create
+  (reminder goes to the roster email regardless of claim status). Cancel is a soft update
   (`status='cancelled'`, row kept). Student Home "Next Session" widget reads `getNextSession`.
 - Rel: *→1 students.
 - **RLS (updated migration `008`, 2026-06-18):** student SELECT resolves via a **`students` join** —
