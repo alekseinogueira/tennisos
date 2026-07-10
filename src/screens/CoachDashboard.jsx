@@ -7,6 +7,7 @@ import {
   countSessionsThisMonth,
   countFeedbacksThisMonth,
   listPendingFeedback,
+  listDraftFeedbacks,
   listUpcomingSessions14d,
   listRecentActivity,
 } from '../lib/db'
@@ -17,6 +18,7 @@ export default function CoachDashboard() {
   const [metrics, setMetrics] = useState(null)
   const [upcoming, setUpcoming] = useState(null)
   const [due, setDue] = useState(null)
+  const [drafts, setDrafts] = useState(null)
   const [activity, setActivity] = useState(null)
   const [err, setErr] = useState(null)
 
@@ -24,18 +26,20 @@ export default function CoachDashboard() {
     let alive = true
     ;(async () => {
       try {
-        const [active, sessions, feedbacks, dueRows, upcomingRows, activityRows] =
+        const [active, sessions, feedbacks, dueRows, draftRows, upcomingRows, activityRows] =
           await Promise.all([
             countActiveStudents(),
             countSessionsThisMonth(),
             countFeedbacksThisMonth(),
             listPendingFeedback(),
+            listDraftFeedbacks(),
             listUpcomingSessions14d(),
             listRecentActivity(),
           ])
         if (!alive) return
         setMetrics({ active, sessions, feedbacks })
         setDue(dueRows)
+        setDrafts(draftRows)
         setUpcoming(upcomingRows)
         setActivity(activityRows)
       } catch (e) {
@@ -80,7 +84,7 @@ export default function CoachDashboard() {
         <MetricCard label="Sessions This Month" value={metrics?.sessions} />
         <MetricCard label="Feedbacks This Month" value={metrics?.feedbacks} />
         <MetricCard
-          label="Pending Feedback"
+          label="Awaiting Feedback"
           value={due?.length}
           highlight={due?.length > 0}
         />
@@ -90,9 +94,51 @@ export default function CoachDashboard() {
 
       <UpcomingTrainingsCard sessions={upcoming} onChanged={refreshUpcoming} />
 
+      {/* Feedback Due — AI drafts waiting for the coach's review (F1 Etapa 3).
+          Populated once Fase F2 starts landing drafts in Supabase. */}
       <section className="mt-10">
         <h2 className="mb-4 font-display text-3xl tracking-[0.04em] text-forest">
           Feedback Due
+        </h2>
+
+        {drafts && drafts.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-forest/25 bg-white/40 px-6 py-8 text-center">
+            <p className="text-sm text-ink/55">
+              No drafts waiting. Everything the crew sees is live.
+            </p>
+          </div>
+        ) : (
+          <ul className="overflow-hidden rounded-2xl border border-forest/12 bg-white/50">
+            {(drafts ?? []).map((d) => (
+              <li
+                key={d.id}
+                className="flex items-center justify-between gap-4 border-b border-forest/8 px-5 py-4 last:border-0"
+              >
+                <div className="min-w-0">
+                  <p className="font-display text-2xl tracking-[0.03em] text-forest">
+                    {d.student?.full_name ?? 'Student'}
+                  </p>
+                  <p className="mt-0.5 truncate text-sm text-ink/60">
+                    {d.lesson_date ? `Session ${formatDay(d.lesson_date)}` : 'Session'}
+                    {d.title ? ` · ${d.title}` : ''}
+                  </p>
+                </div>
+                <Link
+                  to={`/admin/feedback/${d.id}/review`}
+                  className="shrink-0 text-xs font-semibold uppercase tracking-[0.15em] text-forest underline-offset-4 transition hover:underline"
+                >
+                  Review →
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Awaiting Feedback — past sessions with nothing written or drafted yet. */}
+      <section className="mt-10">
+        <h2 className="mb-4 font-display text-3xl tracking-[0.04em] text-forest">
+          Awaiting Feedback
         </h2>
 
         {due && due.length === 0 ? (
@@ -196,6 +242,17 @@ function MetricCard({ label, value, highlight }) {
       </p>
     </div>
   )
+}
+
+// Date-only values (lesson_date) must pin to local midnight — new Date('YYYY-MM-DD')
+// parses as UTC and renders the previous day in western timezones.
+function formatDay(value) {
+  const d = new Date(String(value).includes('T') ? value : `${value}T00:00:00`)
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
 }
 
 function formatWhen(ts) {

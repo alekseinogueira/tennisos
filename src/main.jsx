@@ -25,6 +25,7 @@ import Students from './screens/admin/Students'
 import StudentDetail from './screens/admin/StudentDetail'
 import StudentForm from './screens/admin/StudentForm'
 import FeedbackComposer from './screens/admin/FeedbackComposer'
+import FeedbackReview from './screens/admin/FeedbackReview'
 import Videos from './screens/admin/Videos'
 import FeedbackDetail from './screens/admin/FeedbackDetail'
 
@@ -65,6 +66,7 @@ createRoot(document.getElementById('root')).render(
                   path="/admin/students/:id/feedback/:fid"
                   element={<FeedbackDetail />}
                 />
+                <Route path="/admin/feedback/:id/review" element={<FeedbackReview />} />
                 <Route path="/admin/videos" element={<Videos />} />
               </Route>
             </Route>

@@ -291,11 +291,13 @@ export async function countSessionsThisMonth() {
   return count ?? 0
 }
 
-/** Count of feedbacks created in the current calendar month. */
+/** Count of feedbacks PUBLISHED in the current calendar month — a draft awaiting
+ *  review isn't a feedback given yet. */
 export async function countFeedbacksThisMonth() {
   const { count, error } = await supabase
     .from('feedbacks')
     .select('*', { count: 'exact', head: true })
+    .eq('status', 'published')
     .gte('created_at', startOfMonthISO())
     .lt('created_at', startOfNextMonthISO())
   if (error) throw error
@@ -311,6 +313,7 @@ export async function listRecentActivity() {
       await supabase
         .from('feedbacks')
         .select('id, title, created_at, student:students(full_name)')
+        .eq('status', 'published')
         .order('created_at', { ascending: false })
         .limit(5),
     ),
@@ -369,7 +372,9 @@ export async function listUpcomingSessions14d() {
  *  action yet, so a past scheduled session is treated as having happened.
  *  Returns one row per student (their most recent uncovered session), newest
  *  session first: { student_id, student_name, session_at, location }. Reused for
- *  the PENDING FEEDBACK metric (its length) and the Step 3 FEEDBACK DUE list. */
+ *  the AWAITING FEEDBACK metric (its length) and the HQ Awaiting Feedback list.
+ *  A DRAFT counts as coverage on purpose: the session's feedback exists and sits
+ *  in the Feedback Due (drafts) block — listing it here too would double-nag. */
 export async function listPendingFeedback() {
   const now = new Date()
   const since = new Date(now.getTime() - 14 * MS_PER_DAY).toISOString()
@@ -417,6 +422,19 @@ export async function listPendingFeedback() {
   return due
 }
 
+/** Coach-only in practice (a student's RLS can't see drafts): the AI-generated
+ *  feedbacks awaiting review, newest first. Feeds the HQ "Feedback Due" block
+ *  (Fase F1, Etapa 3). Joins the student name for the list row. */
+export async function listDraftFeedbacks() {
+  return unwrap(
+    await supabase
+      .from('feedbacks')
+      .select('id, title, lesson_date, created_at, student:students(full_name)')
+      .eq('status', 'draft')
+      .order('created_at', { ascending: false }),
+  )
+}
+
 // ─── feedbacks ───────────────────────────────────────────────────────────────
 
 export async function listFeedbacksForStudent(studentId) {
@@ -460,6 +478,13 @@ export async function updateFeedback(id, patch) {
   return unwrap(
     await supabase.from('feedbacks').update(patch).eq('id', id).select().single(),
   )
+}
+
+/** Coach-only (RLS): publish a feedback — persist the (possibly edited) coach's
+ *  analysis and flip status so the student's RLS lets them see it. No email in
+ *  v1 (send-feedback-email only accepts the service-role key; Fase F2 wires it). */
+export async function publishFeedback(id, patch = {}) {
+  return updateFeedback(id, { ...patch, status: 'published' })
 }
 
 // ─── student_gallery (per-student PRIVATE lesson footage) ────────────────────
