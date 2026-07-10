@@ -3,6 +3,32 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-07-10 — Fase F1 Etapa 3: coluna `status` em feedbacks, drafts portal-only, sem email no publish v1, 2 listas no HQ (4 decisões do coach)
+- **Decision (1) — draft vs publicado = coluna `status` em `feedbacks` (migration 013):** text
+  ('draft'|'published'), NOT NULL default 'published', check; RLS `feedbacks_select` passou a exigir
+  `status='published'` p/ o aluno (coach vê tudo). **Why:** a Etapa 3 do plano pedia `Status='Publicado'` mas a
+  tabela não tinha coluna; default 'published' preserva 100% do comportamento existente (linhas antigas,
+  FeedbackComposer, sync do n8n). **Alternatives:** (a) `published_at timestamptz` NULL=draft (ganharia o
+  "quando", mas foge do que o doc nomeia); (b) sem schema change (rejeitado — travaria a F2).
+- **Decision (2) — drafts entram no Supabase só via F2; n8n INTACTO:** o workflow "Publicar Feedback" continua
+  sincronizando apenas Notion Publicado (chega como published via default). **Why:** o próprio doc da fase diz
+  "workflows n8n existentes — inalterados"; estender o poll p/ sincronizar Rascunho arriscaria o upsert de 5 min
+  sobrescrever edições inline do coach / reverter publish (exigiria guardas extras). **Alternatives:** estender o
+  workflow agora (rejeitado — risco de overwrite, fora do escopo da fase).
+- **Decision (3) — SEM email ao publicar pelo portal (v1):** Publish só muda status. **Why:** a Edge Function
+  `send-feedback-email` só aceita a service-role key (guard verificado) — o portal roda com anon key e não
+  consegue chamá-la; o doc da Etapa 3 não pede email (isso é a F2 Etapa 1). **Alternatives:** alterar a função
+  p/ aceitar JWT de coach + redeploy (rejeitado — mais superfície agora; fica p/ a F2).
+- **Decision (4) — HQ mantém DUAS listas:** "Feedback Due" novo = drafts da IA p/ revisar (Review →); a lista
+  antiga de sessões-sem-feedback ficou abaixo renomeada "Awaiting Feedback" (métrica idem). Um draft conta como
+  cobertura na Awaiting de propósito (sem cobrança dupla do mesmo treino). **Alternatives:** substituir a lista
+  antiga (rejeitado — perderia o lembrete de escrever feedback de sessões dadas).
+- **Decisão de implementação — prévia compartilhada por extração:** a view de 7 seções do `SessionDetail` virou
+  `SessionFeedbackView` presentacional (link Compare = prop), reusada pela tela do aluno e pela `FeedbackReview`
+  com preview ao vivo do body editado. **Why:** "prévia igual ao que o aluno vê" por construção, sem duplicar
+  ~400 linhas. **Alternatives:** duplicar o layout na review (drift inevitável); coach abrir `/feedback/:id`
+  direto (header usa o profile do usuário logado — mostraria o nome do coach).
+
 ## 2026-07-10 — Fase F1 Etapa 2: soft-cancel, modal Edit único e substituição do "This Week" (3 decisões do coach)
 - **Decision (1) — Cancelar treino = soft-cancel, não DELETE:** o Cancel do bloco "Upcoming Trainings" marca
   `status='cancelled'` nas N linhas do grupo (via `cancelSessions`), contrariando a letra do plano da Fase F

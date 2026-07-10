@@ -4,6 +4,45 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase F1 ETAPA 3 (bloco "Feedback Due" com prévia + edição inline + Publicar) COMMITADA (`3a52a98`) + migration 013 APLICADA live + 1 draft simulado inserido (2026-07-10, auto mode OFF, frontend NÃO deployado).**
+Protocolo seguido: li memory-bank + plano da Fase F → plano + 4 decisões via AskUserQuestion → aprovação →
+apliquei → lint+build limpos → diff → aprovação → migration live + draft simulado + commit.
+- **Decisões do coach (AskUserQuestion, as 4 recomendações aceitas):** (1) **coluna `status`** em `feedbacks`
+  ('draft'|'published', default 'published') — resolve a lacuna de schema que a Etapa 3 exigia (o doc pedia
+  `Status='Publicado'` mas a tabela não tinha coluna); (2) **portal-only agora** — n8n INTACTO (o doc da fase diz
+  "workflows n8n inalterados"); drafts entram no Supabase só quando a F2 criar (bloco validável já pelo draft
+  simulado); (3) **SEM email no publish v1** — a Edge Function `send-feedback-email` só aceita service-role key
+  (guard verificado no código), o portal com anon key não consegue chamá-la; F2 liga a notificação; (4) **manter
+  as duas listas** no HQ — "Feedback Due" novo = drafts da IA p/ revisar; a lista antiga de sessões-sem-feedback
+  ficou logo abaixo renomeada **"Awaiting Feedback"** (métrica renomeada igual).
+- **Migration `013_feedbacks_status.sql` APLICADA** via `db push --linked` (verificada por query: coluna
+  default `'published'`, NOT NULL, check draft|published; policy `feedbacks_select` recriada = aluno só vê
+  `status='published'`, coach vê tudo). Linhas existentes (3, todas SIM-TEST) ficaram published — nada mudou
+  p/ o aluno. FeedbackComposer continua publicando direto via default (sem code change).
+- **`src/components/SessionFeedbackView.jsx` NOVO** (~440 linhas): a view de 7 seções do `SessionDetail`
+  extraída verbatim como componente presentacional (`feedback`, `studentName`, `videos`, `compareHref` — o link
+  "Compare" virou prop, oculto na revisão do coach). `SessionDetail.jsx` ficou só fetch+estados+chrome
+  (-408 linhas), tela do aluno pixel-idêntica.
+- **`src/screens/admin/FeedbackReview.jsx` NOVO** — rota `/admin/feedback/:id/review` (RoleRoute coach/admin):
+  badge Draft/Published, textarea "Coach's analysis — edit before publishing" (estilo do Composer), botão
+  **Publish** (disabled com body vazio; vira "Save changes" se já published) e **preview ao vivo** — o
+  `SessionFeedbackView` recebe `{...feedback, body: <digitado>}`, ou seja, a prévia é exatamente o que o aluno
+  verá com a edição corrente. Publicar → `publishFeedback(id, {body})` → navigate('/coach').
+- **Coach HQ:** bloco **Feedback Due** lista drafts (`listDraftFeedbacks`: nome · lesson_date via `formatDay`
+  pin-local-midnight · título · "Review →"); empty state "No drafts waiting. Everything the crew sees is live."
+  Seção antiga renomeada **Awaiting Feedback** (mesma query `listPendingFeedback`; um draft conta como
+  cobertura DE PROPÓSITO — senão o mesmo treino cobraria em 2 listas). Métrica 4 renomeada "Awaiting Feedback".
+- **`db.js`:** +`listDraftFeedbacks()` (status='draft', join nome, newest first), +`publishFeedback(id, patch)`
+  (= updateFeedback com status='published'); `countFeedbacksThisMonth` e o braço feedbacks do
+  `listRecentActivity` agora filtram `status='published'` (draft não é feedback dado).
+- **Draft simulado inserido** p/ validar o fluxo: `notion_id='SIM-TEST-DRAFT-20260709'` (id `3afcaa2b-…`),
+  conta de teste `433a077e`/student `b80a7db6`, `source='video_analysis'`, `status='draft'`, lesson 2026-07-09,
+  ratings 7/8/7/8, transação idempotente delete-then-insert. **Cleanup contratado (cobre este também):**
+  `delete from feedbacks where notion_id like 'SIM-TEST-%';`. Enquanto draft, o aluno NÃO o vê (RLS nova).
+- lint+build limpos. **SEM deploy do frontend** (prod serve a Home antiga). **NEXT: F1 Etapa 4 — deploy via
+  `deploy-prod`** (commit → push → hook → verify). Antes de confiar no fluxo em prod: coach valida
+  Review → Publish com o draft simulado (publicar → some do Feedback Due → aparece p/ o aluno na aba Feedback).
+
 **Fase F1 ETAPA 2 (bloco "Upcoming Trainings" na Home do coach) COMMITADA (`1a29a61`) + Edge Function `send-session-reminder` REDEPLOYADA (2026-07-10, auto mode OFF, frontend NÃO deployado).**
 Protocolo seguido: li memory-bank + plano da Fase F → plano + 3 decisões via AskUserQuestion → aprovação →
 apliquei → lint+build limpos → `git diff` completo → aprovação → commit + redeploy da função.

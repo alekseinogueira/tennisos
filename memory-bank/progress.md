@@ -4,6 +4,16 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Fase F1 Etapa 3 — bloco "Feedback Due" com prévia + edição inline + Publicar (2026-07-10, `3a52a98`,
+  frontend NÃO deployado; migration 013 APLICADA live).** `feedbacks.status` novo ('draft'|'published', default
+  published — linhas existentes intactas) + RLS `feedbacks_select` exige published p/ o aluno (coach vê tudo).
+  `SessionFeedbackView.jsx` NOVO = view de 7 seções extraída do `SessionDetail` (prévia compartilhada, tela do
+  aluno pixel-idêntica). `FeedbackReview.jsx` NOVO (`/admin/feedback/:id/review`): edição inline do body com
+  preview ao vivo (exatamente o que o aluno verá) + Publish → `publishFeedback` (SEM email na v1 — a Edge
+  Function só aceita service-role; F2 liga). Coach HQ: "Feedback Due" lista drafts (Review →); lista antiga
+  renomeada "Awaiting Feedback" (draft conta como cobertura — sem cobrança dupla); métricas/atividade contam só
+  published. n8n INTACTO (decisão: drafts entram via F2). 1 draft simulado `SIM-TEST-DRAFT-20260709` inserido p/
+  validação (cleanup: `delete from feedbacks where notion_id like 'SIM-TEST-%'`). lint+build limpos. Deploy = Etapa 4.
 - **Fase F1 Etapa 2 — bloco "Upcoming Trainings" na Home do coach (2026-07-10, `1a29a61`, frontend NÃO deployado;
   Edge Function `send-session-reminder` REDEPLOYADA).** `UpcomingTrainingsCard.jsx` NOVO substitui a seção "This
   Week" do Coach HQ (decisão do coach): sessões dos próximos 14 dias agrupadas por `group_id` (legada sem grupo =
@@ -218,12 +228,13 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
-- **Fase F (Coach Tools + Robozinho) — F1 Etapas 1 (`79361ff`) e 2 (`1a29a61`) done; NEXT: F1 Etapa 3**
-  ("Feedback Due" com prévia completa do feedback + edição inline do body + botão Publicar — ATENÇÃO: o prompt
-  da Etapa 3 pede `Status='Publicado'` no Supabase, mas a tabela `feedbacks` NÃO tem coluna `status` (design
-  registrado 2026-07-08: visibilidade = linha existir com user_id, RLS own-row) → a etapa vai exigir decisão de
-  schema/semântica antes de codar), depois Etapa 4 (deploy via `deploy-prod`). F2 (tela de disparo de análise)
-  e F3 (Robozinho, médio prazo) documentados no plano. Cada etapa exige plano+aprovação (auto mode OFF).
+- **Fase F (Coach Tools + Robozinho) — F1 Etapas 1 (`79361ff`), 2 (`1a29a61`) e 3 (`3a52a98`) done; NEXT: F1
+  Etapa 4 — deploy via `deploy-prod`** (a Home nova do coach inteira — Schedule Training, Upcoming Trainings,
+  Feedback Due/Awaiting Feedback, Review — só existe em prod depois disso). A decisão de schema da Etapa 3 foi
+  resolvida: `feedbacks.status` (migration 013, live). Validação recomendada antes/logo após o deploy: coach
+  abre o draft `SIM-TEST-DRAFT-20260709` no Feedback Due → edita → Publish → confere que some do bloco e
+  aparece p/ o aluno. F2 (tela de disparo de análise — inclui email no publish + drafts reais no Supabase) e
+  F3 (Robozinho, médio prazo) documentados no plano. Cada etapa exige plano+aprovação (auto mode OFF).
 - **3 feedbacks simulados NOVOS no Supabase de produção p/ teste do portal (2026-07-08, external — sem repo change).**
   Atados a `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, student `b80a7db6`, **1 student row** — confirmado
   por query), `source='video_analysis'`, marcador `notion_id='SIM-TEST-<data>'`. Progressão jun→jul 2026:
@@ -499,9 +510,11 @@
   a página `/feedback` (e todo consumidor de `getStudentByUserId`, incl. Home) dispara PGRST116 "multiple rows"
   p/ esse account. O perfil de teste seguro é `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, 1 linha).
   Fix futuro: dedup das linhas de student desse user_id, ou trocar `.maybeSingle()`→`.limit(1)`/ordem determinística.
-- **Tabela `feedbacks` (Supabase) não tem `status`/`synced_to_portal`** (esclarecido 2026-07-08). Esses 2 campos
-  são **só do Notion** (gate do workflow "Publicar Feedback" `yk7iENBUAGMj3M6a`). No portal, visibilidade ao aluno =
-  linha existir com `user_id` correto (RLS own-row) — não há flag "publicado" na feedbacks. Não é bug; é design.
+- ~~**Tabela `feedbacks` (Supabase) não tem `status`/`synced_to_portal`**~~ **ATUALIZADO (2026-07-10, migration
+  013):** `feedbacks.status` ('draft'|'published') agora EXISTE e a RLS esconde drafts do aluno — visibilidade =
+  linha própria **E published**. `synced_to_portal` segue só no Notion (gate do workflow "Publicar Feedback"
+  `yk7iENBUAGMj3M6a`, que continua sincronizando apenas Publicado → chega como published via default; o n8n não
+  conhece a coluna nova — por decisão, drafts no Supabase só nascerão via F2).
 - **Fase E2 fan-out depende do paired-item (`.item`) do n8n — e2e de grupo não validado** (ETAPA 3, 2026-06-23).
   Sob fan-out (N alunos), `Gerar HTML`/`Extrair HTML`/`Salvar URL` usam `$('...').item` p/ pegar o aluno corrente;
   se o pairing resolver errado, cards/páginas saem com dados trocados (mismatch silencioso). A camada de dados foi

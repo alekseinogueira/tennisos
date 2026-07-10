@@ -142,12 +142,16 @@
 | focus_next        | text                  | foco_proxima_aula |
 | next_session_goals| jsonb                 | objetivos_proxima_aula — array of `{ titulo, descricao }` |
 | card_visual_url   | text                  | public URL of the ETAPA-3 visual card |
+| video_url         | text                  | *(migration 011)* Notion "Vídeo da Aula" → "Watch on Drive" button |
+| status            | text NOT NULL default 'published' | *(migration 013, Fase F1 Etapa 3)* 'draft' \| 'published' (check). Drafts = AI feedbacks awaiting coach review in the HQ "Feedback Due" block; portal Publish flips to published. |
 
 - Rel: *→1 students; *↔* videos via feedback_video_links.
-- **RLS:** student SELECT own; coach full CRUD. Students read-only. The Fase-E columns
-  are covered by the existing row policies (no column-level grants). The n8n upsert runs
+- **RLS:** student SELECT own **AND `status='published'`** (migration 013 — drafts are
+  invisible to students); coach full CRUD. Students read-only. The Fase-E columns are
+  covered by the existing row policies (no column-level grants). The n8n upsert runs
   with the **service key** (bypasses RLS) and **must populate `user_id`** (resolved from the
-  student) so the student's SELECT sees the row.
+  student) so the student's SELECT sees the row; it doesn't send `status`, so synced rows
+  land 'published' via the default (Notion-gated publish behaves exactly as before).
 - **Fase-E (migration 009):** the existing coach-handwritten path (FeedbackComposer →
   title/body/lesson_date) is unchanged — its rows leave every AI column NULL and
   `source='coach'`. The student Feedback tab (`Feedbacks.jsx`) renders the AI fields only
