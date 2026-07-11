@@ -481,10 +481,33 @@ export async function updateFeedback(id, patch) {
 }
 
 /** Coach-only (RLS): publish a feedback — persist the (possibly edited) coach's
- *  analysis and flip status so the student's RLS lets them see it. No email in
- *  v1 (send-feedback-email only accepts the service-role key; Fase F2 wires it). */
+ *  analysis and flip status so the student's RLS lets them see it. Callers that
+ *  want the student notified follow up with sendFeedbackPublishedEmail(). */
 export async function publishFeedback(id, patch = {}) {
   return updateFeedback(id, { ...patch, status: 'published' })
+}
+
+/** Coach-only (Edge Function guard): draft the coach's analysis with Claude.
+ *  invoke() attaches the coach's JWT, which generate-feedback-analysis verifies
+ *  (role coach/admin) before spending API credits. Returns the analysis text. */
+export async function generateFeedbackAnalysis({ student_name, fields, history }) {
+  const { data, error } = await supabase.functions.invoke(
+    'generate-feedback-analysis',
+    { body: { student_name, fields, history } },
+  )
+  if (error) throw error
+  if (!data?.analysis) throw new Error('The AI returned no analysis.')
+  return data.analysis
+}
+
+/** Notify a student their feedback is live. The send-feedback-email guard
+ *  accepts the coach's JWT (Fase F2) in addition to n8n's service-role key. */
+export async function sendFeedbackPublishedEmail(payload) {
+  const { data, error } = await supabase.functions.invoke('send-feedback-email', {
+    body: payload,
+  })
+  if (error) throw error
+  return data
 }
 
 // ─── student_gallery (per-student PRIVATE lesson footage) ────────────────────

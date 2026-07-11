@@ -24,7 +24,7 @@ import AdminHome from './screens/admin/AdminHome'
 import Students from './screens/admin/Students'
 import StudentDetail from './screens/admin/StudentDetail'
 import StudentForm from './screens/admin/StudentForm'
-import FeedbackComposer from './screens/admin/FeedbackComposer'
+import FeedbackNew, { LegacyComposerRedirect } from './screens/admin/FeedbackNew'
 import FeedbackReview from './screens/admin/FeedbackReview'
 import Videos from './screens/admin/Videos'
 import FeedbackDetail from './screens/admin/FeedbackDetail'
@@ -58,9 +58,10 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/admin/students/new" element={<StudentForm />} />
                 <Route path="/admin/students/:id" element={<StudentDetail />} />
                 <Route path="/admin/students/:id/edit" element={<StudentForm />} />
+                <Route path="/admin/feedback/new" element={<FeedbackNew />} />
                 <Route
                   path="/admin/students/:id/feedback/new"
-                  element={<FeedbackComposer />}
+                  element={<LegacyComposerRedirect />}
                 />
                 <Route
                   path="/admin/students/:id/feedback/:fid"

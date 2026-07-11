@@ -9,11 +9,13 @@
 //   - focus_next is an optional one-line teaser ("Foco da próxima aula").
 //
 // AUTH: verify_jwt is OFF for this function (see config.toml) because n8n has no
-// Supabase user session. Instead it is guarded by the service-role key, which n8n
-// already sends via its "Supabase Service" credential (apikey + Authorization).
-// We accept the request only if either header matches SUPABASE_SERVICE_ROLE_KEY.
+// Supabase user session. Guarded by _shared/coach-auth.ts instead: the service-role
+// key (n8n's "Supabase Service" credential) OR a signed-in coach/admin JWT — the
+// Fase F2 manual path publishes from the portal and emails the student directly.
 //
 // Secret: RESEND_API_KEY (Supabase Edge Function secret — never hardcoded).
+
+import { isCoachOrService } from "../_shared/coach-auth.ts";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const FROM = "Aleksei Nogueira <55tc@55tenniscrew.com>";
@@ -160,15 +162,8 @@ Deno.serve(async (req) => {
     return json({ error: "Method not allowed." }, 405);
   }
 
-  // Server-to-server guard: require the service-role key (n8n sends it via the
-  // "Supabase Service" credential as both apikey and Authorization: Bearer).
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const apikeyHeader = req.headers.get("apikey");
-  const authHeader = (req.headers.get("authorization") || "").replace(
-    /^Bearer\s+/i,
-    "",
-  );
-  if (!serviceKey || (apikeyHeader !== serviceKey && authHeader !== serviceKey)) {
+  // Guard: service-role key (n8n) or a signed-in coach/admin JWT (portal).
+  if (!(await isCoachOrService(req))) {
     return json({ error: "Unauthorized." }, 401);
   }
 

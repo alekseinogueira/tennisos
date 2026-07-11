@@ -10,8 +10,15 @@ verify_jwt = true
 
 # Feedback "your analysis is ready" email. Triggered server-to-server by the n8n
 # "55TC - Publicar Feedback" workflow (ETAPA 4), which has no Supabase user JWT —
-# so JWT verification is OFF at the gateway. The function instead guards itself by
-# requiring the service-role key (n8n sends it via its "Supabase Service" cred as
-# both apikey and Authorization), rejecting anything else with 401.
+# so JWT verification is OFF at the gateway. The function guards itself via
+# _shared/coach-auth.ts: service-role key (n8n) OR a coach/admin user JWT
+# (Fase F2 — the portal emails the student when the coach publishes manually).
 [functions.send-feedback-email]
+verify_jwt = false
+
+# Fase F2 — Claude drafts the "Análise do Coach" for the manual feedback path.
+# Called from the coach's browser session; the gateway JWT check would accept ANY
+# signed-in student, so it's OFF and the function enforces role coach/admin itself
+# (same _shared/coach-auth.ts guard). Secret: ANTHROPIC_API_KEY.
+[functions.generate-feedback-analysis]
 verify_jwt = false

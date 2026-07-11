@@ -65,9 +65,18 @@ export default function CoachDashboard() {
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-ink/50">
           55TC · HQ
         </p>
-        <h1 className="mt-2 font-display text-5xl tracking-[0.06em] text-forest">
-          Headquarters
-        </h1>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+          <h1 className="font-display text-5xl tracking-[0.06em] text-forest">
+            Headquarters
+          </h1>
+          {/* Fase F2 — entry to the two-path feedback screen (manual / video). */}
+          <Link
+            to="/admin/feedback/new"
+            className="rounded bg-forest px-5 py-3 text-xs font-semibold uppercase tracking-[0.1em] text-sand transition hover:bg-forest/90"
+          >
+            + New Feedback
+          </Link>
+        </div>
         <p className="mt-3 max-w-md text-ink/60">
           Less Theory. More Game. Your week at a glance.
         </p>
