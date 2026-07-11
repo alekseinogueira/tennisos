@@ -20,6 +20,8 @@ import {
   createFeedback,
   generateFeedbackAnalysis,
   sendFeedbackPublishedEmail,
+  listVisualCues,
+  upsertVisualCue,
 } from '../../lib/db'
 
 const ANALYSIS_WEBHOOK_URL =
@@ -641,9 +643,23 @@ function VideoPath({ students }) {
   const [driveUrl, setDriveUrl] = useState('')
   const [sessionDate, setSessionDate] = useState(todayLocal())
   const [selected, setSelected] = useState(() => new Map()) // student_id → visual_cue
+  const [savedCues, setSavedCues] = useState(() => new Map()) // student_id → remembered cue
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(null)
   const [ok, setOk] = useState(null)
+
+  // Remembered cues from past dispatches — pre-fill on pick, coach confirms/edits.
+  useEffect(() => {
+    let alive = true
+    listVisualCues()
+      .then((rows) => {
+        if (alive) setSavedCues(new Map(rows.map((r) => [r.student_id, r.visual_cue])))
+      })
+      .catch(() => {}) // best-effort: no cues just means empty fields
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const fileId = useMemo(() => extractDriveFileId(driveUrl), [driveUrl])
   const picked = students.filter((s) => selected.has(s.id))
@@ -653,7 +669,7 @@ function VideoPath({ students }) {
     setSelected((prev) => {
       const next = new Map(prev)
       if (next.has(s.id)) next.delete(s.id)
-      else next.set(s.id, '')
+      else next.set(s.id, savedCues.get(s.id) ?? '')
       return next
     })
   }
@@ -693,6 +709,21 @@ function VideoPath({ students }) {
         }),
       })
       if (!res.ok) throw new Error(`Analysis webhook answered ${res.status}.`)
+      // Remember the cues the coach just confirmed (best-effort — a failed
+      // save never touches the analysis result).
+      const cueSaves = picked
+        .map((s) => ({ id: s.id, cue: (selected.get(s.id) || '').trim() }))
+        .filter((c) => c.cue)
+      const settled = await Promise.allSettled(
+        cueSaves.map((c) => upsertVisualCue(c.id, c.cue)),
+      )
+      setSavedCues((prev) => {
+        const next = new Map(prev)
+        cueSaves.forEach((c, i) => {
+          if (settled[i].status === 'fulfilled') next.set(c.id, c.cue)
+        })
+        return next
+      })
       setOk(
         `Analysis done for ${picked.length} player${picked.length > 1 ? 's' : ''} — drafts are in Feedback Due for your review.`,
       )

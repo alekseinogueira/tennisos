@@ -510,6 +510,36 @@ export async function sendFeedbackPublishedEmail(payload) {
   return data
 }
 
+// ─── student_visual_profile (remembered visual cues, coach-only) ─────────────
+
+/** Coach-only (RLS): every saved visual cue — the roster is small, one query
+ *  feeds the whole dispatch screen. */
+export async function listVisualCues() {
+  return unwrap(
+    await supabase.from('student_visual_profile').select('student_id, visual_cue'),
+  )
+}
+
+/** Coach-only (RLS): remember the cue the coach just confirmed for a student
+ *  (one row per student — on_conflict keeps the latest). */
+export async function upsertVisualCue(studentId, cue) {
+  return unwrap(
+    await supabase
+      .from('student_visual_profile')
+      .upsert(
+        {
+          student_id: studentId,
+          visual_cue: cue,
+          confirmed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'student_id' },
+      )
+      .select()
+      .single(),
+  )
+}
+
 // ─── student_gallery (per-student PRIVATE lesson footage) ────────────────────
 
 /** A student's own clips, newest first. RLS: student sees own; coach sees all. */
