@@ -4,6 +4,58 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase F2 — Tela de Disparo (Etapas 1+2 juntas) APLICADA: commit `1a7caaa` + 2 Edge Functions DEPLOYADAS + n8n com upsert de drafts AO VIVO (2026-07-11, auto mode OFF, frontend NÃO deployado).**
+Sessão retomou um prompt cuja sessão anterior caiu SEM deixar rastro (working tree limpo — verificado). Protocolo:
+plano + 4 decisões via AskUserQuestion (todas as recomendações aceitas) → apliquei → lint+build limpos →
+aprovação (commit + deploy das funções + aplicar n8n) → executei → verifiquei tudo live.
+- **Decisões do coach (AskUserQuestion ×2, 8 respostas):** (1) "Gerar com IA" via **Edge Function nova**
+  `generate-feedback-analysis` (chave da Claude API nunca no bundle; guard por role); (2) **guard da
+  `send-feedback-email` ampliado** p/ aceitar JWT de coach/admin além da service key (n8n intacto); (3) Caminho B
+  = **POST direto browser→webhook n8n** (preflight CORS testado ANTES: 204, allow-origin portal, allow-headers
+  content-type); (4) **FeedbackComposer antigo REMOVIDO** — rota `/admin/students/:id/feedback/new` redireciona
+  p/ a tela nova com `?student=<id>`; + aprovação de commit / deploy das 2 funções / chave via arquivo / aplicar n8n.
+- **`src/screens/admin/FeedbackNew.jsx` NOVO (~750 linhas)** — rota `/admin/feedback/new`, botão "+ New Feedback"
+  no header do HQ. Dois caminhos em cards: **MANUAL** (form completo do schema: 4 sliders 0–10, 4 selects
+  qualitativos com o vocabulário do Gemini/da view do aluno — o `QualIndicator` casa lowercase —, focus_areas em
+  chips (presets que o `FocusIcon` reconhece) + entrada livre, duração/rally, focus_next, objetivos titulo+descrição
+  dinâmicos, data; botão **"✦ Generate with AI"** manda campos + últimos 5 feedbacks do aluno p/ a função e preenche
+  o body; **Publish** = `createFeedback` com `status='published'` via default + email — falha de email NUNCA desfaz
+  o publish, mensagem honesta) e **VÍDEO** (URL do Drive → `file_id` extraído por regex `/d/`, `?id=` ou id puro,
+  com feedback visual; seletor múltiplo com **`visual_cue` POR aluno**; data; POST ao webhook
+  `https://n8n.55tenniscrew.com/webhook/analisar-treinos` com o contrato E2 `{file_id, session_date, students:[…]}`
+  — o fetch espera o pipeline inteiro, UX avisa "takes a few minutes"). Alunos sem conta reivindicada ficam
+  **desabilitados nos 2 caminhos** (`feedbacks.user_id` NOT NULL). `db.js`: +`generateFeedbackAnalysis()` e
+  +`sendFeedbackPublishedEmail()` via `supabase.functions.invoke` (anexa o JWT do coach).
+- **Edge Functions DEPLOYADAS (projeto `vdyvlylacsghnvtllrzj`):** `generate-feedback-analysis` NOVA
+  (`claude-opus-4-8`, adaptive thinking, SDK oficial via `npm:@anthropic-ai/sdk`, prompt na voz do Professor
+  Aleksei com FOCO EXTERNO, 4–8 frases sem markdown; secret `ANTHROPIC_API_KEY`) e `send-feedback-email`
+  REDEPLOYADA com o guard novo em **`_shared/coach-auth.ts`** (service key OU JWT com profiles.role coach/admin —
+  p/ o n8n é a MESMA comparação de string de antes, retrocompatível). **Verificado live:** ambas 401 sem auth,
+  401 com anon key pura. `config.toml`: `[functions.generate-feedback-analysis] verify_jwt=false` (guard interno
+  por role — o gateway aceitaria qualquer aluno logado).
+- **n8n `T7kobxM1FZM99O8l` APLICADO ao vivo (17→20 nós) — Problema 2 resolvido:** cadeia nova `Salvar URL no
+  Notion → Buscar Aluno (Draft) → Montar Draft → Upsert Draft no Supabase → Resumir Aula`. Por item do fan-out:
+  GET students (header `Accept: application/vnd.pgrst.object+json` p/ manter 1-item-por-item e o pareamento do
+  fan-out estável) → Code monta a linha (`status='draft'`, `notion_id` da página criada, `video_url`=fileLink,
+  `lesson_date`=session_date do webhook, title=focos, clamp 0–10) → POST `feedbacks?on_conflict=notion_id`
+  (merge-duplicates). Os N drafts entram **antes do Webhook Response** → o grupo inteiro sai do "Awaiting
+  Feedback" e cai no "Feedback Due" junto. Nós novos com `onError: continueRegularOutput` — falha de draft nunca
+  derruba Notion/Twilio; aluno sem user_id só não gera draft. Método provado: export → transform determinístico
+  (`/root/f2-work/transform-f2.js`: asserts unique-or-throw, guarda de idempotência, `vm.Script` no Code, teste
+  offline do nó passa — clamp 15→10, "7"→7, unclaimed→null) → import → `update --active=true` → `pm2 restart` →
+  re-export verify (**active, 20 nós, cadeia certa, creds intactas por ID `0toUlVDwrVTZ8BXi`, 0 segredos**).
+  Restore: `/root/f2-work/wf-pre-f2.json`.
+- **PENDÊNCIAS:** (1) **secret `ANTHROPIC_API_KEY` NÃO setado** — combinado: coach roda
+  `! printf '%s' 'CHAVE' > /root/f2-work/anthropic.key && chmod 600 /root/f2-work/anthropic.key` e a próxima
+  sessão faz `supabase secrets set` + shred (padrão da rotação); até lá o botão IA retorna "AI service is not
+  configured" (o resto da tela funciona). (2) **e2e real do caminho vídeo não rodado** (billable Gemini — mesma
+  pendência padrão da Fase E); atenção ao edge case: re-rodar o MESMO vídeo depois de publicar reverteria o
+  feedback p/ draft (merge-duplicates por notion_id — documentado em Known Issues). (3) **Frontend NÃO deployado**
+  (prod ainda sem a tela — deploy = F2 Etapa 4 via `deploy-prod`). (4) F2 Etapa 3 (aprendizado de visual_cue /
+  `student_visual_profile`) não começada.
+- **NEXT:** coach fornece a chave → secret + smoke test do "Generate with AI" → validação manual dos 2 caminhos →
+  F2 Etapa 3 ou deploy (Etapa 4). Exige plano+aprovação (auto mode OFF).
+
 **Fase F1 ETAPA 4 (deploy) CONCLUÍDA — F1 COMPLETA e NO AR em produção (2026-07-10, auto mode OFF).**
 Protocolo seguido: li memory-bank + plano da Fase F → lint+build limpos verificados → plano de deploy →
 aprovação via AskUserQuestion → skill `deploy-prod` (push → hook → verify).

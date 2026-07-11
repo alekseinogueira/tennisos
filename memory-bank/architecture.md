@@ -62,8 +62,12 @@ tennisos/
 │   │   ├── 001_profiles_auth.sql   # role enum, profiles, is_coach(), handle_new_user trigger
 │   │   ├── 002_mvp_schema.sql      # business tables (students, packages, lesson_credits, feedbacks, student_gallery, curated_library + 2 feedback-link joins)
 │   │   └── 003_rls_policies.sql    # enable RLS + policies on every table
-│   └── functions/
-│       └── invite/index.ts         # (later) coach invite email; uses service-role key
+│   └── functions/                  # (estado 2026-07-11 — todas deployadas)
+│       ├── _shared/coach-auth.ts   # guard: service-role key OU JWT com role coach/admin
+│       ├── send-invite-email/      # convite do aluno (verify_jwt=true)
+│       ├── send-session-reminder/  # confirmação/reagendamento/cancelamento de treino (kind)
+│       ├── send-feedback-email/    # "seu feedback chegou" — n8n (service key) OU coach JWT
+│       └── generate-feedback-analysis/  # F2: Claude rascunha a Análise do Coach (ANTHROPIC_API_KEY)
 └── memory-bank/                    # existing context
 ```
 

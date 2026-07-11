@@ -4,6 +4,18 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Fase F2 Etapas 1+2 — Tela de Disparo (manual + vídeo) APLICADA: backend 100% live, frontend NÃO deployado
+  (2026-07-11, `1a7caaa`).** `FeedbackNew.jsx` novo em `/admin/feedback/new` (botão "+ New Feedback" no HQ; o
+  FeedbackComposer antigo foi REMOVIDO e a rota velha redireciona com `?student=`): caminho MANUAL = form completo
+  do schema feedbacks (sliders 0–10, selects qualitativos, focus chips + livre, objetivos, rally/duração,
+  focus_next) + "✦ Generate with AI" (campos + histórico → Edge Function nova `generate-feedback-analysis`,
+  Claude `claude-opus-4-8`, guard coach/admin, secret `ANTHROPIC_API_KEY` **ainda não setado**) + Publish =
+  INSERT published + email; caminho VÍDEO = Drive URL → `file_id` automático + seletor múltiplo com `visual_cue`
+  por aluno → POST direto ao webhook n8n (CORS verificado). **Edge Functions deployadas:** a nova + a
+  `send-feedback-email` com guard ampliado (`_shared/coach-auth.ts`: service key OU JWT coach/admin; 401 sem
+  auth/anon verificado live). **n8n `T7kobxM1FZM99O8l` = 20 nós ao vivo:** o fan-out agora upserta 1 feedback
+  `status='draft'` por aluno ANTES do Webhook Response → grupo inteiro sai do Awaiting Feedback e cai no
+  Feedback Due junto (Problema 2). Restore `/root/f2-work/wf-pre-f2.json`; e2e real com vídeo pendente.
 - **Fase F1 COMPLETA (Etapas 1–4) — Home nova do coach DEPLOYADA em produção (2026-07-10, commit `8153089`).**
   Etapa 4 = deploy via `deploy-prod` (push `ca6af56..8153089` → hook → verify): deployment
   `dpl_2UwWupV9MKkgwPAhrKSfXmNEvGjA` READY/production, `portal.55tenniscrew.com` 200 servindo o bundle do
@@ -237,12 +249,13 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
-- **Fase F (Coach Tools + Robozinho) — F1 COMPLETA (Etapas 1–4, deployada em `8153089`); NEXT: F2 — Tela de
-  Disparo** (Etapa 1: caminho manual — form + IA preenche análise + publica direto; F2 também liga o email no
-  publish — a Edge Function `send-feedback-email` exige service-role — e cria drafts reais no Supabase; Etapa 2:
-  caminho vídeo; Etapa 3: aprendizado de visual_cue; Etapa 4: deploy). F3 (Robozinho) fica p/ depois de F1+F2
-  validadas. Validação manual da F1 pendente c/ o coach: Review→Publish do draft `SIM-TEST-DRAFT-20260709` em
-  prod (some do Feedback Due → aparece p/ o aluno). Cada etapa exige plano+aprovação (auto mode OFF).
+- **Fase F (Coach Tools + Robozinho) — F1 COMPLETA (deployada em `8153089`); F2 Etapas 1+2 APLICADAS
+  (2026-07-11, `1a7caaa` — tela manual+vídeo, email no publish LIGADO via guard novo, drafts reais entram pelo
+  n8n).** Restam na F2: **setar o secret `ANTHROPIC_API_KEY`** (coach fornece a chave → `supabase secrets set` +
+  smoke test do Generate with AI), validação manual dos 2 caminhos, **Etapa 3** (aprendizado de visual_cue /
+  `student_visual_profile`) e **Etapa 4** (deploy do frontend via `deploy-prod` — prod ainda não tem a tela).
+  F3 (Robozinho) fica p/ depois. Validação manual da F1 segue pendente c/ o coach: Review→Publish do draft
+  `SIM-TEST-DRAFT-20260709` em prod. Cada etapa exige plano+aprovação (auto mode OFF).
 - **3 feedbacks simulados NOVOS no Supabase de produção p/ teste do portal (2026-07-08, external — sem repo change).**
   Atados a `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, student `b80a7db6`, **1 student row** — confirmado
   por query), `source='video_analysis'`, marcador `notion_id='SIM-TEST-<data>'`. Progressão jun→jul 2026:
@@ -501,6 +514,15 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **Re-rodar o MESMO vídeo depois de publicar reverte o feedback p/ draft** (F2, 2026-07-11, by-design aceito).
+  O upsert de drafts do workflow de Análise usa `on_conflict=notion_id` + merge-duplicates com `status='draft'`
+  no corpo — um segundo POST do mesmo vídeo cria páginas Notion NOVAS (notion_ids novos → drafts duplicados),
+  mas um retry que reaproveite o mesmo notion_id sobrescreveria body/status de um feedback já publicado.
+  Improvável no fluxo do portal (cada disparo = páginas novas); vale guarda futura (upsert condicional a
+  status='draft' via RPC) se aparecer na prática.
+- **Secret `ANTHROPIC_API_KEY` pendente** (F2, 2026-07-11): a `generate-feedback-analysis` está deployada mas
+  retorna "AI service is not configured" (500) até o secret existir. Combinado: coach escreve a chave em
+  `/root/f2-work/anthropic.key` (600) → próxima sessão roda `supabase secrets set` lendo do arquivo + `shred`.
 - **Acesso ao dev server = túnel SSH do coach (não é bug de código)** (esclarecido 2026-07-08). O que parecia
   "login do dev server não responde"/"tela branca"/"connection refused" era o **túnel SSH do coach caído** — o dev
   server roda num droplet remoto (`67.205.171.204`), e o coach acessa por `ssh -N -L 5174:localhost:5174 -L

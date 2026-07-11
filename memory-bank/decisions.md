@@ -3,6 +3,34 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-07-11 — Fase F2: IA via Edge Function, email por JWT de coach, webhook direto do browser, composer→redirect + drafts upsertados pelo próprio workflow de Análise
+- **Decision (1) — "Gerar com IA" = Edge Function nova `generate-feedback-analysis`** com `ANTHROPIC_API_KEY`
+  como secret e guard por role (coach/admin) antes de gastar crédito. **Why:** a chave da Claude API não pode ir
+  no bundle do frontend (público); o portal manda campos + histórico e a função chama `claude-opus-4-8`.
+  **Alternatives:** chamar a API do browser (rejeitado — expõe a chave); sem IA nesta etapa.
+- **Decision (2) — guard da `send-feedback-email` ampliado** via `_shared/coach-auth.ts`: service-role key (n8n,
+  mesma comparação de string de antes) OU JWT válido com `profiles.role` coach/admin. **Why:** a F2 publica do
+  portal e precisa emailar o aluno; reverte a Decision (3) de 2026-07-10 conforme planejado ("fica p/ a F2").
+  **Alternatives:** função de email separada p/ o portal (duplicaria template); continuar sem email.
+- **Decision (3) — Caminho Vídeo dispara o webhook n8n DIRETO do browser** (sem proxy). **Why:** preflight
+  OPTIONS testado antes de codar — 204 com `Access-Control-Allow-Origin: https://portal.55tenniscrew.com` e
+  `Allow-Headers: content-type`; menos uma peça. **Alternatives:** Edge Function proxy (fallback combinado se o
+  CORS quebrar; também esconderia a URL do webhook do bundle).
+- **Decision (4) — FeedbackComposer removido; rota antiga redireciona** p/ `/admin/feedback/new?student=<id>`
+  (Manual pré-selecionado). **Why:** uma tela só de criação; os links existentes (StudentDetail, Students,
+  FeedbackDetail, Awaiting Feedback) continuam funcionando sem edição. **Alternatives:** manter as duas telas
+  (rejeitado — duplicação).
+- **Decision (5) — drafts entram no Supabase pelo PRÓPRIO workflow de Análise** (3 nós novos por item do
+  fan-out, ANTES do Webhook Response), não pelo poll do "Publicar Feedback". **Why:** os N drafts da aula em
+  grupo aterrissam na mesma execução → todos os alunos saem do "Awaiting Feedback" simultaneamente (Problema 2
+  do prompt F2); `onError: continueRegularOutput` isola falhas (Notion/Twilio nunca caem por causa do draft);
+  o poll do Publicar segue INTACTO (decisão de 2026-07-10 preservada). **Alternatives:** estender o poll p/
+  sincronizar Rascunho (rejeitado desde a F1 — risco de overwrite a cada 5 min); polling do portal.
+- **Decision (6) — lookup de aluno no n8n com `Accept: application/vnd.pgrst.object+json`.** **Why:** resposta
+  em objeto único mantém 1-item-por-item no fan-out (array vazio dropparia o item e quebraria o pareamento
+  `.item` dos nós seguintes); 0 linhas → 406 → continueRegularOutput → o draft daquele aluno só não nasce.
+  **Alternatives:** GET normal (array) + IF (mais nós, pareamento frágil).
+
 ## 2026-07-10 — Fase F1 Etapa 3: coluna `status` em feedbacks, drafts portal-only, sem email no publish v1, 2 listas no HQ (4 decisões do coach)
 - **Decision (1) — draft vs publicado = coluna `status` em `feedbacks` (migration 013):** text
   ('draft'|'published'), NOT NULL default 'published', check; RLS `feedbacks_select` passou a exigir
