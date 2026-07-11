@@ -4,6 +4,28 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase F2 ETAPA 4 (deploy do frontend) CONCLUÍDA — Tela de Disparo NO AR em produção (2026-07-11, auto mode OFF).**
+Coach mapeou o estado via memory-bank → escolheu "Etapa 4 — deploy" via AskUserQuestion (vs setar a chave primeiro / F3).
+Protocolo: lint+build limpos (bundle `index-CKdUD3QI.js`) → skill `deploy-prod` (push → hook → verify).
+- **Deploy verificado pelo domínio:** `git push origin master` (`8153089..61e689c`, incluindo a feature `941bb81` +
+  o /umb `61e689c` que só toca memory-bank → bundle idêntico) → hook job `8IceutjGuRkQsyzX8gNE` PENDING →
+  `portal.55tenniscrew.com` HTTP 200 servindo **`index-CKdUD3QI.js`** (= hash do build local). Bateu na 1ª checagem
+  (git-integration da Vercel buildou do push antes do hook — mesmo colateral do deploy da F1).
+- **Verificação por API Vercel indisponível** nesta sessão (`VERCEL_TOKEN` não está no env) — usei o método
+  alternativo do memory-bank (comparar o hash do bundle servido pelo domínio com o do build local). Prova equivalente.
+- **AGORA EM PROD (commits `1a7caaa`…`941bb81`):** Tela de Disparo `/admin/feedback/new` (botão "+ New Feedback" no HQ;
+  caminho MANUAL com form completo + "✦ Generate with AI" + Publish/email; caminho VÍDEO → POST ao webhook n8n com
+  `visual_cue` por aluno) + FeedbackComposer antigo removido (rota velha redireciona) + aprendizado de cue
+  (`student_visual_profile`, pré-preenche "How to spot them"). Backend (2 Edge Functions, n8n 20 nós, migrations
+  013/014) já estava live.
+- **PENDÊNCIAS DA F2 (restam 2):** (1) **secret `ANTHROPIC_API_KEY` NÃO setado** — reconfirmado nesta sessão:
+  `/root/f2-work/anthropic.key` NÃO existe → o botão "Generate with AI" EM PROD retorna "AI service is not configured"
+  (o resto da tela funciona 100%). Coach fornece a chave → `supabase secrets set` + shred + smoke test. (2) **e2e real
+  do caminho vídeo** (billable Gemini) não rodado — valida também o ciclo do cue (disparo salva → próxima seleção
+  pré-preenche). **F2 está funcionalmente completa e no ar salvo a chave da IA.**
+- **NEXT:** setar a chave da Claude (habilita o "Generate with AI" em prod) OU **F3 (Robozinho** — doc de planejamento
+  separado a criar). Exige plano+aprovação (auto mode OFF).
+
 **Fase F2 ETAPA 3 (aprendizado de visual_cue) APLICADA: commit `941bb81` + migration 014 LIVE (2026-07-11, auto mode OFF, frontend NÃO deployado).**
 Protocolo seguido: mapeei o estado via memory-bank → coach escolheu "F2 Etapa 3" via AskUserQuestion (vs deploy
 Etapa 4 / setar secret primeiro) → plano + 1 decisão de design → aprovação → apliquei → lint+build limpos →

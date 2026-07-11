@@ -4,8 +4,16 @@
 > Read this first at the start of every task.
 
 ## What Works
-- **Fase F2 Etapa 3 — aprendizado de visual_cue APLICADA: migration 014 LIVE, frontend NÃO deployado
-  (2026-07-11, `941bb81`).** Tabela `student_visual_profile` nova (1 cue/aluno: `student_id` UNIQUE FK
+- **Fase F2 COMPLETA e NO AR — Tela de Disparo deployada em produção (Etapa 4, 2026-07-11, `61e689c`).**
+  Deploy via `deploy-prod` (push `8153089..61e689c` → hook job `8IceutjGuRkQsyzX8gNE` → verify):
+  `portal.55tenniscrew.com` HTTP 200 servindo `index-CKdUD3QI.js` (= hash do build local dos commits
+  `1a7caaa`…`941bb81`). Em prod agora: `/admin/feedback/new` (caminho manual com form + Generate with AI +
+  Publish/email; caminho vídeo → webhook n8n com visual_cue por aluno), FeedbackComposer antigo removido,
+  aprendizado de cue (`student_visual_profile` pré-preenche "How to spot them"). Backend já estava live
+  (Edge Functions, n8n 20 nós, migrations 013/014). **Restam 2 pendências:** secret `ANTHROPIC_API_KEY` não
+  setado (botão IA retorna "AI service is not configured" em prod até a chave) + e2e real do vídeo (billable).
+  Verificação por API Vercel indisponível (sem `VERCEL_TOKEN` no env) → usado o método hash-do-bundle-no-domínio.
+- **Fase F2 Etapa 3 — aprendizado de visual_cue APLICADA: migration 014 LIVE (2026-07-11, `941bb81`).** Tabela `student_visual_profile` nova (1 cue/aluno: `student_id` UNIQUE FK
   on-delete-cascade, `visual_cue` NOT NULL, confirmed_at/updated_at; RLS coach-only `is_coach()`) — aplicada
   via `db push --linked` e verificada por query (colunas, RLS ON, policy, índice UNIQUE). `db.js`:
   +`listVisualCues()` / +`upsertVisualCue(studentId, cue)` (upsert on_conflict=student_id). `FeedbackNew.jsx`
@@ -258,15 +266,14 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
-- **Fase F (Coach Tools + Robozinho) — F1 COMPLETA (deployada em `8153089`); F2 Etapas 1+2+3 APLICADAS
-  (2026-07-11, `1a7caaa`+`941bb81` — tela manual+vídeo, email no publish LIGADO, drafts reais pelo n8n,
-  aprendizado de visual_cue com migration 014 live).** Restam na F2: **setar o secret `ANTHROPIC_API_KEY`**
-  (verificado 2026-07-11: `/root/f2-work/anthropic.key` ainda NÃO existe — coach fornece a chave →
-  `supabase secrets set` + shred + smoke test do Generate with AI), validação manual dos 2 caminhos (o e2e do
-  vídeo agora também valida o ciclo do cue: disparo salva → próxima seleção pré-preenche) e **Etapa 4**
-  (deploy do frontend via `deploy-prod` — prod ainda não tem a tela; commits locais `1a7caaa`…`941bb81`).
-  F3 (Robozinho) fica p/ depois (doc separado a criar). Validação manual da F1 segue pendente c/ o coach:
-  Review→Publish do draft `SIM-TEST-DRAFT-20260709` em prod. Cada etapa exige plano+aprovação (auto mode OFF).
+- **Fase F (Coach Tools + Robozinho) — F1 COMPLETA (deployada `8153089`); F2 COMPLETA e NO AR (Etapa 4
+  deployada `61e689c`, 2026-07-11 — tela manual+vídeo + email no publish + drafts reais pelo n8n + aprendizado de
+  visual_cue, tudo em produção).** Restam na F2 apenas 2 pendências NÃO-bloqueantes: **setar o secret
+  `ANTHROPIC_API_KEY`** (verificado 2026-07-11: `/root/f2-work/anthropic.key` ainda NÃO existe → botão "Generate
+  with AI" retorna "AI service is not configured" EM PROD até a chave; coach fornece → `supabase secrets set` +
+  shred + smoke test) e **e2e real do caminho vídeo** (billable Gemini; valida também o ciclo do cue). **NEXT: setar
+  a chave da Claude OU F3 (Robozinho** — doc de planejamento separado a criar). Validação manual da F1 segue pendente
+  c/ o coach: Review→Publish do draft `SIM-TEST-DRAFT-20260709` em prod. Cada etapa exige plano+aprovação (auto mode OFF).
 - **3 feedbacks simulados NOVOS no Supabase de produção p/ teste do portal (2026-07-08, external — sem repo change).**
   Atados a `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, student `b80a7db6`, **1 student row** — confirmado
   por query), `source='video_analysis'`, marcador `notion_id='SIM-TEST-<data>'`. Progressão jun→jul 2026:
