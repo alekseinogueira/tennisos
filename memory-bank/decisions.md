@@ -3,6 +3,21 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-07-11 — Fase F2 Etapa 3: visual_cue salvo no DISPARO (não no publish) + tabela coach-only com UNIQUE student_id
+- **Decision (1) — o `visual_cue` é salvo no momento do DISPARO da análise** (POST ao webhook bem-sucedido),
+  não "após feedback publicado" como diz a letra do doc da fase. **Why:** o cue só existe na tela de disparo —
+  salvá-lo no publish exigiria carregá-lo no draft (coluna extra em `feedbacks`) + plumbing no `FeedbackReview`
+  e no n8n; o disparo é quando o coach digitou/confirmou o cue, e o ganho de sinal do publish (confirmar que a
+  IA identificou o aluno certo) não paga essa complexidade num tool single-coach. Save é best-effort
+  (`Promise.allSettled` — falha nunca afeta a análise). **Alternatives:** salvar no publish do draft
+  (rejeitado — cross-screen plumbing); perguntar ao coach a cada disparo sem persistir (era o estado da Etapa 2).
+- **Decision (2) — `student_visual_profile` com `student_id` UNIQUE e RLS coach-only:** 1 cue por aluno
+  (upsert `on_conflict=student_id`, mesmo idioma do `notion_id`/010), policy única `svp_coach_all` =
+  `is_coach()` (aluno nunca lê/escreve — é ferramenta interna do coach). **Why:** "salvar ou atualizar o cue
+  do aluno" implica exatamente 1 linha viva; histórico de cues antigos não tem consumidor. **Alternatives:**
+  N linhas com histórico + query do mais recente (rejeitado — complexidade sem uso); guardar o cue direto em
+  `students` (rejeitado — o doc pede tabela separada e evita mexer em tabela com RLS de aluno).
+
 ## 2026-07-11 — Fase F2: IA via Edge Function, email por JWT de coach, webhook direto do browser, composer→redirect + drafts upsertados pelo próprio workflow de Análise
 - **Decision (1) — "Gerar com IA" = Edge Function nova `generate-feedback-analysis`** com `ANTHROPIC_API_KEY`
   como secret e guard por role (coach/admin) antes de gastar crédito. **Why:** a chave da Claude API não pode ir

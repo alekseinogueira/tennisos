@@ -4,6 +4,15 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Fase F2 Etapa 3 — aprendizado de visual_cue APLICADA: migration 014 LIVE, frontend NÃO deployado
+  (2026-07-11, `941bb81`).** Tabela `student_visual_profile` nova (1 cue/aluno: `student_id` UNIQUE FK
+  on-delete-cascade, `visual_cue` NOT NULL, confirmed_at/updated_at; RLS coach-only `is_coach()`) — aplicada
+  via `db push --linked` e verificada por query (colunas, RLS ON, policy, índice UNIQUE). `db.js`:
+  +`listVisualCues()` / +`upsertVisualCue(studentId, cue)` (upsert on_conflict=student_id). `FeedbackNew.jsx`
+  (caminho vídeo): ao selecionar um aluno, o campo "How to spot them" vem pré-preenchido com o cue salvo
+  (coach confirma/edita); após disparo bem-sucedido, os cues confirmados são salvos via `Promise.allSettled`
+  best-effort (falha nunca afeta a análise). **Decisão do coach: salvar no DISPARO** (não no publish do draft
+  como diz a letra do doc — evitaria coluna extra em feedbacks + plumbing no FeedbackReview). lint+build limpos.
 - **Fase F2 Etapas 1+2 — Tela de Disparo (manual + vídeo) APLICADA: backend 100% live, frontend NÃO deployado
   (2026-07-11, `1a7caaa`).** `FeedbackNew.jsx` novo em `/admin/feedback/new` (botão "+ New Feedback" no HQ; o
   FeedbackComposer antigo foi REMOVIDO e a rota velha redireciona com `?student=`): caminho MANUAL = form completo
@@ -249,13 +258,15 @@
     columns + `avatars` bucket) being applied — same unapplied-migration gate as 8B/8C.
 
 ## In Progress
-- **Fase F (Coach Tools + Robozinho) — F1 COMPLETA (deployada em `8153089`); F2 Etapas 1+2 APLICADAS
-  (2026-07-11, `1a7caaa` — tela manual+vídeo, email no publish LIGADO via guard novo, drafts reais entram pelo
-  n8n).** Restam na F2: **setar o secret `ANTHROPIC_API_KEY`** (coach fornece a chave → `supabase secrets set` +
-  smoke test do Generate with AI), validação manual dos 2 caminhos, **Etapa 3** (aprendizado de visual_cue /
-  `student_visual_profile`) e **Etapa 4** (deploy do frontend via `deploy-prod` — prod ainda não tem a tela).
-  F3 (Robozinho) fica p/ depois. Validação manual da F1 segue pendente c/ o coach: Review→Publish do draft
-  `SIM-TEST-DRAFT-20260709` em prod. Cada etapa exige plano+aprovação (auto mode OFF).
+- **Fase F (Coach Tools + Robozinho) — F1 COMPLETA (deployada em `8153089`); F2 Etapas 1+2+3 APLICADAS
+  (2026-07-11, `1a7caaa`+`941bb81` — tela manual+vídeo, email no publish LIGADO, drafts reais pelo n8n,
+  aprendizado de visual_cue com migration 014 live).** Restam na F2: **setar o secret `ANTHROPIC_API_KEY`**
+  (verificado 2026-07-11: `/root/f2-work/anthropic.key` ainda NÃO existe — coach fornece a chave →
+  `supabase secrets set` + shred + smoke test do Generate with AI), validação manual dos 2 caminhos (o e2e do
+  vídeo agora também valida o ciclo do cue: disparo salva → próxima seleção pré-preenche) e **Etapa 4**
+  (deploy do frontend via `deploy-prod` — prod ainda não tem a tela; commits locais `1a7caaa`…`941bb81`).
+  F3 (Robozinho) fica p/ depois (doc separado a criar). Validação manual da F1 segue pendente c/ o coach:
+  Review→Publish do draft `SIM-TEST-DRAFT-20260709` em prod. Cada etapa exige plano+aprovação (auto mode OFF).
 - **3 feedbacks simulados NOVOS no Supabase de produção p/ teste do portal (2026-07-08, external — sem repo change).**
   Atados a `aleksei.nogueirasousa@gmail.com` (user_id `433a077e`, student `b80a7db6`, **1 student row** — confirmado
   por query), `source='video_analysis'`, marcador `notion_id='SIM-TEST-<data>'`. Progressão jun→jul 2026:

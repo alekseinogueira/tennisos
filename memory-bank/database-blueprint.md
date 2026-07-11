@@ -157,6 +157,21 @@
   `source='coach'`. The student Feedback tab (`Feedbacks.jsx`) renders the AI fields only
   when present, so both shapes coexist. ETAPA 4 (Notion→Supabase sync) upserts on `notion_id`.
 
+### student_visual_profile  (remembered visual cues for group-video analysis; coach-only)
+| column       | type                    | notes |
+|--------------|-------------------------|-------|
+| id           | uuid PK                 | |
+| student_id   | uuid NOT NULL **UNIQUE** → students(id) on delete cascade | 1 row per student — upsert key (`on_conflict=student_id`, same idiom as feedbacks.notion_id) |
+| visual_cue   | text NOT NULL           | how to spot the player in a video ("camiseta azul, lado esquerdo") |
+| confirmed_at | timestamptz NOT NULL default now() | last time the coach confirmed the cue (a dispatch) |
+| updated_at   | timestamptz NOT NULL default now() | |
+
+- *(migration 014, Fase F2 Etapa 3, applied live 2026-07-11.)* The dispatch screen
+  (`FeedbackNew.jsx`, video path) pre-fills "How to spot them" from here on student pick;
+  a successful dispatch upserts the confirmed cues (best-effort — never blocks the analysis).
+- **RLS:** single policy `svp_coach_all` = `is_coach()` for ALL — students never read or
+  write it (internal coach tooling; the cue travels to n8n only inside the webhook payload).
+
 ### student_gallery  (per-student PRIVATE lesson footage; subject = student)
 | column           | type                    | notes |
 |------------------|-------------------------|-------|

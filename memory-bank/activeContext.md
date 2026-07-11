@@ -4,6 +4,36 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Fase F2 ETAPA 3 (aprendizado de visual_cue) APLICADA: commit `941bb81` + migration 014 LIVE (2026-07-11, auto mode OFF, frontend NÃO deployado).**
+Protocolo seguido: mapeei o estado via memory-bank → coach escolheu "F2 Etapa 3" via AskUserQuestion (vs deploy
+Etapa 4 / setar secret primeiro) → plano + 1 decisão de design → aprovação → apliquei → lint+build limpos →
+diff → aprovação → migration live (verificada por query) → commit.
+- **Decisão do coach (AskUserQuestion, recomendação aceita): cue salvo NO DISPARO, não no publish do draft.**
+  O doc da fase diz "após análise aprovada (feedback publicado)", mas o cue só existe na tela de disparo —
+  salvar no publish exigiria coluna extra em `feedbacks` + plumbing no `FeedbackReview`/n8n. No disparo é o
+  momento em que o coach digitou/confirmou o cue; simples e tudo numa tela (ver decisions.md).
+- **Migration `014_student_visual_profile.sql` APLICADA** via `db push --linked` e **verificada por query**:
+  tabela `student_visual_profile` (id, `student_id` NOT NULL **UNIQUE** FK→students on delete cascade,
+  `visual_cue` NOT NULL, confirmed_at, updated_at), RLS ON, policy única `svp_coach_all` = `is_coach()`
+  (aluno nunca lê/escreve). UNIQUE `student_id_key` presente = requisito do upsert `on_conflict=student_id`
+  (mesmo idioma do `notion_id`/010). Aditiva — zero impacto no que está no ar.
+- **`db.js`:** +`listVisualCues()` (SELECT student_id+visual_cue, 1 query p/ o roster todo) e
+  +`upsertVisualCue(studentId, cue)` (upsert on_conflict=student_id, atualiza confirmed_at/updated_at).
+- **`FeedbackNew.jsx` (VideoPath):** carrega os cues salvos ao montar (`savedCues` Map, catch silencioso =
+  best-effort); `toggle()` agora semeia o campo "How to spot them" com o cue salvo do aluno (antes `''`) —
+  coach confirma ou edita; após disparo bem-sucedido (`res.ok`), upsert dos cues não-vazios dos alunos
+  escolhidos via `Promise.allSettled` — **falha de save nunca afeta a análise** (mesmo padrão dos emails) —
+  e o `savedCues` local é atualizado só nos fulfilled.
+- **PENDÊNCIAS DA F2 (restam):** (1) **secret `ANTHROPIC_API_KEY` NÃO setado** — verificado nesta sessão:
+  `/root/f2-work/anthropic.key` NÃO existe (coach ainda não rodou o
+  `! printf '%s' 'CHAVE' > /root/f2-work/anthropic.key && chmod 600 …`); botão IA segue "AI service is not
+  configured". (2) **e2e real do caminho vídeo** não rodado (billable Gemini) — agora também valida o ciclo
+  do cue (disparo salva → próxima seleção pré-preenche). (3) **F2 Etapa 4 — deploy do frontend** via
+  `deploy-prod` (prod ainda NÃO tem a tela de disparo nem a Etapa 3; commits locais: `1a7caaa`…`941bb81`).
+- **NEXT:** coach fornece a chave → `supabase secrets set` + shred + smoke test do "Generate with AI" →
+  validação manual dos 2 caminhos → **F2 Etapa 4 (deploy)**. Depois F3 (Robozinho, doc separado a criar).
+  Exige plano+aprovação (auto mode OFF).
+
 **Fase F2 — Tela de Disparo (Etapas 1+2 juntas) APLICADA: commit `1a7caaa` + 2 Edge Functions DEPLOYADAS + n8n com upsert de drafts AO VIVO (2026-07-11, auto mode OFF, frontend NÃO deployado).**
 Sessão retomou um prompt cuja sessão anterior caiu SEM deixar rastro (working tree limpo — verificado). Protocolo:
 plano + 4 decisões via AskUserQuestion (todas as recomendações aceitas) → apliquei → lint+build limpos →
