@@ -4,6 +4,24 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Curated Library POPULADA em produção — 37 vídeos curados, as 8 pastas saíram do "Coming soon"
+  (2026-08-07, dados + doc; SEM deploy, nenhum código de produto tocado).** Curadoria em inglês pedida pelo
+  coach a partir de 4 canais de referência (Intuitive Tennis, Top Tennis Training, Online Tennis Instruction,
+  Feel Tennis) **sem cota obrigatória**, comparando com outras fontes. Entregues **`memory-bank/planning/
+  library-curation.md`** (metodologia, 8 pastas × subtópico · canal · título original · URL, justificativa por
+  conjunto, distribuição de canais, fontes novas com credencial, limitações) e **`supabase/seeds/
+  curated_library_v1.sql`** (37 inserts idempotentes por `external_url`, **fora de `migrations/`** para o
+  `db push` não pegar). **Aplicado ao vivo** via `db query --linked` no projeto `vdyvlylacsghnvtllrzj`:
+  forehand/backhand/footwork/serve/mentality 5 cada + volley/slice/smash 4 cada = **37**, todas com URL
+  `watch?v=` e `source='youtube'`. **Os 8 placeholders da Fase 8E foram DELETADOS** (aprovação explícita) —
+  `external_url=''`, título = nome da categoria, criados 2026-06-17; eram desnecessários (as pastas são
+  hard-coded no `Library.jsx`) e renderizavam um card "Watch ↗" quebrado por pasta. **Sem deploy: é mudança de
+  dado** e a tela já estava em prod desde a 8E. **Coach validou em prod** — os 37 embeds tocam.
+  **Método de verificação:** `youtube.com/oembed?url=…&format=json` devolve `title`+`author_name` reais
+  (WebFetch em página do YouTube devolve só o rodapé) — **37/37 verificadas, 0 falhas**; pegou 1 erro real
+  (vídeo de **tênis de mesa** que passaria por "mental game"). **11 canais / 37 vídeos**, teto de 3 por canal
+  por categoria respeitado. **Caveat honesto: os vídeos NÃO foram assistidos** — título/canal são fato,
+  adequação pedagógica é julgamento; recomendação aberta de assistir 1 por pasta.
 - **Protocolo de orquestração Claude Code + Codex ADOTADO (2026-08-07, governança — sem código de produto).**
   Portado de `/root/agente_cortes` + `/root/Agente_WRD` para 3 arquivos, sem reestruturar o `CLAUDE.md`:
   **`docs/ORQUESTRACAO.md` NOVO** (princípio "o coordenador orquestra; o Codex coda", default invertido —
@@ -546,6 +564,19 @@
   manual external_url paste). n8n/Stripe seams.
 
 ## Known Issues
+- **`planning/roadmap-portal.md` (Fase 8E) descreve uma coluna `description` em `curated_library` que NÃO
+  existe** (achado 2026-08-07). O doc mostra `insert into curated_library (title, category, description,
+  created_at)`; as colunas reais (`002_mvp_schema.sql`) são `id, coach_id, title, category, external_url,
+  source, created_at`, e o `LibraryCard` renderiza **só** `title` + player. Consequência prática: não há onde
+  guardar subtópico nem um "por que assistir" — a curadoria v1 contornou embutindo no título
+  (`<Subtopic> · <Channel>`). Correção limpa seria migration aditiva com `description`/`subtopic`; não feita
+  (mudança de schema, exige plano+aprovação). **Tratar o roadmap 8E como aspiracional nesse ponto.**
+- **Curadoria da Library: os 37 vídeos NÃO foram assistidos** (2026-08-07). Título, canal e existência estão
+  verificados via oEmbed (37/37); a adequação pedagógica é inferida de credencial do coach/canal + tema. O
+  coach confirmou que os embeds TOCAM em prod, mas a validação de conteúdo (assistir 1 por pasta) segue aberta.
+  Riscos residuais registrados no doc: link rot (sem monitoramento — um re-check periódico do oEmbed sobre
+  `select external_url from curated_library` resolveria) e ausência de tag de nível (iniciante e 4.0 veem a
+  mesma prateleira; `curated_library` não tem coluna de nível).
 - **Re-rodar o MESMO vídeo depois de publicar reverte o feedback p/ draft** (F2, 2026-07-11, by-design aceito).
   O upsert de drafts do workflow de Análise usa `on_conflict=notion_id` + merge-duplicates com `status='draft'`
   no corpo — um segundo POST do mesmo vídeo cria páginas Notion NOVAS (notion_ids novos → drafts duplicados),

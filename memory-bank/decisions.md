@@ -3,6 +3,44 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-08-07 — Curadoria da Curated Library v1 (37 vídeos) — escopo, formato do título e aplicação em produção
+- **Decision (1) — curadoria em INGLÊS, 4–5 vídeos por pasta, subtópicos dentro das 8 categorias existentes.**
+  **Why:** escolha do coach via AskUserQuestion — os 4 canais de referência que ele indicou são todos em inglês
+  e o portal é todo em inglês; subtópico dentro das pastas existentes evita mexer na lista hard-coded do
+  `Library.jsx`. O coach reforçou no meio da sessão: conversa em PT, **entrega 100% em inglês**.
+  **Alternatives:** português BR (rejeitado — sairia dos canais de referência e destoaria do portal); ambos com
+  preferência inglês (rejeitado); propor categorias novas além das 8 (rejeitado — exigiria mudar `Library.jsx`).
+- **Decision (2) — subtópico vive no TÍTULO, no formato `<Subtopic> · <Channel>`.** **Why:** `curated_library`
+  **não tem coluna `description`** (o `roadmap-portal.md` da Fase 8E diz que tem e está errado) e o
+  `LibraryCard` renderiza só `title` + player. Repetir a categoria no título seria ruído (a pasta já diz), e
+  muitos títulos originais são clickbait ("It's NOT Linear", "Insane Backhand Power") — off-brand ao lado da voz
+  55TC "direta, sem jargão". O player embedado mostra o título original, então nada é escondido do aluno, e o
+  crédito do canal fica explícito no card. **Alternatives:** usar o título cru do YouTube (rejeitado — clickbait
+  + categoria redundante); adicionar `description`/`subtopic` via migration (adiado — mudança de schema exige
+  plano+aprovação própria; registrado como recomendação no doc).
+- **Decision (3) — verificação obrigatória por `youtube.com/oembed`, e nenhuma URL não verificada entra na
+  entrega.** **Why:** IDs de vídeo do YouTube são inadivinháveis — alucinar um é o risco central deste tipo de
+  tarefa. WebFetch numa página do YouTube devolve só o rodapé (inútil para verificar); o oEmbed devolve `title`
+  e `author_name` reais em JSON. **37/37 verificadas, 0 falhas**, e a checagem pegou um erro real: um vídeo que
+  aparecia forte em busca de "mental game" era do canal **Peak Performance Table Tennis** (tênis de mesa).
+  **Alternatives:** confiar nos títulos devolvidos pelo WebSearch (rejeitado — o caso do tênis de mesa passaria).
+- **Decision (4) — seed fica em `supabase/seeds/`, FORA de `supabase/migrations/`.** **Why:** é dado, não
+  schema; dentro de `migrations/` o `supabase db push` aplicaria junto de qualquer migration futura, sem
+  intenção. Idempotente por `where not exists` sobre `external_url`, então re-rodar é seguro.
+  **Alternatives:** migration numerada (rejeitado — polui o histórico de schema com conteúdo editorial).
+- **Decision (5) — os 8 placeholders da Fase 8E foram DELETADOS de produção.** Linhas com `external_url=''` e
+  título = nome da categoria, criadas 2026-06-17 para "semear" as categorias. **Why:** as 8 pastas são
+  hard-coded no `Library.jsx`, então as linhas nunca foram necessárias — e cada uma renderizava para o aluno um
+  card "Watch ↗" quebrado (href vazio) e inflava a contagem da pasta em +1. Deleção é destrutiva, então foi
+  perguntada e **aprovada explicitamente** (Hard Rule "ask before deleting"). **Alternatives:** deixar como
+  estavam (rejeitado pelo coach — card quebrado visível ao aluno); deletar só depois da conferência no portal.
+- **Decision (6) — aplicar o seed em produção NÃO exigiu deploy.** **Why:** é mudança de dado; a tela
+  `Library.jsx` já está em prod desde a Fase 8E, e ela lê `curated_library` em runtime. Nenhum commit de código
+  de produto foi necessário para o conteúdo entrar no ar.
+- **Caveat registrado, não uma decisão:** os vídeos **não foram assistidos**. Título/canal/existência são fato
+  verificado; adequação pedagógica é julgamento inferido de credenciais e tema. Declarado explicitamente no doc
+  e nos Known Issues, com a recomendação de assistir 1 por pasta antes de considerar a curadoria fechada.
+
 ## 2026-08-07 — Protocolo de orquestração Claude Code + Codex adotado no TennisOS (portado de agente_cortes / Agente_WRD)
 - **Decision (1) — o protocolo dos outros dois projetos passa a valer aqui**, em `docs/ORQUESTRACAO.md`:
   princípio "o coordenador orquestra; o Codex coda"; **default invertido** (a pergunta é "há motivo pra eu NÃO

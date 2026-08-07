@@ -62,6 +62,8 @@ tennisos/
 │   │   ├── 001_profiles_auth.sql   # role enum, profiles, is_coach(), handle_new_user trigger
 │   │   ├── 002_mvp_schema.sql      # business tables (students, packages, lesson_credits, feedbacks, student_gallery, curated_library + 2 feedback-link joins)
 │   │   └── 003_rls_policies.sql    # enable RLS + policies on every table
+│   ├── seeds/                      # DADO, não schema — fora de migrations/ para o `db push` NÃO aplicar
+│   │   └── curated_library_v1.sql  # 37 vídeos da Library (idempotente por external_url); curadoria em planning/library-curation.md
 │   └── functions/                  # (estado 2026-07-11 — todas deployadas)
 │       ├── _shared/coach-auth.ts   # guard: service-role key OU JWT com role coach/admin
 │       ├── send-invite-email/      # convite do aluno (verify_jwt=true)

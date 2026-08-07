@@ -4,6 +4,49 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Curated Library POPULADA — 37 vídeos curados APLICADOS no Supabase de produção; a Library saiu do "Coming soon" (2026-08-07, auto mode OFF, SEM deploy).**
+Pedido do coach: curadoria de vídeos instrucionais para a `/library`, partindo de 4 canais de referência que ele
+colou (Intuitive Tennis, Top Tennis Training, Online Tennis Instruction, Feel Tennis) mas **sem cota obrigatória** —
+avaliar cada vídeo, comparar com outras fontes e registrar as fontes novas + por que são confiáveis.
+- **4 decisões do coach (AskUserQuestion, todas as recomendações aceitas):** (1) entrega = **doc de curadoria +
+  SQL pronto** (não aplicar sem aprovação); (2) **idioma inglês** (os 4 canais são em inglês e o portal é todo em
+  inglês); (3) **4–5 por pasta** (~35); (4) **subtópicos dentro das 8 pastas existentes**, sem categoria nova.
+  Correção do coach no meio da sessão: conversa em PT, **entrega 100% em inglês** (subtópicos, títulos, doc, SQL).
+- **`memory-bank/planning/library-curation.md` NOVO** (em inglês): metodologia, critérios, as 8 pastas com
+  subtópico · canal · título original · URL, o porquê de cada conjunto, distribuição de canais, fontes novas
+  justificadas e limitações honestas.
+- **`supabase/seeds/curated_library_v1.sql` NOVO** — 37 inserts idempotentes (`where not exists` por
+  `external_url`), **deliberadamente FORA de `supabase/migrations/`** para o `db push` nunca pegar.
+- **Método de verificação (o achado metodológico da sessão): `youtube.com/oembed?url=…&format=json`.**
+  WebFetch em página do YouTube devolve só o rodapé (inútil); o oEmbed devolve `title` + `author_name` reais em
+  JSON. **37/37 URLs verificadas, 0 falhas.** A verificação pegou um erro real: `tJPk71BJzLM`, forte em busca de
+  "mental game", é do canal **Peak Performance Table Tennis** — tênis de mesa. Excluído.
+- **APLICADO ao vivo** (`supabase db query --linked < seed`, projeto `vdyvlylacsghnvtllrzj`): antes 8 linhas
+  (todas placeholder), depois **37 vídeos**. Distribuição: forehand/backhand/footwork/serve/mentality 5 cada,
+  volley/slice/smash 4 cada. **Sem deploy — é mudança de DADO**, e a tela `Library.jsx` já estava em prod (8E).
+- **8 placeholders da Fase 8E DELETADOS** (com aprovação explícita, Hard Rule "ask before deleting"): linhas com
+  `external_url=''` e título = nome da categoria, criadas 2026-06-17 só para semear categorias. Como as 8 pastas
+  são **hard-coded** no `Library.jsx`, elas não eram necessárias — e renderizavam um card "Watch ↗" quebrado para
+  o aluno em toda pasta. Backup com IDs foi para o scratchpad (efêmero — não persistido no repo).
+- **⚠️ Achado de schema:** `curated_library` **NÃO tem coluna `description`** — o `planning/roadmap-portal.md`
+  (Fase 8E) mostra um insert com `description` e **está errado**. Colunas reais: `id, coach_id, title, category,
+  external_url, source, created_at`. Por isso o subtópico vive no título, no formato **`<Subtopic> · <Channel>`**
+  (ex.: `Swing Path & Topspin · Intuitive Tennis`) — o player embedado mostra o título original do YouTube, então
+  nada se perde. Adicionar `description`/`subtopic` seria mudança de schema, **não feita** (fora de escopo).
+- **Coach validou em prod:** abriu a `/library` e confirmou que os 37 embeds tocam ("tudo funcionando
+  perfeitamente") — fecha a única falha que o oEmbed não detecta (dono que desabilita embed de terceiros).
+- **CAVEAT honesto registrado no doc: os vídeos NÃO foram assistidos.** Título, canal e existência são fato
+  verificado; a adequação pedagógica é julgamento inferido de credenciais + tema. Recomendação em aberto:
+  assistir 1 por pasta antes de considerar a curadoria fechada.
+- **11 canais / 37 vídeos**, os 4 de referência com 22. Teto de 3 por canal por categoria respeitado (só o
+  Forehand chegou nele e foi rebalanceado: um Intuitive Tennis saiu para entrar um Top Tennis Training).
+  Fontes novas com credencial checada: Essential Tennis (Ian Westermann), Meike Babel (ex-WTA nº 27),
+  2MinuteTennis (Ryan Reidy, USPTA Elite), Aubone Tennis (J.Y. Aubone, treinou Reilly Opelka), PlayYourCourt
+  (Scott Baxter, RSPA Elite), Tom Avery / CTW Academy.
+- **NEXT:** as 2 pendências da F2 seguem abertas e inalteradas (setar o secret `ANTHROPIC_API_KEY`; e2e real do
+  caminho vídeo). Depois F3 (Robozinho — doc de planejamento a criar). Nenhum código de produto foi tocado nesta
+  sessão (só doc + seed + dados).
+
 **Protocolo de orquestração Claude Code + Codex ADOTADO no TennisOS (2026-08-07, sessão documental, auto mode OFF).**
 Pedido do coach: ler o protocolo de orquestração com Codex dos projetos `/root/agente_cortes` e `/root/Agente_WRD`
 e aplicá-lo aqui, com adaptação e sem alucinar. **Nenhum código de produto tocado** — só governança + config MCP.
