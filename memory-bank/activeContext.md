@@ -4,6 +4,51 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Protocolo de orquestração Claude Code + Codex ADOTADO no TennisOS (2026-08-07, sessão documental, auto mode OFF).**
+Pedido do coach: ler o protocolo de orquestração com Codex dos projetos `/root/agente_cortes` e `/root/Agente_WRD`
+e aplicá-lo aqui, com adaptação e sem alucinar. **Nenhum código de produto tocado** — só governança + config MCP.
+- **Onde estava:** `docs/ORQUESTRACAO.md` nos dois projetos (a versão do `agente_cortes` é a mais madura — ela
+  própria um porte do `Agente_WRD`, documentado em `agente_cortes/memory-bank/handoffs/2026-07-25-governanca-
+  orquestracao-codex.md`), amarrado por uma secção `## Orquestração` no `AGENTS.md` de cada um + ponteiro curto
+  no `CLAUDE.md`.
+- **Estrutura escolhida pelo coach (AskUserQuestion, recomendação aceita): 3 arquivos, SEM reestruturar o
+  `CLAUDE.md`.** `docs/ORQUESTRACAO.md` NOVO (protocolo completo) + **`AGENTS.md` NOVO e curto** (~60 linhas:
+  hard rules resumidas, tokens 55TC, memory bank, orquestração, UMB no Codex, Git/push/deploy) + secção
+  `## Orchestration` de 8 linhas no `CLAUDE.md`, que fica intacto no resto. Razão do AGENTS.md: **o Codex lê
+  `AGENTS.md`, não `CLAUDE.md`** — sem ele o Codex não enxerga as Hard Rules nem a marca. Alternativas
+  rejeitadas: espelho total (AGENTS.md como fonte de verdade + CLAUDE.md fino — reestruturaria o que funciona);
+  sem AGENTS.md.
+- **Núcleo portado sem mudança:** "o coordenador orquestra; o Codex coda"; **default invertido** (a pergunta é
+  "há motivo pra eu NÃO delegar esta implementação?"); gatilhos concretos; task packet de 5–7 linhas; **sandbox
+  do Codex como isolamento** (worktree é opcional, só compensa em execução paralela); padrões **A**
+  (implementação delegada: contrato → packet → `workspace-write` → revisão → integra) e **B** (revisão
+  adversarial em `read-only`, risco zero); uma fase = uma sessão = UMB = parada.
+- **Adaptações ao TennisOS (todas derivadas do CLAUDE.md + memory-bank, nada inventado):** (1) **aceite do packet
+  = `npm run lint` + `npm run build`** (não há test runner) + script de teste offline descartável quando o
+  comportamento importar (o método que provou o parsing da E2 e o transform da F2) — substitui o baseline pytest
+  do `agente_cortes`; (2) **design visual NUNCA é delegado** — tokens 55TC são decisão do coordenador e cor
+  off-brand em diff do Codex é motivo de rejeição (o dourado `#C8A96E` já foi recusado nas Fases D e F);
+  (3) **zonas proibidas reescritas p/ as superfícies daqui** — Supabase ao vivo (`db push`/`db query`/
+  `secrets set`/`functions deploy`/`storage cp`), n8n ao vivo (`import:workflow`/`update:workflow`/
+  `pm2 restart`/POST ao webhook), `git push` + deploy hook + skill `deploy-prod`, PII de alunos, chamadas pagas
+  (Gemini/Anthropic/Resend/Twilio), `memory-bank/*`. O Codex pode ESCREVER o SQL da migration ou o transform do
+  n8n; **aplicar é do coordenador**; (4) **`danger-full-access` proibido** — este host roda o n8n de produção do
+  55TC (mesma razão do `agente_cortes`, que é o VPS); (5) **ordem de deploy (push → hook → verify) e auto mode
+  OFF (plano → aprovação → aplicar → diff → aprovação) declarados imunes a qualquer delegação** — o packet só
+  entra DEPOIS do plano aprovado; (6) branch **`master`** registrada no AGENTS.md (vários docs de planejamento
+  dizem `main` erradamente).
+- **Setup executado e verificado:** `claude mcp add --scope local --transport stdio codex-worker -- codex
+  mcp-server` neste diretório (grava em `~/.claude.json`, projeto `/root/tennisos`) → `claude mcp list` mostra
+  **`codex-worker: ✔ Connected`**, `codex-cli 0.145.0`. Rollback: `claude mcp remove codex-worker -s local`.
+- **PENDÊNCIAS/CAVEATS honestos:** (1) **nenhuma chamada real ao Codex foi feita** — o MCP está conectado mas o
+  fluxo A/B ainda NÃO foi exercido neste repo; o protocolo só prova valor quando for usado. (2) As ferramentas
+  MCP carregam no **início** da sessão → `codex`/`codex-reply` só ficam chamáveis **após reiniciar o Claude Code**
+  aqui. (3) Sem deploy (nada de frontend mudou; prod segue servindo `index-CKdUD3QI.js` do commit `61e689c`).
+- **NEXT:** o próximo trabalho de código do projeto é o candidato natural ao **padrão A** (ex.: uma função de
+  `db.js` ou uma tela já especificada), e qualquer plano de fase antes de pedir aprovação ao coach é candidato ao
+  **padrão B**. As 2 pendências da F2 seguem abertas e inalteradas: setar o secret `ANTHROPIC_API_KEY` e o e2e
+  real do caminho vídeo. Depois, F3 (Robozinho — doc de planejamento a criar).
+
 **Fase F2 ETAPA 4 (deploy do frontend) CONCLUÍDA — Tela de Disparo NO AR em produção (2026-07-11, auto mode OFF).**
 Coach mapeou o estado via memory-bank → escolheu "Etapa 4 — deploy" via AskUserQuestion (vs setar a chave primeiro / F3).
 Protocolo: lint+build limpos (bundle `index-CKdUD3QI.js`) → skill `deploy-prod` (push → hook → verify).

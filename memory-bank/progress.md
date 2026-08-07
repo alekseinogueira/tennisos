@@ -4,6 +4,20 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Protocolo de orquestração Claude Code + Codex ADOTADO (2026-08-07, governança — sem código de produto).**
+  Portado de `/root/agente_cortes` + `/root/Agente_WRD` para 3 arquivos, sem reestruturar o `CLAUDE.md`:
+  **`docs/ORQUESTRACAO.md` NOVO** (princípio "o coordenador orquestra; o Codex coda", default invertido —
+  "há motivo pra eu NÃO delegar?", gatilhos, task packet 5–7 linhas, sandbox como isolamento, padrões A
+  implementação-delegada / B revisão-adversarial-`read-only`, invariantes, setup+rollback), **`AGENTS.md` NOVO**
+  (~60 linhas — o Codex lê AGENTS.md, não CLAUDE.md) e secção `## Orchestration` no `CLAUDE.md` (resto intacto).
+  **Adaptações daqui:** aceite = `npm run lint` + `npm run build` (sem test runner) + teste offline descartável
+  quando o comportamento importar; **design visual nunca delegado** (tokens 55TC = decisão do coordenador);
+  zonas proibidas = Supabase ao vivo / n8n ao vivo / `git push` + hook + `deploy-prod` / PII de alunos / chamadas
+  pagas / `memory-bank/*` (o Codex escreve o SQL ou o transform, **aplicar é do coordenador**);
+  `danger-full-access` proibido (este host roda o n8n de produção); ordem de deploy e auto-mode-OFF imunes à
+  delegação. **MCP `codex-worker` registrado em escopo local e verificado `✔ Connected`** (`codex-cli 0.145.0`).
+  **Caveats:** nenhuma chamada real ao Codex feita ainda (fluxo A/B não exercido aqui); MCP carrega no início da
+  sessão → `codex`/`codex-reply` só chamáveis após reiniciar o Claude Code. Sem deploy.
 - **Fase F2 COMPLETA e NO AR — Tela de Disparo deployada em produção (Etapa 4, 2026-07-11, `61e689c`).**
   Deploy via `deploy-prod` (push `8153089..61e689c` → hook job `8IceutjGuRkQsyzX8gNE` → verify):
   `portal.55tenniscrew.com` HTTP 200 servindo `index-CKdUD3QI.js` (= hash do build local dos commits

@@ -28,6 +28,14 @@ Single-coach tool first; build only what solves a real, recurring problem for me
 - Display font: **Bebas Neue**
 - Body font: **DM Sans**
 
+## Orchestration
+Claude Code coordinates; Codex (via the `codex-worker` MCP) executes delimited scope. Full model in
+`docs/ORQUESTRACAO.md`; shared agent rules in `AGENTS.md`. **Default:** mechanical implementation with
+clear scope goes to Codex — the question is "is there a reason NOT to delegate this?". Adversarial review
+in `sandbox: read-only` is zero risk, use it whenever in doubt. Codex never touches central state
+(`memory-bank/*`), live Supabase/n8n, secrets or student PII, and never commits, pushes or deploys.
+Visual design is never delegated — the 55TC tokens below are a coordinator decision.
+
 ## Memory
 At the start of every task, read `memory-bank/activeContext.md` and `memory-bank/progress.md`.
 Read other memory-bank files only when the task needs them.

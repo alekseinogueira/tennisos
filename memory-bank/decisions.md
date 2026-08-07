@@ -3,6 +3,35 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-08-07 — Protocolo de orquestração Claude Code + Codex adotado no TennisOS (portado de agente_cortes / Agente_WRD)
+- **Decision (1) — o protocolo dos outros dois projetos passa a valer aqui**, em `docs/ORQUESTRACAO.md`:
+  princípio "o coordenador orquestra; o Codex coda"; **default invertido** (a pergunta é "há motivo pra eu NÃO
+  delegar esta implementação?"); gatilhos concretos; task packet de 5–7 linhas; **sandbox do Codex como
+  mecanismo de isolamento** (não worktree/Git); padrões **A** (implementação delegada) e **B** (revisão
+  adversarial em `read-only`, risco zero); invariantes; setup do MCP com rollback. **Why:** o coach quer o
+  mesmo hábito de trabalho nos três repositórios; aqui o ganho é direto porque o padrão de código é regular
+  (`db.js` + telas com o mesmo esqueleto) e `lint`+`build` dão critério de aceite executável.
+  **Alternatives:** manter só Claude Code (rejeitado — pedido explícito); copiar o doc verbatim (rejeitado —
+  as zonas de risco daqui são outras).
+- **Decision (2) — estrutura em 3 arquivos, sem reestruturar o `CLAUDE.md`:** `docs/ORQUESTRACAO.md` (protocolo
+  completo) + `AGENTS.md` NOVO e curto (o Codex lê AGENTS.md, não CLAUDE.md — sem ele o Codex não enxerga as
+  Hard Rules nem os tokens 55TC) + uma secção `## Orchestration` no `CLAUDE.md`, que fica intacto no resto.
+  **Why:** escolha do coach via AskUserQuestion. **Alternatives:** espelho total dos outros projetos (AGENTS.md
+  como fonte de verdade + CLAUDE.md fino — rejeitado: reestruturaria um CLAUDE.md que funciona); sem AGENTS.md
+  (rejeitado: o Codex ficaria cego às regras de marca).
+- **Decision (3) — adaptações ao TennisOS, não porte literal:** (a) o critério de aceite do task packet é
+  `npm run lint` + `npm run build` (não há test runner) + script de teste offline descartável quando o
+  comportamento importar; (b) **design visual nunca é delegado** — tokens 55TC são decisão do coordenador e
+  cor off-brand em diff do Codex é motivo de rejeição; (c) zonas proibidas reescritas para as superfícies
+  reais daqui: Supabase ao vivo (`db push`/`db query`/`secrets set`/`functions deploy`/`storage cp`), n8n ao
+  vivo (`import:workflow`/`update:workflow`/`pm2 restart`/POST ao webhook), `git push` + deploy hook + skill
+  `deploy-prod`, PII de alunos e chamadas pagas (Gemini/Anthropic/Resend/Twilio); (d) `danger-full-access`
+  proibido — este host roda o n8n de produção do 55TC; (e) a ordem de deploy (push → hook → verify) e o
+  "auto mode OFF" (plano → aprovação → aplicar → diff → aprovação) declarados imunes a qualquer delegação.
+- **Setup:** `claude mcp add --scope local --transport stdio codex-worker -- codex mcp-server` executado neste
+  diretório; verificado `codex-worker: ✔ Connected`, `codex-cli 0.145.0`. **Nenhuma chamada real ao Codex
+  foi feita** — o fluxo A/B ainda não foi exercido aqui.
+
 ## 2026-07-11 — Fase F2 Etapa 3: visual_cue salvo no DISPARO (não no publish) + tabela coach-only com UNIQUE student_id
 - **Decision (1) — o `visual_cue` é salvo no momento do DISPARO da análise** (POST ao webhook bem-sucedido),
   não "após feedback publicado" como diz a letra do doc da fase. **Why:** o cue só existe na tela de disparo —
