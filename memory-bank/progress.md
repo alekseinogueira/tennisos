@@ -4,6 +4,12 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **✅ ILUSTRAÇÕES DA LIBRARY — ARCO FECHADO E VALIDADO PELO COACH em produção (2026-08-09, 5 deploys:
+  `70fc239` → `e0c6470` → `68de721` → `bb81d45` → `9569ec1`).** Estado final: 8 SVGs inline (nítidos no
+  iOS), rota `/library` code-split (principal 607 kB / 161,65 gzip + chunk 308 kB / 75 gzip sob demanda),
+  card como bloco centralizado (`items-center`), a arte é o ícone da categoria (emoji permanece só no header
+  de dentro da pasta), e toda a normalização óptica vive no `viewBox` num objeto de config por categoria.
+  Coach confirmou nitidez e alinhamento no aparelho dele.
 - **`items-center` no card + dx recuado para 55% do centro de massa (2026-08-09).** Coach reportou o bloco
   inteiro alinhado à esquerda. **Medido antes de mexer: o bloco de texto já estava em desvio 0,0 px do centro
   nos 9 cards** e a caixa da arte com margens iguais — aplicar `items-center` (regra única no `<button>`

@@ -22,9 +22,20 @@ pedindo `align-items: center` como regra única na classe compartilhada.
   21,9 → 12,1. É um trade-off sem solução ótima: centrar a caixa alinha as caixas mas deixa o corpo 48
   unidades fora; centrar a massa faz o contrário. O comentário no componente documenta os dois extremos
   ("push toward 1 to favour the body, toward 0 to line the boxes up exactly").
-- **PENDENTE DE CONFIRMAÇÃO DO COACH:** se após hard-reload o bloco ainda parecer à esquerda, minha
-  instrumentação não está reproduzindo o que ele vê e preciso de screenshot novo — as medições não sustentam
-  o diagnóstico dele no build atual.
+- **✅ CONFIRMADO PELO COACH ("resolvido") após o deploy do `9569ec1`.** Fecha a pendência: o bloco está
+  centralizado para ele. **Confirma retroativamente a hipótese de cache** — as medições nunca sustentaram o
+  diagnóstico de "bloco à esquerda" no build atual, e o `items-center` não moveu pixel nenhum; o que mudou
+  de fato entre a queixa e o "resolvido" foi o recuo do dx para 55% **e** a página recarregada.
+
+**FECHAMENTO DO ARCO das ilustrações da Library (5 deploys, 2026-08-09): `70fc239` → `e0c6470` → `68de721`
+→ `bb81d45` → `9569ec1`, todos verificados em produção.** Estado final: 8 SVGs inline, rota `/library`
+code-split (principal 607 kB/161,65 gzip + chunk 308 kB/75 gzip), card como bloco centralizado com
+`items-center`, arte como ícone da categoria (emoji só no header de dentro da pasta), normalização óptica
+inteira no `viewBox` (scale/dx/dy por categoria num objeto só). **As 3 lições de método que custaram
+retrabalho:** (1) verificar em Chromium **não** é verificar iOS — o WebKit do cache do Playwright roda aqui
+e deveria ter sido o primeiro passo; (2) exceção óptica calibrada num tamanho **não** transfere para outro —
+re-medir quando a área muda; (3) **medir antes de aceitar o diagnóstico** — duas das queixas tinham causa
+diferente da suposta, e uma não existia no build atual.
 
 **Alinhamento óptico dos 8 cards + serve/smash ampliados de propósito (2026-08-09, auto mode OFF).**
 Coach confirmou que **o borrão está resolvido** e apontou 3 coisas: cards com alinhamentos diferentes entre si
