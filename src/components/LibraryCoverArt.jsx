@@ -36,12 +36,14 @@ import mentality from '../assets/library-covers/mentality.svg?raw'
 //           it is allowed to overflow (the <svg> is overflow-visible).
 //   dx/dy — shift in 512-units, positive = right / down.
 //
-// dx CENTRES EACH POSE ON ITS CENTRE OF MASS. The files are centred by
-// *bounding box*, which is not where the eye puts the middle: a slice sits 48
-// units left of centre because its racquet reaches right, a footwork sits 27
-// right. On a card whose title is centred, that reads as eight drawings on
-// eight different axes. dx = 256 − (measured ink centroid) puts them all on
-// one axis with the text.
+// dx CENTRES EACH POSE BETWEEN ITS BOUNDING BOX AND ITS CENTRE OF MASS, at 55%
+// of the way to the centroid. There is no single "centre" of a figure whose
+// racquet reaches out: centring the box leaves the body sitting 48 units off
+// (slice) and the eight poses on eight different axes; centring the mass makes
+// the boxes themselves disagree by as much as 22px on a 352px card. 55% halves
+// the worst deviation of either — measured spread across the eight drops from
+// 32px to 18px on desktop. Push toward 1 to favour the body, toward 0 to line
+// the boxes up exactly.
 //
 // scale EQUALISES PERCEIVED MASS, not height. Height alone is misleading: a
 // serve and a smash reach full height with an outstretched racquet while the
@@ -54,14 +56,14 @@ import mentality from '../assets/library-covers/mentality.svg?raw'
 //
 // dy pulls poses whose mass sits low (racquet high overhead) back up.
 const ART = {
-  forehand: { src: forehand, scale: 1.01, dx: 39, dy: 6 },
-  backhand: { src: backhand, scale: 0.94, dx: 45, dy: 3 },
-  footwork: { src: footwork, scale: 0.92, dx: -27, dy: 4 },
-  serve: { src: serve, scale: 1.28, dx: 6, dy: -10 },
-  volley: { src: volley, scale: 1.05, dx: 22, dy: 2 },
-  slice: { src: slice, scale: 1.06, dx: 49, dy: 3 },
-  smash: { src: smash, scale: 1.18, dx: 3, dy: -20 },
-  mentality: { src: mentality, scale: 1.02, dx: -12, dy: 7 },
+  forehand: { src: forehand, scale: 1.01, dx: 21, dy: 6 },
+  backhand: { src: backhand, scale: 0.94, dx: 25, dy: 3 },
+  footwork: { src: footwork, scale: 0.92, dx: -15, dy: 4 },
+  serve: { src: serve, scale: 1.28, dx: 3, dy: -10 },
+  volley: { src: volley, scale: 1.05, dx: 12, dy: 2 },
+  slice: { src: slice, scale: 1.06, dx: 27, dy: 3 },
+  smash: { src: smash, scale: 1.18, dx: 2, dy: -20 },
+  mentality: { src: mentality, scale: 1.02, dx: -7, dy: 7 },
 }
 
 // A viewBox that magnifies by `scale` about the centre and then shifts the

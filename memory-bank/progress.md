@@ -4,6 +4,13 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **`items-center` no card + dx recuado para 55% do centro de massa (2026-08-09).** Coach reportou o bloco
+  inteiro alinhado à esquerda. **Medido antes de mexer: o bloco de texto já estava em desvio 0,0 px do centro
+  nos 9 cards** e a caixa da arte com margens iguais — aplicar `items-center` (regra única no `<button>`
+  compartilhado, como pedido) deixou as medições **idênticas**. A descrição bate com o estado anterior ao
+  `68de721`, então a hipótese principal é **cache** — pendente de hard-reload do coach. O que era real: a
+  geometria desenhada desviava até **+21,9 px** (slice) num card de 352 px, resíduo do centro-de-massa a 100%;
+  **dx recuado para 55%** derruba o spread de 32 px para 18 px. lint+build limpos.
 - **Cards da Library alinhados num eixo só + serve/smash ampliados (2026-08-09).** Coach confirmou o borrão
   resolvido e apontou alinhamentos inconsistentes. **Duas causas medidas, nenhuma era o `text-center`:**
   (a) as figuras nunca estiveram opticamente centradas — os arquivos são centrados por *bounding box* e o

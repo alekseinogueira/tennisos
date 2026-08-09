@@ -159,7 +159,10 @@ function FolderCard({ folder, onOpen }) {
   return (
     <button
       onClick={onOpen}
-      className="group relative flex aspect-[4/5] flex-col justify-between overflow-hidden rounded-3xl bg-forest p-5 text-center transition hover:-translate-y-0.5 sm:aspect-square sm:p-6"
+      // items-center centres every child as a block on the card's axis — the
+      // art, the title and the count line — instead of letting them stretch
+      // full width and rely on text-align. One rule, all nine cards.
+      className="group relative flex aspect-[4/5] flex-col items-center justify-between overflow-hidden rounded-3xl bg-forest p-5 text-center transition hover:-translate-y-0.5 sm:aspect-square sm:p-6"
     >
       <CourtMotif className="pointer-events-none absolute -right-6 -bottom-6 h-40 text-sand/[0.06]" />
 

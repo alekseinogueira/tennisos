@@ -4,6 +4,28 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**`items-center` no card + dx recuado para 55% do centro de massa (2026-08-09, auto mode OFF).**
+Coach reportou "o bloco inteiro (ícone + título + subtítulo) alinhado à esquerda, sobrando espaço à direita",
+pedindo `align-items: center` como regra única na classe compartilhada.
+- **MEDIÇÃO ANTES DE MEXER (WebKit DPR 3, mobile 393 e desktop 1280): o bloco de texto já estava em desvio
+  0,0 px do centro em TODOS os 9 cards, e a caixa da arte com margens iguais (68/68 no desktop, 40/40 no
+  mobile).** Ou seja, o que ele descreveu **não existe no build em produção**. Apliquei `items-center` mesmo
+  assim (pedido explícito, regra única no `<button>` compartilhado) e **as medições ficaram idênticas** — o
+  que confirma que já estava centrado; a regra só troca centralização por `text-align` por centralização
+  estrutural, o que é mais robusto.
+- **HIPÓTESE PRINCIPAL: página em cache.** A descrição bate **exatamente** com o estado anterior ao
+  `68de721` (texto à esquerda, arte centrada). O deploy tinha saído minutos antes da mensagem. Pedi
+  hard-reload e um screenshot novo se persistir.
+- **O que era real e foi corrigido:** o único elemento fora do eixo era a **geometria desenhada** dentro da
+  caixa — de −10,5 a **+21,9 px** (slice) num card de 352 px —, resíduo do centro-de-massa a 100% da rodada
+  anterior. **dx recuado para 55% do caminho até o centroide**: spread cai de **32 px para 18 px**, slice de
+  21,9 → 12,1. É um trade-off sem solução ótima: centrar a caixa alinha as caixas mas deixa o corpo 48
+  unidades fora; centrar a massa faz o contrário. O comentário no componente documenta os dois extremos
+  ("push toward 1 to favour the body, toward 0 to line the boxes up exactly").
+- **PENDENTE DE CONFIRMAÇÃO DO COACH:** se após hard-reload o bloco ainda parecer à esquerda, minha
+  instrumentação não está reproduzindo o que ele vê e preciso de screenshot novo — as medições não sustentam
+  o diagnóstico dele no build atual.
+
 **Alinhamento óptico dos 8 cards + serve/smash ampliados de propósito (2026-08-09, auto mode OFF).**
 Coach confirmou que **o borrão está resolvido** e apontou 3 coisas: cards com alinhamentos diferentes entre si
 (uns à esquerda, outros no meio, um totalmente fora), `serve` e `smash` parecendo menores por serem verticais,

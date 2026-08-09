@@ -3,6 +3,25 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-08-09 — `items-center` no card e recuo do centro-de-massa para 55%
+- **Decision (1) — `items-center` na classe compartilhada do `<button>` do card.** Pedido explícito do coach.
+  **Why:** ele reportou o bloco inteiro alinhado à esquerda. **Medi antes de mexer e o bloco de texto já
+  estava em desvio 0,0 px do centro nos 9 cards, com a caixa da arte em margens iguais** — e depois de
+  aplicar, as medições ficaram **idênticas**. Ou seja, a regra não mudou pixel nenhum; ela troca uma
+  centralização por `text-align` (que só afeta conteúdo inline) por uma centralização **estrutural** de cada
+  filho como bloco. Vale ter mesmo assim: é mais robusta e é o que foi pedido.
+- **Decision (2) — dx recua de 100% para 55% do caminho até o centro de massa.** **Why:** o único elemento
+  realmente fora do eixo era a geometria desenhada: de −10,5 a **+21,9 px** (slice) num card de 352 px. Não
+  existe centro único para uma figura cuja raquete se estende — centrar a **caixa** alinha as caixas mas
+  deixa o corpo até 48 unidades fora; centrar a **massa** faz as caixas discordarem em até 22 px. 55% corta
+  o pior desvio dos dois: spread de **32 px → 18 px**. **Alternatives:** manter 100% (rejeitado — é o que
+  produz o desvio visível agora); voltar a 0 (rejeitado — reabre a queixa da rodada anterior, oito desenhos
+  em oito eixos). O comentário no componente registra os dois extremos para ajuste futuro.
+- **Registro honesto:** a descrição do coach ("bloco à esquerda, espaço à direita") **bate exatamente com o
+  estado anterior ao `68de721`**, e o deploy tinha saído minutos antes da mensagem — hipótese principal é
+  **página em cache**. Não afirmei isso como certeza: pedi hard-reload e screenshot novo, porque se persistir
+  minha instrumentação não está reproduzindo o que ele vê.
+
 ## 2026-08-09 — Centro de massa como eixo, normalização óptica migrada para o viewBox, serve/smash ampliados
 - **Decision (1) — REVERTE o `dx = 0` da decisão anterior: cada pose passa a ser centrada pelo CENTRO DE
   MASSA (`dx = 256 − centroide`).** **Why:** eu tinha argumentado que "o alcance do braço/raquete é parte da
