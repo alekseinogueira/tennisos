@@ -172,15 +172,20 @@ function FolderCard({ folder, onOpen }) {
         <h2 className="font-display text-3xl leading-none tracking-[0.04em] text-sand sm:text-4xl">
           {folder.label}
         </h2>
-        {empty ? (
-          <span className="mt-2 inline-block rounded bg-sand/10 px-2 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-sand/70">
-            Coming soon
-          </span>
-        ) : (
-          <p className="mt-2 text-xs font-medium uppercase tracking-[0.2em] text-sand/55">
-            {folder.count} {folder.count === 1 ? 'video' : 'videos'}
-          </p>
-        )}
+        {/* Fixed-height meta row: the "Coming soon" badge is taller than the
+            count line, and without this the empty folder's title sits a few
+            pixels above every other card's. */}
+        <div className="mt-2 flex h-6 items-center justify-center">
+          {empty ? (
+            <span className="rounded bg-sand/10 px-2 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.2em] text-sand/70">
+              Coming soon
+            </span>
+          ) : (
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-sand/55">
+              {folder.count} {folder.count === 1 ? 'video' : 'videos'}
+            </p>
+          )}
+        </div>
       </div>
     </button>
   )

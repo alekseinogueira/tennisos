@@ -4,6 +4,19 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Cards da Library alinhados num eixo só + serve/smash ampliados (2026-08-09).** Coach confirmou o borrão
+  resolvido e apontou alinhamentos inconsistentes. **Duas causas medidas, nenhuma era o `text-center`:**
+  (a) as figuras nunca estiveram opticamente centradas — os arquivos são centrados por *bounding box* e o
+  **centro de massa desvia até ±48 unidades (±9,5%)**; agora `dx = 256 − centroide` por categoria (reverte a
+  decisão anterior de `dx=0`); (b) o badge "Coming soon" (22,4 px) contra a linha de contagem (16 px) punha o
+  título do `Mentality` 6,4 px acima dos outros — resolvido com linha meta de altura fixa (`h-6`); os 9
+  títulos batem em 260 px. **Mecânica trocada:** toda a normalização óptica saiu do CSS e foi para o
+  **`viewBox`** (`size = 512/scale`, origem deslocada por dx/dy, pré-computado no load) — caixa idêntica para
+  as 8 poses, valores nas mesmas unidades das medições, `<svg>` `overflow-visible`. **`serve` 1.05→1.28 e
+  `smash` 1.00→1.18**, rompendo o limite comum de propósito e com autorização do coach (a métrica de massa
+  pedia 1,57 para o serve — correção parcial). Verificado em WebKit DPR 3 (393 e 1280); lint+build limpos.
+  **Armadilha documentada:** `<svg>` inline com `width:auto` não resolve pelo aspect ratio (default é
+  `width:100%`) e estoura o layout num flex item — usar `aspect-square h-full`.
 - **Borrão das ilustrações RESOLVIDO na causa-raiz + card centralizado + 1º code splitting do app
   (2026-08-09).** **Causa provada por reprodução no WebKit a DPR 3:** o WebKit rasteriza SVG carregado via
   `<img>` na resolução CSS (1x) e amplia o bitmap para o DPR da tela — o Blink re-rasteriza na densidade do

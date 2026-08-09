@@ -3,6 +3,43 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-08-09 — Centro de massa como eixo, normalização óptica migrada para o viewBox, serve/smash ampliados
+- **Decision (1) — REVERTE o `dx = 0` da decisão anterior: cada pose passa a ser centrada pelo CENTRO DE
+  MASSA (`dx = 256 − centroide`).** **Why:** eu tinha argumentado que "o alcance do braço/raquete é parte da
+  pose, não um erro a corrigir". Sob texto **centralizado**, isso deixou de valer: os arquivos são centrados
+  por *bounding box* e o centro de massa desvia até **±48 unidades (±9,5%)** — `slice` −48,5, `backhand` −45,
+  `forehand` −39,2, `footwork` +27 — o que o coach leu (corretamente) como "uns alinhados à esquerda, outros
+  no meio". Um eixo compartilhado com o texto vale mais que a fidelidade ao enquadramento original.
+  **Alternatives:** correção parcial a 50–70% (não escolhida — o objetivo aqui é um eixo, não meio eixo);
+  voltar o texto para a esquerda (rejeitado — o coach pediu tudo centralizado).
+- **Decision (2) — toda a normalização óptica migra de CSS para o `viewBox` do SVG.**
+  `viewBoxFor({scale,dx,dy})` → `${256-half-dx} ${256-half-dy} ${size} ${size}`, `size = 512/scale`,
+  pré-computado uma vez no load. **Why:** com CSS, `scale` mudava o **tamanho da caixa** do elemento, então
+  cada card tinha geometria ligeiramente diferente e `dx` em `%` teria resolvido contra a largura do wrapper
+  (não da arte) — dois sistemas de coordenadas misturados. Pelo viewBox, **toda pose ocupa uma caixa
+  idêntica**, só o desenho se move dentro, e os valores ficam nas mesmas unidades das medições (512-space).
+  Exige `<svg>` com `overflow-visible` para pose ampliada transbordar em vez de ser cortada.
+  **Alternatives:** `transform: scale/translate` (rejeitado — é a família de bug que causou o borrão);
+  `left`/`top` em % (rejeitado — percentagem resolve contra o wrapper, não contra a arte).
+- **Decision (3) — `serve` 1.05→1.28 e `smash` 1.00→1.18, rompendo o limite superior/inferior comum.**
+  Autorizado explicitamente pelo coach ("mesmo que quebre um pouco o padrão de limite"). **Why:** poses
+  verticais alcançam a altura toda com a raquete enquanto o corpo fica pequeno, então **a igualdade de altura
+  produz desigualdade de massa** — é o mesmo fenômeno que eu já tinha medido no início (d=126 do serve contra
+  ~190 do grupo). A métrica de massa pede **1,57** para o serve, o que seria grotesco: correção parcial.
+  O smash a 1,18 é praticamente o que a massa pede (1,20).
+- **Decision (4) — linha meta de altura fixa (`h-6`) no card.** **Why:** o badge "Coming soon" tem 22,4 px
+  contra 16 px da linha de contagem, e isso empurrava o título do `Mentality` **6,4 px acima** dos outros
+  oito (medido no DOM) — o card "totalmente desalinhado" que o coach apontou. Agora os 9 títulos batem em
+  260 px do topo. **Alternatives:** tirar o padding do badge (rejeitado — ficaria apertado e ainda dependeria
+  da métrica da fonte).
+- **Armadilha de CSS documentada:** `<svg>` **inline** com `width:auto` **não** resolve pelo aspect ratio como
+  um `<img>` — o default do SVG é `width:100%`, e num flex item shrink-to-fit isso estoura o layout. Wrapper
+  `aspect-square h-full` + `[&>svg]:h-full [&>svg]:w-full`.
+- **Erro de método registrado:** o screenshot `fullPage` deu 9948 px de largura e eu suspeitei do
+  `overflow-visible` recém-adicionado. Era **o meu próprio `<pre>` de medição** na página de preview (`<pre>`
+  não quebra linha). Só descobri medindo `scrollWidth` com e sem o `overflow-visible` — igual nos dois.
+  **Lição: descartar o instrumento de teste antes de culpar o código sob teste.**
+
 ## 2026-08-09 — SVG inline (o `<img>` borra no WebKit), rota /library code-split, e card centralizado
 - **Decision (1) — a arte passa a ser SVG INLINE (`?raw` + `dangerouslySetInnerHTML`), abandonando `<img>`.**
   **Why:** **provado por reprodução**, não por teoria — o **WebKit rasteriza SVG carregado via `<img>` na

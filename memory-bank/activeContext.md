@@ -4,6 +4,39 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Alinhamento óptico dos 8 cards + serve/smash ampliados de propósito (2026-08-09, auto mode OFF).**
+Coach confirmou que **o borrão está resolvido** e apontou 3 coisas: cards com alinhamentos diferentes entre si
+(uns à esquerda, outros no meio, um totalmente fora), `serve` e `smash` parecendo menores por serem verticais,
+e o pedido de deixar tudo — card, textos e ícones — centralizado.
+- **Achado 1 — o desalinhamento tinha DUAS causas, ambas medidas, nenhuma era o `text-center` (que já estava
+  em prod).** (a) **As figuras nunca estiveram opticamente centradas:** os arquivos são centrados por
+  **bounding box**, e o **centro de massa** desvia até **±48 unidades (±9,5% da caixa)** — `slice` −48,5,
+  `backhand` −45, `forehand` −39,2 à esquerda; `footwork` +27 à direita. Num card de texto centralizado isso
+  vira oito desenhos em oito eixos. **Isso reverte a minha decisão anterior de `dx = 0`** ("o alcance da
+  raquete é a pose, não erro") — o coach viu como erro e ele está certo: sob texto centralizado, o eixo
+  compartilhado vale mais. Agora **dx = 256 − centroide** por categoria. (b) **`Mentality` estava 6,4 px acima
+  de todos** (medido no DOM): o badge "Coming soon" tem 22,4 px contra 16 px da linha de contagem. Corrigido
+  com **linha meta de altura fixa** (`mt-2 flex h-6 items-center justify-center`) — os 9 títulos agora batem
+  em 260 px do topo do card.
+- **Achado 2 — mecânica trocada: TODA a normalização óptica agora vive no `viewBox`,** não em CSS.
+  `viewBoxFor({scale,dx,dy})` → `${256-half-dx} ${256-half-dy} ${size} ${size}` com `size = 512/scale`,
+  pré-computado 1× no load (troca do `viewBox="0 0 512 512"`, com throw se o literal sumir do asset).
+  Vantagem: **todo pose ocupa uma caixa idêntica** (a geometria do card não varia), só o desenho se move
+  dentro dela, e os valores ficam nas **mesmas unidades das medições** (512-space). `<svg>` com
+  `overflow-visible` para a pose ampliada transbordar em vez de ser cortada.
+- **Achado 3 — `serve` 1.05→1.28 e `smash` 1.00→1.18, quebrando o limite superior/inferior de propósito**
+  (autorizado explicitamente pelo coach). A métrica de massa (√área inkada) diz que `serve` precisaria de
+  **1,57** para igualar o grupo — grotesco —, então levou correção parcial. `smash` a 1.18 é praticamente o
+  que a massa pede (1,20).
+- **⚠️ Armadilha nova documentada: `<svg>` inline com `width:auto` NÃO resolve pelo aspect ratio** como um
+  `<img>` — o default do SVG é `width:100%`, e dentro de um flex item shrink-to-fit isso estoura o layout.
+  Solução: wrapper `aspect-square h-full` + `[&>svg]:h-full [&>svg]:w-full`.
+- **Falso positivo que me custou tempo (registrar):** o `fullPage` screenshot deu 9948 px de largura e eu
+  suspeitei do `overflow-visible`. Era **o meu próprio `<pre>` de medição** na página de preview (`<pre>` não
+  quebra linha). Medi com/sem `overflow-visible` e o `scrollWidth` não mudou — só então achei a causa.
+  **Lição: antes de culpar o código sob teste, descartar o instrumento de teste.**
+- Verificado no **WebKit a DPR 3** (393 e 1280). lint+build limpos.
+
 **CAUSA-RAIZ do borrão encontrada e provada: WebKit rasteriza SVG dentro de `<img>` em 1x. Arte agora é SVG INLINE + rota /library code-split + card centralizado (2026-08-09, auto mode OFF).**
 Coach mandou o screenshot `IMG_8524 2.PNG` (iPhone 1179×2556, DPR 3, **já pós-`e0c6470`** — sem emoji), com
 2 queixas: ícones ainda borrados, e tamanho/alinhamento inconsistentes.
