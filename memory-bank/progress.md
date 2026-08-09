@@ -4,6 +4,19 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Borrão das ilustrações RESOLVIDO na causa-raiz + card centralizado + 1º code splitting do app
+  (2026-08-09).** **Causa provada por reprodução no WebKit a DPR 3:** o WebKit rasteriza SVG carregado via
+  `<img>` na resolução CSS (1x) e amplia o bitmap para o DPR da tela — o Blink re-rasteriza na densidade do
+  device, por isso o bug só aparecia no iPhone e nunca nos meus screenshots em Chromium. Matriz de 4 variantes
+  renderizada lado a lado **refutou** as hipóteses de `transition`/compositing e de `width`/`height` ausentes;
+  só o **SVG inline** sai nítido. `LibraryCoverArt` migrou para `?raw` + `dangerouslySetInnerHTML` (constantes
+  de build, sem entrada de usuário). Custo do inline (612→914 kB) mitigado por **code splitting da `/library`**
+  (`screens/LibraryLazy.js` NOVO + `<Suspense>`): **principal 607 kB / 161,65 gzip — menor que antes** + chunk
+  `Library` 307 kB / 75 gzip sob demanda. **Design:** card virou **bloco centralizado** (`text-center`) —
+  arte e título no mesmo eixo, resolvendo a inconsistência de alinhamento; arte reduzida ~10%.
+  Verificado em **WebKit DPR 3** (393 e 1280) + Chromium. lint+build limpos.
+  **Ferramenta nova disponível:** WebKit do cache do Playwright roda aqui (`playwright@1.61.1` no scratchpad +
+  `PLAYWRIGHT_BROWSERS_PATH`) — usar para qualquer bug reportado só no iPhone.
 - **Ajuste pós-deploy das ilustrações — nitidez + tamanho (2026-08-09).** Coach reportou "pequenos e desfocados"
   em prod. **Desfoque:** causado por `transform: scale()` num `<img>` com SVG (rasteriza no tamanho de layout e o
   transform estica o bitmap — visível no **iOS Safari**); `scale`/`dy` passaram a ser `height`/`top` em %, sem

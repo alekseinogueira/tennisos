@@ -3,6 +3,42 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-08-09 — SVG inline (o `<img>` borra no WebKit), rota /library code-split, e card centralizado
+- **Decision (1) — a arte passa a ser SVG INLINE (`?raw` + `dangerouslySetInnerHTML`), abandonando `<img>`.**
+  **Why:** **provado por reprodução**, não por teoria — o **WebKit rasteriza SVG carregado via `<img>` na
+  resolução CSS (1x) e amplia o bitmap para o DPR da tela**. Numa tela 3x o vetor chega como imagem 1x
+  esticada. O Blink re-rasteriza na densidade do device, e é por isso que **todos** os meus screenshots em
+  Chromium mostravam nitidez perfeita enquanto o coach via borrão no iPhone. Inline faz o browser desenhar
+  geometria vetorial de verdade na resolução da própria camada. **Alternatives testadas e REFUTADAS na mesma
+  matriz:** tirar o `transition` do card (hipótese de compositing — continua borrado); pôr `width`/`height`
+  explícitos no root do SVG (hipótese de dimensão intrínseca — continua borrado). Não testadas por serem o
+  mesmo caminho de textura: `background-image`, `mask-image`.
+- **Decision (2) — a rota `/library` vira code-split (`LibraryLazy.js` + `<Suspense>`), o primeiro do app.**
+  **Why:** inline levou o bundle de 612→914 kB (162→237 gzip), e isso cairia em **toda** rota, inclusive para
+  aluno que nunca abre a Library. Com o split: principal **607 kB / 161,65 gzip — menor que antes de tudo** +
+  chunk `Library` de 307 kB / 75 gzip só em `/library`. **Por que módulo separado e não `const Library =
+  lazy()` no `main.jsx`:** o `main.jsx` não exporta nada, então a regra `react-refresh/only-export-components`
+  quebra o lint; o projeto **não tem um único `eslint-disable`** e não valia abrir a exceção por uma linha.
+  **Alternatives:** aceitar +74 kB gzip em todas as rotas (rejeitado — regressão que eu mesmo causaria);
+  buscar o SVG por `fetch` em runtime e injetar (rejeitado — mesmo peso de rede, mas adiciona estado async e
+  um flash de carregamento a um componente puramente apresentacional).
+- **Decision (3) — card com bloco CENTRALIZADO (arte + título + contagem no mesmo eixo).** Pedido explícito de
+  decisão de design pelo coach, entre isso e "texto à esquerda com ícone ao lado". **Why:** as oito figuras são
+  desenhadas **centradas no próprio viewBox**, então um título alinhado à esquerda sob arte centrada cria dois
+  eixos competindo — é literalmente a inconsistência que ele apontou. Centralizar unifica em uma coluna e
+  mantém a qualidade de pôster que a arte trouxe. **Alternatives:** ícone ao lado do texto com o texto à
+  esquerda (rejeitado — transforma o tile em linha de lista e obrigaria a arte a encolher muito, desfazendo o
+  ganho de tamanho da rodada anterior). Arte reduzida ~10% junto, a pedido ("pode estar grande demais").
+- **Registro de paleta (3ª ocorrência):** o pedido citava `#F5EDE0 / #1B3A2D / #C8A96E`. O verde real do 55TC é
+  **`#1C3526`** e o dourado **`#C8A96E` já foi recusado nas Fases D e F**. Ignorado de propósito, como das
+  outras vezes; só forest/sand/ink. A paleta errada vem dos docs de planejamento antigos e segue reaparecendo
+  nos pedidos — vale corrigir na fonte se algum doc ainda a listar.
+- **Método reaproveitável (o achado da sessão): dá para rodar WebKit aqui e reproduzir bug de iOS.**
+  `npm i playwright@1.61.1` **no scratchpad** (casar a versão com o `webkit-2311` do cache — a última pede
+  `webkit-2336` e falha) + `PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright` + `webkit.launch()` com
+  `deviceScaleFactor: 3`. **Lição:** "verifiquei em headless Chromium" **não** é verificação de iOS; para
+  qualquer queixa que só aparece no iPhone, renderizar no WebKit antes de propor causa.
+
 ## 2026-08-09 — Ajuste pós-deploy das ilustrações: sem CSS transform, e o emoji sai do card da grade
 - **Decision (1) — `scale`/`dy` viram tamanho de layout (`height`/`top` em %), NUNCA `transform`.** **Why:** um
   `<img>` com SVG é rasterizado no **tamanho de layout**; `transform: scale()` depois **estica esse bitmap** em vez

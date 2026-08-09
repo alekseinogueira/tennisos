@@ -159,17 +159,14 @@ function FolderCard({ folder, onOpen }) {
   return (
     <button
       onClick={onOpen}
-      className="group relative flex aspect-[4/5] flex-col justify-between overflow-hidden rounded-3xl bg-forest p-5 text-left transition hover:-translate-y-0.5 sm:aspect-square sm:p-6"
+      className="group relative flex aspect-[4/5] flex-col justify-between overflow-hidden rounded-3xl bg-forest p-5 text-center transition hover:-translate-y-0.5 sm:aspect-square sm:p-6"
     >
       <CourtMotif className="pointer-events-none absolute -right-6 -bottom-6 h-40 text-sand/[0.06]" />
 
-      {/* The pose illustration IS the card's icon: it owns everything above the
-          title and bleeds into the card padding, so it reads at full size on a
-          phone. Title and count below are untouched. */}
-      <LibraryCoverArt
-        category={folder.key}
-        className="relative -mx-5 -mt-3 flex-1 pb-2 sm:-mx-6 sm:-mt-4"
-      />
+      {/* The pose illustration IS the card's icon. Art and text share one
+          centred axis: the figures are drawn centred in their own viewBox, so a
+          left-aligned title underneath would read as two competing alignments. */}
+      <LibraryCoverArt category={folder.key} className="relative flex-1 pt-1 pb-4" />
 
       <div className="relative">
         <h2 className="font-display text-3xl leading-none tracking-[0.04em] text-sand sm:text-4xl">

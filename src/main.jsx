@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
@@ -18,7 +18,6 @@ import Profile from './screens/Profile'
 import Feedbacks from './screens/Feedbacks'
 import SessionDetail from './screens/SessionDetail'
 import FeedbackCompare from './screens/FeedbackCompare'
-import Library from './screens/Library'
 import Gallery from './screens/Gallery'
 import AdminHome from './screens/admin/AdminHome'
 import Students from './screens/admin/Students'
@@ -28,6 +27,7 @@ import FeedbackNew, { LegacyComposerRedirect } from './screens/admin/FeedbackNew
 import FeedbackReview from './screens/admin/FeedbackReview'
 import Videos from './screens/admin/Videos'
 import FeedbackDetail from './screens/admin/FeedbackDetail'
+import Library from './screens/LibraryLazy'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -47,7 +47,14 @@ createRoot(document.getElementById('root')).render(
               <Route path="/feedback" element={<Feedbacks />} />
               <Route path="/feedback/compare" element={<FeedbackCompare />} />
               <Route path="/feedback/:id" element={<SessionDetail />} />
-              <Route path="/library" element={<Library />} />
+              <Route
+                path="/library"
+                element={
+                  <Suspense fallback={<p className="text-sm text-ink/50">Loading the library…</p>}>
+                    <Library />
+                  </Suspense>
+                }
+              />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/profile" element={<Profile />} />
               <Route element={<RoleRoute allow={['coach', 'admin']} />}>

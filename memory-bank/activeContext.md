@@ -4,6 +4,42 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**CAUSA-RAIZ do borrão encontrada e provada: WebKit rasteriza SVG dentro de `<img>` em 1x. Arte agora é SVG INLINE + rota /library code-split + card centralizado (2026-08-09, auto mode OFF).**
+Coach mandou o screenshot `IMG_8524 2.PNG` (iPhone 1179×2556, DPR 3, **já pós-`e0c6470`** — sem emoji), com
+2 queixas: ícones ainda borrados, e tamanho/alinhamento inconsistentes.
+- **MÉTODO QUE FECHOU O CASO (registrar — vale para qualquer bug "só no iPhone"): o WebKit do cache do
+  Playwright roda aqui.** `npm i playwright@1.61.1` **no scratchpad** (versão casada com o `webkit-2311` do
+  cache; a última pedia `webkit-2336`) + `PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright` +
+  `webkit.launch()` com `deviceScaleFactor: 3`. Isso **reproduz o Safari do iOS** — o Chromium headless nunca
+  ia pegar esse bug.
+- **Matriz de 4 hipóteses renderizada no WebKit a DPR 3, lado a lado:** (1) `<img>` como estava em prod,
+  (2) `<img>` sem o `transition` do card, (3) `<img>` com `width`/`height` explícitos no root do SVG,
+  (4) **SVG inline**. **1, 2 e 3 saem igualmente borrados; só o 4 sai nítido.** Ou seja: **não era o
+  compositing do `transition` nem a falta de dimensão intrínseca** — as duas hipóteses que eu ia testar
+  foram REFUTADAS. **O WebKit rasteriza SVG carregado via `<img>` na resolução CSS (1x) e amplia o bitmap
+  para o DPR da tela.** O Blink re-rasteriza na densidade do device — por isso 100% dos meus screenshots em
+  Chromium mostravam nitidez perfeita enquanto o coach via borrão.
+- **`LibraryCoverArt` agora usa `?raw` + `dangerouslySetInnerHTML`** (conteúdo é constante de build da nossa
+  própria pasta de assets — nenhuma entrada de usuário chega ali). Sizing continua por layout
+  (`height`/`top` em %) num wrapper com `[&>svg]:block [&>svg]:h-full [&>svg]:w-auto`; `aria-hidden` no
+  wrapper (o `role="img"`+`<title>` de dentro do SVG não deve ser anunciado — o título do card já nomeia).
+- **CUSTO E MITIGAÇÃO:** inline jogou os ~300 kB de path no bundle → 612→914 kB (162→237 gzip). Mitigado com
+  **code splitting da rota `/library`**: `src/screens/LibraryLazy.js` NOVO (`export default lazy(...)` — em
+  módulo próprio porque `const X = lazy()` dentro do `main.jsx`, que não exporta nada, quebra a regra
+  `react-refresh/only-export-components`; o projeto **não usa nenhum `eslint-disable`** e não quis abrir
+  exceção) + `<Suspense>` na rota. Resultado: **principal 607 kB / 161,65 gzip (MENOR que os 162,83 de antes
+  de tudo) + chunk `Library` 307 kB / 75 gzip só em `/library`.** É o primeiro code splitting do app.
+- **DECISÃO DE DESIGN (pedida pelo coach): bloco CENTRALIZADO** — `text-left` → `text-center` no card. As
+  figuras são desenhadas centradas no próprio viewBox, então título alinhado à esquerda sob arte centrada
+  criava **dois eixos competindo** — exatamente a "inconsistência" que ele viu. A alternativa (ícone ao lado
+  do texto, vertical-centered) viraria linha de lista e obrigaria a arte a encolher muito, perdendo a
+  qualidade de pôster. Arte reduzida ~10% junto (`-mx-5 -mt-3 … pb-2` → `pt-1 pb-4`, sem sangria).
+- **⚠️ PALETA DO PEDIDO IGNORADA DE PROPÓSITO:** o coach citou `#F5EDE0 / #1B3A2D / #C8A96E`. O verde real é
+  **`#1C3526`** e o dourado **`#C8A96E` já foi recusado nas Fases D e F** (Hard Rule do CLAUDE.md). Nada de
+  dourado foi introduzido; só forest/sand/ink. É a **terceira** vez que essa paleta dos docs de planejamento
+  antigos reaparece num pedido.
+- Verificado no **WebKit a DPR 3** (mobile 393 e desktop 1280) + Chromium. lint+build limpos.
+
 **AJUSTE pós-deploy das ilustrações: nitidez + tamanho — emoji SAI do card da grade (2026-08-09, auto mode OFF).**
 Coach viu em prod e reportou "ícones pequenos e desfocados", supondo que eu tivesse usado PNG. **Não era PNG** —
 verificado ao vivo: os 8 assets voltam `content-type: image/svg+xml`, bytes idênticos aos SVGs, com

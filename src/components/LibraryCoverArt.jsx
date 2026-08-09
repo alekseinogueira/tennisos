@@ -2,22 +2,28 @@
 // technique category. Rendered as a decorative layer inside the existing
 // Library folder cards; it never replaces the emoji, title or count.
 //
-// WHY <img> AND NOT INLINE SVG: the eight files total ~300 KB of path data and
-// this app ships a single non-code-split bundle (see main.jsx). As URL imports
-// Vite emits them as separate hashed assets the browser fetches and caches on
-// demand, leaving the JS bundle untouched. The trade-off is that CSS can't
-// reach `currentColor` across the <img> boundary, so the sand token is baked
-// into each file's root `color` attribute (#F5EDE0 — the same value as
-// --color-sand in index.css). The paths still use fill="currentColor", so an
-// inline embed later would pick the colour up from CSS with no edit.
-import forehand from '../assets/library-covers/forehand.svg'
-import backhand from '../assets/library-covers/backhand.svg'
-import footwork from '../assets/library-covers/footwork.svg'
-import serve from '../assets/library-covers/serve.svg'
-import volley from '../assets/library-covers/volley.svg'
-import slice from '../assets/library-covers/slice.svg'
-import smash from '../assets/library-covers/smash.svg'
-import mentality from '../assets/library-covers/mentality.svg'
+// WHY INLINE SVG AND NOT <img>: WebKit rasterises an SVG loaded through <img>
+// at CSS resolution and then upscales that bitmap to the device pixel ratio, so
+// on a 3x iPhone screen the vector arrives as a blurry 1x image. Blink
+// re-rasterises at device scale, which is why it only shows up on iOS/Safari.
+// Verified by rendering the same file four ways in WebKit at dpr 3: <img>,
+// <img> without a compositing transition, <img> with explicit width/height on
+// the root, and inline — only the inline one is sharp. Embedding the markup in
+// the DOM makes the browser draw real vector geometry at the layer's own
+// resolution, so it is crisp at any density.
+//
+// The cost is that the ~300 KB of path data now lands in the JS bundle instead
+// of eight separately cached assets (this app has no code splitting — see
+// main.jsx). If that ever matters, lazy-loading the /library route moves the
+// whole thing out of the initial download.
+import forehand from '../assets/library-covers/forehand.svg?raw'
+import backhand from '../assets/library-covers/backhand.svg?raw'
+import footwork from '../assets/library-covers/footwork.svg?raw'
+import serve from '../assets/library-covers/serve.svg?raw'
+import volley from '../assets/library-covers/volley.svg?raw'
+import slice from '../assets/library-covers/slice.svg?raw'
+import smash from '../assets/library-covers/smash.svg?raw'
+import mentality from '../assets/library-covers/mentality.svg?raw'
 
 // Category key → art. Keys match CATEGORIES in screens/Library.jsx; anything
 // off-list (the "More" folder) resolves to undefined and renders nothing.
@@ -52,15 +58,13 @@ const ART = {
  *
  * `min-h-0` lets the band shrink below the artwork's intrinsic 512px inside a
  * flex column — without it the illustration would drive the card's height.
- * The caller supplies the vertical padding that gives `scale`/`dy` room to
- * move without ever reaching the emoji above or the title below.
+ * The caller supplies the vertical padding that keeps `scale`/`dy` clear of
+ * the title below.
  *
  * NO CSS TRANSFORM. `scale`/`dy` are applied as layout size (height %) and
- * offset (top %), never `transform: scale()/translate()`. An <img> holding an
- * SVG is rasterised at its *layout* size; a transform then stretches that
- * bitmap instead of re-rendering the vector, which reads as a soft, blurry
- * figure on iOS Safari in particular. Sizing by layout keeps every pose
- * rasterised at the size it is actually drawn at, so it stays sharp.
+ * offset (top %), never `transform: scale()/translate()`. A transform on a
+ * rasterised layer stretches pixels instead of redrawing the vector — the same
+ * class of bug as the <img> path this component moved away from.
  *
  * @param {string} category - category key (must match ART / CATEGORIES)
  * @param {string} [className] - layout classes for the band wrapper
@@ -73,20 +77,15 @@ export default function LibraryCoverArt({ category, className = '' }) {
   return (
     <div
       className={`pointer-events-none flex min-h-0 items-center justify-center ${className}`}
+      aria-hidden="true"
     >
       {art && (
-        <img
-          src={art.src}
-          alt=""
-          aria-hidden="true"
-          draggable="false"
-          decoding="async"
-          className="relative max-w-none"
-          style={{
-            height: `${art.scale * 100}%`,
-            width: 'auto',
-            top: `${art.dy}%`,
-          }}
+        <div
+          className="relative [&>svg]:block [&>svg]:h-full [&>svg]:w-auto"
+          style={{ height: `${art.scale * 100}%`, top: `${art.dy}%` }}
+          // Build-time constants from our own asset folder — no user input ever
+          // reaches this, and the files are checked in alongside the component.
+          dangerouslySetInnerHTML={{ __html: art.src }}
         />
       )}
     </div>
