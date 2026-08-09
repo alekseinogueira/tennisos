@@ -38,7 +38,7 @@ const ART = {
   forehand: { src: forehand, scale: 1.01, dy: 1.1 },
   backhand: { src: backhand, scale: 0.94, dy: 0.6 },
   footwork: { src: footwork, scale: 0.92, dy: 0.7 },
-  serve: { src: serve, scale: 1.14, dy: -2 },
+  serve: { src: serve, scale: 1.05, dy: -2 },
   volley: { src: volley, scale: 1.05, dy: 0.3 },
   slice: { src: slice, scale: 1.06, dy: 0.6 },
   smash: { src: smash, scale: 1, dy: -5 },
@@ -55,27 +55,40 @@ const ART = {
  * The caller supplies the vertical padding that gives `scale`/`dy` room to
  * move without ever reaching the emoji above or the title below.
  *
+ * NO CSS TRANSFORM. `scale`/`dy` are applied as layout size (height %) and
+ * offset (top %), never `transform: scale()/translate()`. An <img> holding an
+ * SVG is rasterised at its *layout* size; a transform then stretches that
+ * bitmap instead of re-rendering the vector, which reads as a soft, blurry
+ * figure on iOS Safari in particular. Sizing by layout keeps every pose
+ * rasterised at the size it is actually drawn at, so it stays sharp.
+ *
  * @param {string} category - category key (must match ART / CATEGORIES)
  * @param {string} [className] - layout classes for the band wrapper
  */
 export default function LibraryCoverArt({ category, className = '' }) {
   const art = ART[category]
-  if (!art) return null
 
+  // The wrapper renders even without art: it is the card's flex spacer, so the
+  // "More" folder keeps the same title position as the eight illustrated ones.
   return (
     <div
       className={`pointer-events-none flex min-h-0 items-center justify-center ${className}`}
     >
-      <img
-        src={art.src}
-        alt=""
-        aria-hidden="true"
-        draggable="false"
-        loading="lazy"
-        decoding="async"
-        className="h-full w-full object-contain opacity-90"
-        style={{ transform: `translateY(${art.dy}%) scale(${art.scale})` }}
-      />
+      {art && (
+        <img
+          src={art.src}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          decoding="async"
+          className="relative max-w-none"
+          style={{
+            height: `${art.scale * 100}%`,
+            width: 'auto',
+            top: `${art.dy}%`,
+          }}
+        />
+      )}
     </div>
   )
 }

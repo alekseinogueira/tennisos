@@ -4,6 +4,31 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**AJUSTE pós-deploy das ilustrações: nitidez + tamanho — emoji SAI do card da grade (2026-08-09, auto mode OFF).**
+Coach viu em prod e reportou "ícones pequenos e desfocados", supondo que eu tivesse usado PNG. **Não era PNG** —
+verificado ao vivo: os 8 assets voltam `content-type: image/svg+xml`, bytes idênticos aos SVGs, com
+`color="#F5EDE0"` legível dentro do arquivo. As duas queixas tinham causas separadas e reais:
+- **DESFOQUE — causa real: `transform: scale()` num `<img>` com SVG.** Um `<img>` rasteriza o SVG no **tamanho de
+  layout**; o transform depois **estica o bitmap** em vez de re-renderizar o vetor — some no Chrome desktop e
+  aparece no **iOS Safari**, que é onde o coach olhou. **Fix:** `scale`/`dy` agora são **tamanho de layout**
+  (`height: N%`) e **offset** (`top: N%`), **nenhum transform**. Também saiu o `opacity-90` (arte em sand cheio)
+  e o `loading="lazy"` (é conteúdo principal da tela, lazy só atrasa a pintura).
+- **TAMANHO — o emoji era o gargalo.** Decisão do coach via AskUserQuestion (opção A, recomendada, contra
+  B "arte no card inteiro" e C "manter emoji"): **o `<span>` do emoji sai do `FolderCard` da grade** e a
+  ilustração vira o ícone da categoria, ocupando tudo acima do título e sangrando no padding
+  (`-mx-5 -mt-3 flex-1 pb-2 sm:-mx-6 sm:-mt-4`). **O emoji CONTINUA no header de dentro da pasta**
+  (`openFolder.icon`) — `CATEGORIES.icon` segue em uso, nada virou dado morto.
+- **CORREÇÃO DE NÚMERO que eu dei errado ao coach:** prometi "2,4x no mobile" ao apresentar a opção A. O medido
+  no DOM depois de aplicar é **1,37x no desktop e 1,48x no mobile** (figura do forehand: 149→204 px num card de
+  352; 95→140 px num card de 263). O erro foi meu modelo da faixa antiga (usei 66 px de altura quando o DOM
+  dizia ~97). A escolha continua certa — A é o máximo sem degradar a arte —, mas o número estava inflado.
+- **`serve` recalibrado 1.14 → 1.05.** O reforço de 1,14 foi calibrado no tamanho pequeno; na área maior virou
+  exagero — medição no DOM mostrou a figura a **5 px do topo do card** e 24% acima da média da família. Agora:
+  figuras de 199–229 px (média 209, spread 15%), **folga mínima de 13 px** no topo em todas.
+- **`LibraryCoverArt` agora renderiza o wrapper mesmo sem arte** (`{art && <img/>}`) — é o spacer flex do card, sem
+  ele a pasta **"More"** (sem ilustração) jogaria o título para o topo.
+- Verificado de novo em 390/820/1280 px. lint+build limpos (bundle `index-DOLh5RCK.js`).
+
 **Ilustrações vetoriais das 8 categorias APLICADAS nos cards da Library (2026-08-09, auto mode OFF, SEM deploy).**
 Coach entregou o pacote `55tc-library-covers-vector.zip` na raiz do projeto (untracked, mantido lá) com as **poses
 humanas aprovadas** — substitui explicitamente os pictogramas vetoriais antigos. Pedido: preencher o espaço vazio

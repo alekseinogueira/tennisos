@@ -4,6 +4,15 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Ajuste pós-deploy das ilustrações — nitidez + tamanho (2026-08-09).** Coach reportou "pequenos e desfocados"
+  em prod. **Desfoque:** causado por `transform: scale()` num `<img>` com SVG (rasteriza no tamanho de layout e o
+  transform estica o bitmap — visível no **iOS Safari**); `scale`/`dy` passaram a ser `height`/`top` em %, sem
+  transform, e saíram `opacity-90` e `loading="lazy"`. **Tamanho:** o `<span>` do emoji **saiu do card da grade**
+  (decisão do coach via AskUserQuestion) e a ilustração virou o ícone, ocupando tudo acima do título e sangrando
+  no padding → **1,37x no desktop, 1,48x no mobile** (medido no DOM). O emoji **continua no header de dentro da
+  pasta**. `serve` recalibrado 1.14→1.05 (a 1,14 encostava a 5 px do topo do card). Família em 199–229 px, folga
+  mínima de 13 px. `LibraryCoverArt` renderiza o wrapper mesmo sem arte, para a pasta "More" manter o layout.
+  lint+build limpos.
 - **Ilustrações vetoriais nas 8 pastas da Library — aplicadas no código, lint+build limpos, SEM deploy
   (2026-08-09).** Pacote `55tc-library-covers-vector.zip` (raiz, untracked) validado antes de qualquer edição:
   8 SVGs com `viewBox 0 0 512 512`, paths reais, **0 raster / 0 base64**, `fill="currentColor"` sobre máscara de

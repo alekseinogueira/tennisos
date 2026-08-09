@@ -3,6 +3,34 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-08-09 — Ajuste pós-deploy das ilustrações: sem CSS transform, e o emoji sai do card da grade
+- **Decision (1) — `scale`/`dy` viram tamanho de layout (`height`/`top` em %), NUNCA `transform`.** **Why:** um
+  `<img>` com SVG é rasterizado no **tamanho de layout**; `transform: scale()` depois **estica esse bitmap** em vez
+  de re-renderizar o vetor. No Chrome desktop passa despercebido, no **iOS Safari** aparece como figura borrada —
+  e foi exatamente isso que o coach viu no celular ("desfocados"). Dimensionar por layout mantém cada pose
+  rasterizada no tamanho em que é desenhada. **Alternatives:** manter transform e aumentar o SVG (rejeitado — não
+  resolve, o bitmap continua sendo esticado); `image-rendering` (rejeitado — não tem efeito sobre isso).
+  **Registrar:** a suspeita do coach era que eu tivesse usado os PNGs; **não era** — os 8 assets em prod voltam
+  `image/svg+xml` com os bytes dos SVGs. A queixa era legítima, a causa era outra.
+- **Decision (2) — o emoji SAI do `FolderCard` da grade; a ilustração vira o ícone da categoria.** Escolha do
+  coach via AskUserQuestion. **Why:** o emoji (44 px fixos) era o gargalo do tamanho — num card mobile de 164 px
+  de altura interna ele comia mais de um quarto do espaço. Sem ele a arte ocupa tudo acima do título e sangra no
+  padding. Também tira a redundância de ter emoji **e** figura no mesmo card (a skill `ui-ux-pro-max` lista emoji
+  como ícone entre os anti-patterns). **O emoji permanece no header de dentro da pasta**, então `CATEGORIES.icon`
+  continua em uso. **Alternatives:** arte no card inteiro com o título por cima (rejeitado — renderizei e as pernas
+  das figuras se dissolvem no degradê necessário para o título ficar legível, que é o "não cortar extremidades /
+  sem gradientes" do briefing); manter o emoji e crescer só os respiros (rejeitado pelo coach — ~1,15x, longe do
+  pedido).
+- **Decision (3) — `serve` recalibrado de 1.14 para 1.05.** **Why:** o 1,14 foi uma exceção calibrada **no tamanho
+  pequeno**, onde a figura fina lia menor; na área ~1,4x maior virou exagero — medição no DOM deu a figura a
+  **5 px do topo do card** (encostando na borda, o que o briefing proíbe) e 24% acima da média. A 1,05 a família
+  fica em 199–229 px com folga mínima de 13 px. **Lição registrada:** exceção óptica calibrada num tamanho **não
+  transfere** para outro tamanho — precisa ser re-medida quando a área muda.
+- **Erro meu, corrigido no registro:** ao apresentar a opção A prometi "2,4x no mobile". O medido depois de
+  aplicar é **1,37x desktop / 1,48x mobile**. A causa foi eu ter modelado a faixa antiga em 66 px de altura
+  quando o DOM dizia ~97. A decisão não muda (A segue sendo o máximo sem degradar a arte), mas o número que
+  embasou a escolha estava inflado — **medir no DOM antes de prometer fator, não estimar por geometria de cabeça.**
+
 ## 2026-08-09 — Ilustrações vetoriais das 8 categorias da Library: formato de entrega, cor e normalização óptica
 - **Decision (1) — SVGs entregues por `<img>` + URL import, NÃO inline via `?raw`.** **Why:** o app **não tem code
   splitting** (todas as telas são importadas estaticamente no `main.jsx`), então inline jogaria os ~302 kB de path

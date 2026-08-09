@@ -13,8 +13,9 @@ import { youtubeId } from '../lib/youtube'
 import CourtMotif from '../components/CourtMotif'
 import LibraryCoverArt from '../components/LibraryCoverArt'
 
-// The 8 seeded technique folders, in coaching order. Emoji are placeholders
-// (the spec allows emoji icons); swap for brand SVGs later without touching layout.
+// The 8 seeded technique folders, in coaching order. The folder cards now use
+// the approved 55TC pose art (see LibraryCoverArt); `icon` is still the emoji
+// shown in the header once a folder is open.
 const CATEGORIES = [
   { key: 'forehand', label: 'Forehand', icon: '🎾' },
   { key: 'backhand', label: 'Backhand', icon: '🔁' },
@@ -162,16 +163,13 @@ function FolderCard({ folder, onOpen }) {
     >
       <CourtMotif className="pointer-events-none absolute -right-6 -bottom-6 h-40 text-sand/[0.06]" />
 
-      <span
-        className="relative flex h-11 w-11 items-center justify-center rounded-full bg-sand/10 text-2xl"
-        aria-hidden="true"
-      >
-        {folder.icon}
-      </span>
-
-      {/* Pose illustration in the card's free middle band. Purely decorative —
-          the emoji, title and count below are untouched. */}
-      <LibraryCoverArt category={folder.key} className="relative flex-1 pt-1 pb-3" />
+      {/* The pose illustration IS the card's icon: it owns everything above the
+          title and bleeds into the card padding, so it reads at full size on a
+          phone. Title and count below are untouched. */}
+      <LibraryCoverArt
+        category={folder.key}
+        className="relative -mx-5 -mt-3 flex-1 pb-2 sm:-mx-6 sm:-mt-4"
+      />
 
       <div className="relative">
         <h2 className="font-display text-3xl leading-none tracking-[0.04em] text-sand sm:text-4xl">
