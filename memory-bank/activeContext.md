@@ -4,6 +4,48 @@
 > Read this first at the start of every task.
 
 ## Current Focus
+**Ilustrações vetoriais das 8 categorias APLICADAS nos cards da Library (2026-08-09, auto mode OFF, SEM deploy).**
+Coach entregou o pacote `55tc-library-covers-vector.zip` na raiz do projeto (untracked, mantido lá) com as **poses
+humanas aprovadas** — substitui explicitamente os pictogramas vetoriais antigos. Pedido: preencher o espaço vazio
+no meio de cada card da grade de pastas, **sem** trocar o card, o emoji, o título, a contagem, as cores ou a
+estrutura. Skill `ui-ux-pro-max` usada para orientar integração/equilíbrio/responsividade.
+- **Pacote validado antes de tocar em código:** `svg/` (8) + `png-transparent/` (8, 1024²) + prancha de conferência
+  + README. Checagem programática dos 8 SVGs: `viewBox="0 0 512 512"`, **0 `<image>`, 0 `base64`**, 22–228 `<path>`
+  reais, um `fill="currentColor"` num `<rect>` mascarado por **máscara de luminância** (arte chapada, monocromática,
+  fundo transparente). Nomes já batiam 1:1 com as `CATEGORIES` do `Library.jsx` — nenhuma variação de caixa/hífen,
+  nenhuma arte trocada de categoria. **PNGs usados só como referência de medição**, nunca implementados.
+- **`src/assets/library-covers/*.svg` NOVO (8 arquivos)** + **`src/components/LibraryCoverArt.jsx` NOVO** (mapa
+  categoria→asset + config óptica num só lugar). **`Library.jsx` mudou +5 linhas, puramente aditivas** (1 import +
+  1 elemento no `FolderCard`): `<LibraryCoverArt category={folder.key} className="relative flex-1 pt-1 pb-3" />`
+  entre o círculo do emoji e o bloco título+contagem. Pasta `More` (`__other`) resolve `undefined` → não renderiza.
+- **`<img>` + URL import, NÃO inline:** o bundle JS cresceu **+0,96 kB** (611,89 → 612,85 kB; baseline medido
+  buildando o HEAD) — os ~302 kB de vetor saem como 8 assets hasheados separados e cacheáveis. Inline via `?raw`
+  entraria inteiro no bundle único (o app **não tem code splitting**).
+- **Única edição no asset:** o `color` raiz de cada SVG passou de `#F6E7D5` (creme do pacote) para **`#F5EDE0` =
+  token sand** do `index.css` — Hard Rule de cores. Como o `<img>` isola o CSS, `currentColor` resolve contra esse
+  atributo; o `fill="currentColor"` dos paths ficou intacto (um embed inline futuro pega a cor do CSS sem editar).
+- **Padronização óptica (o miolo do trabalho):** os arquivos já vêm **geometricamente** normalizados (bbox centrado
+  em 256,256, lado maior ≈442/512) — isso **não** é paridade óptica. Medi bbox + massa de tinta de cada pose (PIL)
+  e escalonei por métrica combinada **altura da bbox^0.7 × √(área inkada)^0.3** (proxy do tamanho do corpo), com
+  `dy` puxando poses cabeça-pesada de volta ao centro de massa. **dx = 0 em todas** — as bboxes já estão centradas e
+  o alcance de braço/raquete é a pose, não erro a corrigir. Config final (`scale`/`dy`): forehand 1.01/+1.1 ·
+  backhand 0.94/+0.6 · footwork 0.92/+0.7 · **serve 1.14/−2** · volley 1.05/+0.3 · slice 1.06/+0.6 ·
+  **smash 1.00/−5** · mentality 1.02/+1.3. **serve e mentality foram ajustados por conferência visual**, contra a
+  fórmula (1.086→1.14 e 0.96→1.02): corpo pequeno com altura só de raquete lê menor do que a matemática prevê.
+- **Verificação visual real** (chromium headless do cache do Playwright, DSF 2) em **390 / 820 / 1280 px**: 8 artes
+  na categoria certa, emoji+título+contagem presentes, sem clipping de cabeça/raquete/bola/extremidade, sem
+  sobreposição, sem overflow, altura do card inalterada. Método: harness temporário (`preview-library.html` +
+  `src/preview-library.jsx` + export temporário do `FolderCard`) renderizando o **componente real** — tudo
+  **removido e revertido antes do commit** (working tree tem só a feature).
+- **`min-h-0` na faixa é obrigatório** — sem ele o `<img>` de 512px intrínsecos ditaria a altura do card no flex.
+- **lint + build limpos.** Aviso de chunk >500 kB é **pré-existente** (confirmado contra o build do HEAD).
+- **Limite honesto registrado:** no mobile a arte fica ~70 px porque a faixa livre é o que sobra depois do emoji
+  (44 px fixos) e do bloco de título — é o **teto matemático** dado "não sobrepor texto" + "não mudar a altura do
+  card". Ganhar mais exigiria mexer no card, fora de escopo.
+- **NEXT:** deploy desta mudança via `deploy-prod` quando o coach quiser (prod segue servindo `index-CKdUD3QI.js`
+  do commit `61e689c` — a Library em prod está sem as ilustrações). As 2 pendências da F2 seguem abertas e
+  inalteradas (secret `ANTHROPIC_API_KEY`; e2e real do caminho vídeo). Depois F3 (Robozinho).
+
 **Curated Library POPULADA — 37 vídeos curados APLICADOS no Supabase de produção; a Library saiu do "Coming soon" (2026-08-07, auto mode OFF, SEM deploy).**
 Pedido do coach: curadoria de vídeos instrucionais para a `/library`, partindo de 4 canais de referência que ele
 colou (Intuitive Tennis, Top Tennis Training, Online Tennis Instruction, Feel Tennis) mas **sem cota obrigatória** —

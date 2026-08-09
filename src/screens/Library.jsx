@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { listLibrary } from '../lib/db'
 import { youtubeId } from '../lib/youtube'
 import CourtMotif from '../components/CourtMotif'
+import LibraryCoverArt from '../components/LibraryCoverArt'
 
 // The 8 seeded technique folders, in coaching order. Emoji are placeholders
 // (the spec allows emoji icons); swap for brand SVGs later without touching layout.
@@ -167,6 +168,10 @@ function FolderCard({ folder, onOpen }) {
       >
         {folder.icon}
       </span>
+
+      {/* Pose illustration in the card's free middle band. Purely decorative —
+          the emoji, title and count below are untouched. */}
+      <LibraryCoverArt category={folder.key} className="relative flex-1 pt-1 pb-3" />
 
       <div className="relative">
         <h2 className="font-display text-3xl leading-none tracking-[0.04em] text-sand sm:text-4xl">

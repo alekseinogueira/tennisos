@@ -3,6 +3,50 @@
 > Append-only record of meaningful decisions. Newest at top. One entry per decision.
 > Format: date — decision — why — alternatives considered.
 
+## 2026-08-09 — Ilustrações vetoriais das 8 categorias da Library: formato de entrega, cor e normalização óptica
+- **Decision (1) — SVGs entregues por `<img>` + URL import, NÃO inline via `?raw`.** **Why:** o app **não tem code
+  splitting** (todas as telas são importadas estaticamente no `main.jsx`), então inline jogaria os ~302 kB de path
+  data no bundle único que toda rota carrega. Como URL imports o Vite emite 8 assets hasheados separados, buscados
+  sob demanda e cacheáveis — o bundle JS cresceu **+0,96 kB** (611,89 → 612,85 kB, baseline medido buildando o
+  HEAD). **Alternatives:** inline com `dangerouslySetInnerHTML` (rejeitado — custo de bundle, sem ganho visível);
+  `mask-image` + `background-color: currentColor` (rejeitado — controle de cor por CSS não compensa perder
+  `alt`/semântica de imagem e adicionar risco de prefixo).
+- **Decision (2) — o `color` raiz de cada SVG foi trocado de `#F6E7D5` para `#F5EDE0` (token sand).** **Why:** o
+  `<img>` isola o CSS, então `currentColor` resolve contra o atributo `color` do próprio arquivo — deixar o creme
+  do pacote poria uma cor **off-brand** na tela, contra a Hard Rule do `CLAUDE.md`. É uma edição de 1 atributo por
+  arquivo; o `fill="currentColor"` dos paths ficou intacto, então um embed inline futuro pega a cor do CSS sem
+  editar nada. **Alternatives:** manter `#F6E7D5` (rejeitado — off-brand); recolorir por filtro CSS (rejeitado —
+  frágil e ilegível).
+- **Decision (3) — normalização ÓPTICA, não geométrica: `scale` por métrica combinada (altura da bbox^0.7 ×
+  √área inkada^0.3), `dy` para poses cabeça-pesada, `dx = 0 em todas`.** **Why:** os arquivos já vêm
+  geometricamente normalizados (bbox centrado em 256,256, lado maior ≈442/512) e mesmo assim as poses **não** leem
+  do mesmo tamanho: um serve alcança a altura toda com a raquete enquanto o corpo fica pequeno; um volley em
+  afundo enche a largura com 3/4 da altura. A altura domina (é a restrição dura da faixa) e a raiz da área inkada
+  entra como proxy do tamanho do corpo. **dx=0** porque as bboxes já estão centradas e centrar por massa empurraria
+  a raquete/o braço para a borda — o alcance é a pose, não um erro. **Alternatives:** mesma largura para todas
+  (rejeitado — é paridade matemática, não óptica); normalizar só por área (rejeitado — jogaria o serve para ~1,5×,
+  estourando a faixa).
+- **Decision (4) — `serve` (1.086→1.14) e `mentality` (0.96→1.02) foram ajustados por conferência visual, contra o
+  que a fórmula devolveu.** **Why:** a fórmula é um ponto de partida, não a autoridade; nos screenshots reais as
+  duas figuras estreitas ainda liam menores que as vizinhas. As exceções vivem **na mesma config por categoria**
+  (objeto `ART`), não espalhadas em classes pelo componente. **Alternatives:** aceitar a fórmula crua (rejeitado —
+  o olho discordou); afinar o expoente até "resolver" o serve (rejeitado — mexeria nas 8 para consertar 1).
+- **Decision (5) — a arte entra como faixa em fluxo (`flex-1 min-h-0 pt-1 pb-3`), não como camada absoluta.**
+  **Why:** em fluxo, o card não pode crescer nem a arte pode encostar no texto por construção — o `justify-between`
+  já existente distribui emoji-em-cima / título-embaixo e a faixa absorve exatamente o vazio. `min-h-0` é
+  obrigatório: sem ele os 512px intrínsecos do `<img>` ditariam a altura do card. Padding assimétrico (`pt-1 pb-3`)
+  porque o Bebas com `leading-none` embaixo pede mais respiro que o círculo do emoji em cima. **Alternatives:**
+  posicionamento absoluto tipo `CourtMotif` (rejeitado — sobreposição vira risco em vez de impossibilidade);
+  arte maior sangrando ao lado do emoji (rejeitado — o pedido proíbe sobrepor/apertar emoji e título).
+- **Limite honesto registrado, não uma decisão:** no mobile a arte fica ~70 px — é o **teto matemático** depois de
+  descontar o emoji (44 px fixos) e o bloco de título da altura interna do card. Mais que isso exigiria mexer no
+  card, o que estava fora do escopo pedido.
+- **Método de verificação (reaproveitável):** harness temporário (`preview-library.html` + `src/preview-library.jsx`
+  + export temporário do `FolderCard`) renderizando o **componente real** no dev server, screenshots por
+  **chromium do cache do Playwright** (`/root/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome`,
+  `--headless --screenshot --force-device-scale-factor=2 --window-size=W,H`) em 390/820/1280, medições de bbox por
+  PIL. Tudo removido e revertido antes do commit — mesmo padrão dos previews da Fase D.
+
 ## 2026-08-07 — Curadoria da Curated Library v1 (37 vídeos) — escopo, formato do título e aplicação em produção
 - **Decision (1) — curadoria em INGLÊS, 4–5 vídeos por pasta, subtópicos dentro das 8 categorias existentes.**
   **Why:** escolha do coach via AskUserQuestion — os 4 canais de referência que ele indicou são todos em inglês

@@ -24,6 +24,8 @@ tennisos/
 ├── src/
 │   ├── main.jsx            # BrowserRouter > AuthProvider > Routes
 │   ├── index.css           # Tailwind v4 entry + @theme 55TC tokens
+│   ├── assets/             # bundled brand art (URL imports -> hashed Vite assets, out of the JS bundle)
+│   │   └── library-covers/ # 8 approved pose SVGs, one per Library category (currentColor, viewBox 0 0 512 512)
 │   ├── lib/
 │   │   ├── supabase.js     # single client from VITE_SUPABASE_* (copy EPC)
 │   │   ├── db.js           # data-access: named async fns + unwrap() (copy EPC pattern)
@@ -36,6 +38,7 @@ tennisos/
 │   ├── components/
 │   │   ├── Layout.jsx        # branded shell + role-aware nav (student: Home/Feedback/Profile · coach: Home/Admin/Videos)
 │   │   ├── CourtMotif.jsx    # BUILT — shared court-line SVG for forest surfaces
+│   │   ├── LibraryCoverArt.jsx # BUILT — category->pose art map + per-category optical scale/offset
 │   │   └── InvitePanel.jsx   # copyable /claim?email=… link, shown after creating a student
 │   └── screens/
 │       ├── Login.jsx

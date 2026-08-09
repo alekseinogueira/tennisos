@@ -4,6 +4,19 @@
 > Read this first at the start of every task.
 
 ## What Works
+- **Ilustrações vetoriais nas 8 pastas da Library — aplicadas no código, lint+build limpos, SEM deploy
+  (2026-08-09).** Pacote `55tc-library-covers-vector.zip` (raiz, untracked) validado antes de qualquer edição:
+  8 SVGs com `viewBox 0 0 512 512`, paths reais, **0 raster / 0 base64**, `fill="currentColor"` sobre máscara de
+  luminância. **`src/assets/library-covers/*.svg` (8) + `src/components/LibraryCoverArt.jsx` NOVOS**;
+  `Library.jsx` **+5 linhas puramente aditivas** — o card, o emoji, o título, a contagem, as cores, o `CourtMotif`
+  e a estrutura seguem intactos. Carregamento por `<img>` + URL import (bundle JS **+0,96 kB**; os ~302 kB de vetor
+  viram 8 assets hasheados cacheáveis — o app não tem code splitting, inline pesaria tudo no bundle único).
+  `color` raiz de cada SVG trocado de `#F6E7D5` para **`#F5EDE0` (token sand)**; `currentColor` preservado.
+  **Normalização óptica** por métrica combinada (altura da bbox^0.7 × √área inkada^0.3) + `dy` para poses
+  cabeça-pesada, **dx=0 em todas**, config centralizada no objeto `ART`; `serve` (1.14) e `mentality` (1.02) ficaram
+  acima do que a fórmula pediu, por conferência visual. **Verificado em 390/820/1280 px** com chromium headless
+  (harness de preview temporário, removido antes do commit): categoria certa, sem clipping/overflow/sobreposição,
+  altura do card inalterada. **Prod ainda NÃO tem isso** — deploy via `deploy-prod` quando o coach quiser.
 - **Curated Library POPULADA em produção — 37 vídeos curados, as 8 pastas saíram do "Coming soon"
   (2026-08-07, dados + doc; SEM deploy, nenhum código de produto tocado).** Curadoria em inglês pedida pelo
   coach a partir de 4 canais de referência (Intuitive Tennis, Top Tennis Training, Online Tennis Instruction,
