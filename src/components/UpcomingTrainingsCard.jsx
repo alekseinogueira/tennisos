@@ -9,6 +9,7 @@
 // 55TC styling: Bebas headings, uppercase tracked labels, forest/sand/ink only.
 import { useEffect, useState } from 'react'
 import { updateSessions, cancelSessions } from '../lib/db'
+import { partitionByEmail, emailClause } from '../lib/notify'
 
 // Bookable times: 30-min increments, 07:00–21:00 inclusive (same as Etapa 1).
 const TIMES = (() => {
@@ -110,21 +111,33 @@ export default function UpcomingTrainingsCard({ sessions, onChanged }) {
   async function handleCancel(group) {
     const n = group.active.length
     const who = n > 1 ? `${n} players` : group.first.student?.full_name ?? 'the player'
-    if (!window.confirm(`Cancel this training? ${who} will be emailed.`)) return
+    // Deliberately doesn't promise an email: players who haven't claimed their
+    // invite have no address yet. The toast reports what actually went out.
+    if (!window.confirm(`Cancel this training for ${who}?`)) return
     setError(null)
     setOk(null)
     setBusyKey(group.key)
     try {
       await cancelSessions(group.active.map((r) => r.id))
+      // Only players with an address on file — an unclaimed WhatsApp invite has
+      // none, and that's a skip to report, not a send to retry.
+      const { withEmail, withoutEmail } = partitionByEmail(
+        group.active,
+        (r) => r.student?.email,
+      )
       const sends = await Promise.allSettled(
-        group.active.map((r) => sendSessionEmail(r, group.first, 'cancelled')),
+        withEmail.map((r) => sendSessionEmail(r, group.first, 'cancelled')),
       )
       const sent = sends.filter((r) => r.status === 'fulfilled').length
-      if (sent < n) console.error('Some cancellation emails failed:', sends)
+      if (sent < withEmail.length)
+        console.error('Some cancellation emails failed:', sends)
       setOk(
-        sent === n
-          ? 'Training cancelled. Players emailed.'
-          : `Training cancelled — emails sent ${sent}/${n}.`,
+        'Training cancelled — ' +
+          emailClause({
+            sent,
+            attempted: withEmail.length,
+            skipped: withoutEmail.length,
+          }),
       )
       onChanged?.()
     } catch (e) {
@@ -296,16 +309,23 @@ function EditTrainingModal({ group, onClose, onSaved }) {
         group.active.map((r) => r.id),
         patch,
       )
+      const { withEmail, withoutEmail } = partitionByEmail(
+        group.active,
+        (r) => r.student?.email,
+      )
       const sends = await Promise.allSettled(
-        group.active.map((r) => sendSessionEmail(r, patch, 'rescheduled')),
+        withEmail.map((r) => sendSessionEmail(r, patch, 'rescheduled')),
       )
       const sent = sends.filter((r) => r.status === 'fulfilled').length
-      const n = group.active.length
-      if (sent < n) console.error('Some reschedule emails failed:', sends)
+      if (sent < withEmail.length)
+        console.error('Some reschedule emails failed:', sends)
       onSaved(
-        sent === n
-          ? 'Training updated. Players emailed.'
-          : `Training updated — emails sent ${sent}/${n}.`,
+        'Training updated — ' +
+          emailClause({
+            sent,
+            attempted: withEmail.length,
+            skipped: withoutEmail.length,
+          }),
       )
     } catch (e2) {
       setError(e2?.message ?? 'Could not update that training. Try again.')

@@ -10,9 +10,15 @@
 // the row the trigger already created. Steps 2-4 require an active session, so
 // the project must have email confirmation disabled.
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { getStudentByEmail, updateProfile, upsertProfile, uploadAvatar } from '../lib/db'
+import {
+  getStudentByEmail,
+  getStudentByInviteToken,
+  updateProfile,
+  upsertProfile,
+  uploadAvatar,
+} from '../lib/db'
 import TennisOSWordmark from '../components/TennisOSWordmark'
 
 const HANDS = ['Right', 'Left', 'Both']
@@ -30,9 +36,13 @@ function humanAuthError(err) {
 export default function ClaimPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
+  const { token } = useParams()
   const emailParam = params.get('email') || ''
 
   const [step, setStep] = useState(1)
+  // 'ok' once the token resolves (or immediately on the legacy ?email= path);
+  // 'dead' when the token is unknown, already claimed, or past its 7-day window.
+  const [linkState, setLinkState] = useState(token ? 'checking' : 'ok')
 
   // Step 1
   const [fullName, setFullName] = useState('')
@@ -58,27 +68,43 @@ export default function ClaimPage() {
   const [busy, setBusy] = useState(false)
   const fileRef = useRef(null)
 
-  // Best-effort pre-fill from the roster row via the get_invite_student RPC
-  // (SECURITY DEFINER — works for the anonymous claim visitor; email from the URL).
+  // Pre-fill from the roster row. Two paths, both SECURITY DEFINER RPCs so they
+  // work for the anonymous claim visitor:
+  //   /claim/:token   → the WhatsApp link. The token is the key, and a token that
+  //                     doesn't resolve kills the page (expired / already used).
+  //   /claim?email=…  → the legacy link. Best-effort pre-fill only; a miss just
+  //                     leaves the form blank, exactly as before.
+  // On the token path the roster row usually has NO email — the student types
+  // their own, and handle_new_user stamps it back onto the row at signup.
   useEffect(() => {
-    if (!emailParam) return
+    if (!token && !emailParam) return
     let active = true
     ;(async () => {
       try {
-        const s = await getStudentByEmail(emailParam)
-        if (active && s) {
+        const s = token
+          ? await getStudentByInviteToken(token)
+          : await getStudentByEmail(emailParam)
+        if (!active) return
+        if (token && !s) {
+          setLinkState('dead')
+          return
+        }
+        if (s) {
           setFullName(s.full_name || '')
           setPhone(s.phone || '')
           if (s.email) setEmail(s.email)
         }
+        setLinkState('ok')
       } catch {
-        /* degrade to email-only pre-fill */
+        // A failed lookup shouldn't lock a student out of a link that may well
+        // be valid — fall through to the blank form and let signUp be the judge.
+        if (active) setLinkState('ok')
       }
     })()
     return () => {
       active = false
     }
-  }, [emailParam])
+  }, [token, emailParam])
 
   function barClass(n) {
     if (n === step) return 'step-bar active'
@@ -105,7 +131,12 @@ export default function ClaimPage() {
       const { data, error: signErr } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        // invite_token rides along in user metadata so handle_new_user can link
+        // the roster row to this new auth user. On the WhatsApp path that's the
+        // ONLY link available — the roster row has no email to match on.
+        options: {
+          data: { full_name: fullName, ...(token ? { invite_token: token } : {}) },
+        },
       })
       if (signErr) throw signErr
       // Steps 2-4 (and the upsert below) need an active session. With email
@@ -168,6 +199,46 @@ export default function ClaimPage() {
     }
   }
 
+  // Token that doesn't resolve: expired, already claimed, or simply wrong. We
+  // don't say which — a stranger with a guessed URL learns nothing either way.
+  if (linkState === 'dead') {
+    return (
+      <div className="claim-root">
+        <style>{STYLES}</style>
+        <div className="header">
+          <TennisOSWordmark />
+        </div>
+        <div className="main">
+          <div className="welcome">
+            <div className="welcome-icon">🎾</div>
+            <div className="welcome-title">THIS LINK EXPIRED</div>
+            <p className="welcome-sub">
+              Invite links last 7 days. Message your coach on WhatsApp and they’ll
+              send you a fresh one — takes them a second.
+            </p>
+            <button className="btn-skip" type="button" onClick={() => navigate('/login')}>
+              Already have an account? Sign in
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (linkState === 'checking') {
+    return (
+      <div className="claim-root">
+        <style>{STYLES}</style>
+        <div className="header">
+          <TennisOSWordmark />
+        </div>
+        <div className="main">
+          <p className="step-label">Checking your invite…</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="claim-root">
       <style>{STYLES}</style>
@@ -195,30 +266,38 @@ export default function ClaimPage() {
               <label>Full Name</label>
               <input
                 type="text"
-                className="prefilled"
+                className={fullName ? 'prefilled' : undefined}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Your name"
+                autoComplete="name"
+                required
               />
             </div>
             <div className="field">
               <label>Email</label>
+              {/* The .prefilled tint means "your coach already filled this in", so
+                  it only earns its place when there's actually a value. On the
+                  WhatsApp path this field starts empty — it's the student's to fill. */}
               <input
                 type="email"
-                className="prefilled"
+                className={email ? 'prefilled' : undefined}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your email"
+                autoComplete="email"
+                required
               />
             </div>
             <div className="field">
               <label>Phone</label>
               <input
                 type="tel"
-                className="prefilled"
+                className={phone ? 'prefilled' : undefined}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Your phone"
+                autoComplete="tel"
               />
             </div>
             <div className="field">

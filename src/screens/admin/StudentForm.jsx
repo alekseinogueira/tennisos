@@ -60,7 +60,9 @@ export default function StudentForm() {
     setSaving(true)
     const payload = {
       full_name: form.full_name.trim(),
-      email: form.email.trim().toLowerCase(),
+      // Optional: the WhatsApp intake has no email yet — the student fills it in
+      // themselves during claim, and handle_new_user stamps it onto the row.
+      email: form.email.trim().toLowerCase() || null,
       phone: form.phone.trim() || null,
       status: form.status,
     }
@@ -71,21 +73,24 @@ export default function StudentForm() {
       } else {
         // user_id stays NULL until the invite is claimed; stamp the creating coach.
         const row = await createStudent({ ...payload, created_by: user?.id ?? null })
-        // Coach creates student → invite email fires automatically. Best-effort:
-        // the copyable claim link in InvitePanel below is the fallback if it fails.
-        const inviteLink = `${window.location.origin}/claim?email=${encodeURIComponent(row.email)}`
-        fetch('https://vdyvlylacsghnvtllrzj.supabase.co/functions/v1/send-invite-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            student_name: row.full_name,
-            student_email: row.email,
-            invite_link: inviteLink,
-          }),
-        }).catch((err) => console.error('Invite email failed to send:', err))
+        // Coach creates student → invite email fires automatically, but ONLY when
+        // we actually have an address. With no email the copyable token link in
+        // InvitePanel below is the whole delivery mechanism (coach sends it).
+        if (row.email) {
+          const inviteLink = `${window.location.origin}/claim/${row.invite_token}`
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invite-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              student_name: row.full_name,
+              student_email: row.email,
+              invite_link: inviteLink,
+            }),
+          }).catch((err) => console.error('Invite email failed to send:', err))
+        }
         // Stay on-screen and surface the copyable invite link for the new student.
         setCreated(row)
         setSaving(false)
@@ -161,19 +166,19 @@ export default function StudentForm() {
           autoComplete="name"
         />
         <Field
-          label="Email"
-          type="email"
-          value={form.email}
-          onChange={(v) => set('email', v)}
-          required
-          autoComplete="email"
-        />
-        <Field
-          label="Phone"
+          label="Phone (WhatsApp)"
           type="tel"
           value={form.phone}
           onChange={(v) => set('phone', v)}
           autoComplete="tel"
+        />
+        <Field
+          label="Email — optional"
+          type="email"
+          value={form.email}
+          onChange={(v) => set('email', v)}
+          autoComplete="email"
+          hint="Leave blank if you only have their WhatsApp. They'll add it themselves when they open the invite link."
         />
 
         <label className="block">
@@ -219,7 +224,7 @@ export default function StudentForm() {
   )
 }
 
-function Field({ label, type = 'text', value, onChange, required, autoComplete }) {
+function Field({ label, type = 'text', value, onChange, required, autoComplete, hint }) {
   return (
     <label className="block">
       <span className="text-xs font-semibold uppercase tracking-[0.15em] text-ink/50">
@@ -233,6 +238,7 @@ function Field({ label, type = 'text', value, onChange, required, autoComplete }
         onChange={(e) => onChange(e.target.value)}
         className="mt-2 w-full rounded-xl border border-forest/15 bg-white/60 px-4 py-3 text-ink outline-none transition placeholder:text-ink/30 focus:border-forest focus:bg-white focus:ring-2 focus:ring-forest/10"
       />
+      {hint && <span className="mt-1.5 block text-xs text-ink/45">{hint}</span>}
     </label>
   )
 }

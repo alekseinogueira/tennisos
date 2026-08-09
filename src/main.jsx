@@ -39,6 +39,9 @@ createRoot(document.getElementById('root')).render(
           <Route path="/forgot" element={<ForgotPassword />} />
           <Route path="/reset" element={<ResetPassword />} />
           <Route path="/claim" element={<ClaimPage />} />
+          {/* Token invite link — the WhatsApp path, where the coach has no email
+              for the student. Same screen; the token replaces ?email= as the key. */}
+          <Route path="/claim/:token" element={<ClaimPage />} />
 
           {/* Authenticated routes — gated, then wrapped in the branded shell */}
           <Route element={<ProtectedRoute />}>

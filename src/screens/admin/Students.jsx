@@ -122,7 +122,10 @@ export default function Students() {
                       {s.full_name}
                     </Link>
                   </td>
-                  <td className="px-5 py-4 text-sm text-ink/65">{s.email}</td>
+                  {/* WhatsApp-only invites have no email until the student claims. */}
+                  <td className="px-5 py-4 text-sm text-ink/65">
+                    {s.email || <span className="text-ink/35">{s.phone || 'No email yet'}</span>}
+                  </td>
                   <td className="px-5 py-4">
                     <StatusBadge status={s.status} />
                   </td>

@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { listActiveStudents, createSessionsGroup } from '../lib/db'
+import { partitionByEmail, emailClause } from '../lib/notify'
 
 // Bookable times: 30-min increments, 07:00–21:00 inclusive (same as StudentDetail).
 const TIMES = (() => {
@@ -112,9 +113,12 @@ export default function ScheduleTrainingCard({ onScheduled }) {
         })),
       )
 
-      // One confirmation email per player; report the real send count.
+      // One confirmation email per player, but only for players we can reach:
+      // a WhatsApp-invited student has no address until they claim. Those are
+      // reported separately so a skip never reads as a delivery failure.
+      const { withEmail, withoutEmail } = partitionByEmail(picked)
       const sends = await Promise.allSettled(
-        picked.map((s) =>
+        withEmail.map((s) =>
           fetch(
             'https://vdyvlylacsghnvtllrzj.supabase.co/functions/v1/send-session-reminder',
             {
@@ -137,15 +141,18 @@ export default function ScheduleTrainingCard({ onScheduled }) {
         ),
       )
       const sent = sends.filter((r) => r.status === 'fulfilled').length
-      if (sent < picked.length)
+      if (sent < withEmail.length)
         console.error('Some confirmation emails failed:', sends)
 
       setSelected(new Set())
       setForm(EMPTY_FORM)
       setOk(
-        sent === picked.length
-          ? `Training scheduled for ${picked.length} player${picked.length > 1 ? 's' : ''}. Emails sent.`
-          : `Training scheduled for ${picked.length} player${picked.length > 1 ? 's' : ''} — emails sent ${sent}/${picked.length}.`,
+        `Training scheduled for ${picked.length} player${picked.length > 1 ? 's' : ''} — ` +
+          emailClause({
+            sent,
+            attempted: withEmail.length,
+            skipped: withoutEmail.length,
+          }),
       )
       onScheduled?.(rows)
     } catch (e) {

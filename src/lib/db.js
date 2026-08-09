@@ -86,6 +86,28 @@ export async function getStudentByEmail(email) {
   return rows?.[0] ?? null
 }
 
+/** Onboarding pre-fill, token path (/claim/:token). Same shape as
+ *  getStudentByEmail, but keyed on the unguessable invite_token and gated on the
+ *  7-day expiry window server-side. Returns null for unknown / already-claimed /
+ *  expired tokens alike — the claim screen renders one "link is dead" state for
+ *  all three rather than telling a stranger which case they hit. */
+export async function getStudentByInviteToken(token) {
+  const rows = unwrap(
+    await supabase.rpc('get_invite_student_by_token', { p_token: token }),
+  )
+  return rows?.[0] ?? null
+}
+
+/** Coach: mint a fresh token + 7-day window for a student whose link expired.
+ *  Returns { invite_token, invite_token_expires_at }, or null if the student has
+ *  already claimed their account (nothing to rotate). */
+export async function rotateInviteToken(studentId) {
+  const rows = unwrap(
+    await supabase.rpc('rotate_invite_token', { p_student_id: studentId }),
+  )
+  return rows?.[0] ?? null
+}
+
 /** Home dashboard: the student's identity (profiles) + roster row (students),
  *  resolved from one auth id. profiles and students share no FK — they only
  *  share the auth user id (profiles.id = students.user_id) — so we fetch both

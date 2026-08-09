@@ -162,31 +162,36 @@ export default function StudentDetail() {
         status: 'scheduled',
       })
 
-      // Fire the reminder email and reflect the real result in the toast.
-      let emailed = true
-      try {
-        const res = await fetch(
-          'https://vdyvlylacsghnvtllrzj.supabase.co/functions/v1/send-session-reminder',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      // Fire the reminder email and reflect the real result in the toast. An
+      // unclaimed WhatsApp invite has no address on file yet — skip the call
+      // rather than posting a null email the function can only reject.
+      const canEmail = Boolean(student.email)
+      let emailed = false
+      if (canEmail) {
+        try {
+          const res = await fetch(
+            'https://vdyvlylacsghnvtllrzj.supabase.co/functions/v1/send-session-reminder',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({
+                student_name: student.full_name,
+                student_email: student.email,
+                scheduled_at: row.scheduled_at,
+                duration_minutes: row.duration_minutes,
+                location: row.location,
+              }),
             },
-            body: JSON.stringify({
-              student_name: student.full_name,
-              student_email: student.email,
-              scheduled_at: row.scheduled_at,
-              duration_minutes: row.duration_minutes,
-              location: row.location,
-            }),
-          },
-        )
-        emailed = res.ok
-        if (!res.ok) console.error('Session reminder email failed:', await res.text())
-      } catch (err) {
-        emailed = false
-        console.error('Session reminder email failed:', err)
+          )
+          emailed = res.ok
+          if (!res.ok) console.error('Session reminder email failed:', await res.text())
+        } catch (err) {
+          emailed = false
+          console.error('Session reminder email failed:', err)
+        }
       }
 
       setSessions((list) =>
@@ -194,9 +199,11 @@ export default function StudentDetail() {
       )
       setSForm(EMPTY_SESSION)
       setSOk(
-        emailed
-          ? 'Session scheduled. Reminder sent.'
-          : 'Session scheduled — but the reminder email didn’t send.',
+        !canEmail
+          ? 'Session scheduled. No reminder email — they haven’t claimed their invite yet.'
+          : emailed
+            ? 'Session scheduled. Reminder sent.'
+            : 'Session scheduled — but the reminder email didn’t send.',
       )
     } catch (e) {
       setSError(e.message ?? 'Could not schedule that. Try again.')
@@ -234,7 +241,10 @@ export default function StudentDetail() {
           </h1>
           <StatusBadge status={student.status} />
         </div>
-        <p className="mt-3 text-ink/60">{student.email}</p>
+        {/* No email until a WhatsApp-invited student claims their account. */}
+        <p className="mt-3 text-ink/60">
+          {student.email || student.phone || 'No email yet — invite not claimed.'}
+        </p>
         <div className="mt-4 flex items-center gap-4">
           <Link
             to={`/admin/students/${student.id}/edit`}

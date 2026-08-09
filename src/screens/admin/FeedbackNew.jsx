@@ -313,25 +313,33 @@ function ManualPath({ students, preselected }) {
       })
 
       // Notify the student; an email failure never undoes the publish.
+      // A WhatsApp-invited student has no address until they claim, so there's
+      // nothing to send to — that's a skip, not a failure, and the toast says so.
+      const canEmail = Boolean(student.email)
       let emailed = false
-      try {
-        await sendFeedbackPublishedEmail({
-          student_name: student.full_name,
-          student_email: student.email,
-          feedback_date: fields.lesson_date,
-          focus_next: fields.focus_next,
-        })
-        emailed = true
-      } catch (mailErr) {
-        console.error('Feedback email failed:', mailErr)
+      if (canEmail) {
+        try {
+          await sendFeedbackPublishedEmail({
+            student_name: student.full_name,
+            student_email: student.email,
+            feedback_date: fields.lesson_date,
+            focus_next: fields.focus_next,
+          })
+          emailed = true
+        } catch (mailErr) {
+          console.error('Feedback email failed:', mailErr)
+        }
       }
 
-      setOk({
-        id: row.id,
-        text: emailed
-          ? `Published — ${student.full_name} was emailed.`
-          : `Published — but the email to ${student.full_name} failed.`,
-      })
+      let text
+      if (!canEmail) {
+        text = `Published — ${student.full_name} sees it in the portal. No email yet: they haven’t claimed their invite.`
+      } else if (emailed) {
+        text = `Published — ${student.full_name} was emailed.`
+      } else {
+        text = `Published — but the email to ${student.full_name} failed.`
+      }
+      setOk({ id: row.id, text })
       setForm({ ...EMPTY_MANUAL, lesson_date: todayLocal() })
     } catch (e2) {
       setError(e2?.message ?? 'Could not publish. Try again.')
